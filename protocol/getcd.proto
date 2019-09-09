@@ -1,0 +1,79 @@
+syntax = "proto3";
+package getcd;
+
+// registry server & serivce
+
+message registry_server {
+	string app = 1;
+	string server = 2;
+	string division = 3;
+	string node = 4;
+	uint32 use_agent = 5;
+	uint32 node_status = 6;
+	uint32 service_status = 7;
+}
+
+message registry_service {
+	string app = 1;
+	string server = 2;
+	string division = 3;
+	string node = 4;
+	string service = 5;
+	string service_ip = 6;
+	sint32 service_port = 7;
+	sint32 rpc_port = 8;
+	sint32 admin_port = 9;
+}
+
+message query_registry_req {
+}
+
+message query_registry_rsp {
+	uint32 result = 1;
+	repeated registry_server servers = 2;
+	repeated registry_service services = 3;
+}
+
+// global config
+
+message query_global_config_req {
+	repeated string categories = 1;
+}
+
+message category_entry {
+    string category = 1;
+    map<string, string> kv = 2;
+}
+
+message query_global_config_rsp {
+	int32 result = 1;
+	repeated category_entry entries = 2;
+}
+
+// protocol limitation
+
+message query_proto_limit_req {
+}
+
+message proto_limit_entry {
+	int32 proto_id = 1;
+	int32 player_limit_enable = 2;
+	int32 player_limit_count = 3;
+	int32 player_limit_duration = 4;
+	int32 server_limit_enable = 5;
+	int32 server_limit_count = 6;
+	int32 server_limit_duration = 7;
+}
+
+message query_proto_limit_rsp {
+	int32 result = 1;
+	repeated proto_limit_entry entries = 2;
+}
+
+// service definition
+
+service GetcdService {
+	rpc QueryRegistry(query_registry_req) returns (query_registry_rsp) {}
+	rpc QueryGlobalConfig(query_global_config_req) returns(query_global_config_rsp) {}
+	rpc QueryProtoLimit(query_proto_limit_req) returns(query_proto_limit_rsp) {}
+}

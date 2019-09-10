@@ -3,6 +3,7 @@ package main
 import ( 
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
+	rc "github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	sf "github.com/xcsean/ApplicationEngine/core/shared/servicefmt"
 	"golang.org/x/net/context"
@@ -13,7 +14,7 @@ type myService struct{}
 func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryReq) (*getcd.QueryRegistryRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &getcd.QueryRegistryRsp{Result: 0}
+	rsp := &getcd.QueryRegistryRsp{Result: rc.OK}
 
 	server := getServerMap()
 	serverLen := getServerCount(server)
@@ -67,7 +68,7 @@ func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryRe
 func (s *myService) QueryGlobalConfig(ctx context.Context, in *getcd.QueryGlobalConfigReq) (*getcd.QueryGlobalConfigRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &getcd.QueryGlobalConfigRsp{Result: 0}
+	rsp := &getcd.QueryGlobalConfigRsp{Result: rc.OK}
 
 	allConfig := getGlobalConfigMap()
 	var entries []*getcd.CategoryEntry
@@ -103,7 +104,7 @@ func (s *myService) QueryGlobalConfig(ctx context.Context, in *getcd.QueryGlobal
 func (s *myService) QueryProtoLimit(ctx context.Context, in *getcd.QueryProtoLimitReq) (*getcd.QueryProtoLimitRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &getcd.QueryProtoLimitRsp{Result: 0}
+	rsp := &getcd.QueryProtoLimitRsp{Result: rc.OK}
 
 	entries := make([]*getcd.ProtoLimitEntry, 0, len(protoLimitArr))
 	for _, v := range protoLimitArr {

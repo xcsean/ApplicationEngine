@@ -34,7 +34,7 @@ func start(fileName string) bool {
 	log.Info("%s start with config=%s", config.Division, fileName)
 	log.Debug("log dir=%s, log name=%s, log level=%s", config.Log.Dir, config.Log.FileName, config.Log.LogLevel)
 	log.Debug("rpc addr=%s, admin addr=%s", config.RPC.Addr(), config.Admin.Addr())
-	log.Debug("mysql addr=%s database=%s, username=%s, password=%s", config.Mysql.Addr(), config.Mysql.Database, config.Mysql.Username, config.Mysql.Password)
+	log.Debug("mysql addr=%s, database=%s, username=%s, password=%s", config.Mysql.Addr(), config.Mysql.Database, config.Mysql.Username, config.Mysql.Password)
 	log.Debug("mysql registry refresh=%d", config.Refresh)
 
 	// start RPC service
@@ -69,18 +69,18 @@ func start(fileName string) bool {
 }
 
 func startRPC(config getcdConfig, ch chan<- string) {
-	dbstr = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", config.Mysql.Username, config.Mysql.Password, config.Mysql.Addr(), config.Mysql.Database)
+	s := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", config.Mysql.Username, config.Mysql.Password, config.Mysql.Addr(), config.Mysql.Database)
 
 	// load registry from mysql immediately
 	// if failed, just send error message and exit
-	if err := loadRegistryFromMysql(dbstr); err != nil {
+	if err := loadRegistryFromMysql(s); err != nil {
 		log.Error("load registry from mysql failed: %s", err.Error())
 		ch <- "load from mysql failed"
 		return
 	}
 
 	// start a timer, load registry from mysql periodically
-	go loadRegistryPeriodically(dbstr, config.Refresh)
+	go loadRegistryPeriodically(s, config.Refresh)
 
 	// listen and start work
 	rpcAddr := config.RPC.Addr()

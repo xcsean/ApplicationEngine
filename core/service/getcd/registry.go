@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	dbstr        string
+	// registry server & service
 	serverLock   sync.RWMutex
 	serverMap    map[string]*sf.RegistryServerConfig
 	serviceLock  sync.RWMutex
 	serviceMap   map[string]*list.List
 
+	// registry global config & proto limitation
 	globalConfigMap map[string][]*sf.RegistryGlobalConfig
 	protoLimitArr   []sf.RegistryProtocol
 )
@@ -240,10 +241,10 @@ func loadRegistryFromMysql(s string) error {
 	// dump!
 	dumpRegistryServerConfig()
 	dumpRegistryServiceConfig()
-	dumpRegistryGlobalConfigMap()
-	dumpRegistryProtoLimitArray()
+	dumpRegistryGlobalConfig()
+	dumpRegistryProtoLimit()
 
-	log.Info("load from mysql ok")
+	log.Info("load registry from mysql ok")
 	return nil
 }
 
@@ -252,7 +253,7 @@ func loadRegistryPeriodically(s string, t uint32) {
 	for {
 		select {
 		case <-tick.C:
-			log.Debug("load from mysql active")
+			log.Debug("it's time to load registry from mysql")
 			loadRegistryFromMysql(s)
 		}
 	}
@@ -282,7 +283,7 @@ func dumpRegistryServiceConfig() {
 	log.Info("<===")
 }
 
-func dumpRegistryGlobalConfigMap() {
+func dumpRegistryGlobalConfig() {
 	log.Info("registry global config ===>")
 	for category, array := range globalConfigMap {
 		str := ""
@@ -294,7 +295,7 @@ func dumpRegistryGlobalConfigMap() {
 	log.Info("<===")
 }
 
-func dumpRegistryProtoLimitArray() {
+func dumpRegistryProtoLimit() {
 	log.Info("registry proto limit ===>")
 	for _, v := range protoLimitArr {
 		log.Info("protoID:%d player(%d %d %d) server(%d)",

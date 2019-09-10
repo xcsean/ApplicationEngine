@@ -8,9 +8,9 @@ message registry_server {
 	string server = 2;
 	string division = 3;
 	string node = 4;
-	uint32 use_agent = 5;
-	uint32 node_status = 6;
-	uint32 service_status = 7;
+	sint32 use_agent = 5;
+	sint32 node_status = 6;
+	sint32 service_status = 7;
 }
 
 message registry_service {
@@ -29,7 +29,7 @@ message query_registry_req {
 }
 
 message query_registry_rsp {
-	uint32 result = 1;
+	int32 result = 1;
 	repeated registry_server servers = 2;
 	repeated registry_service services = 3;
 }

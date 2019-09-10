@@ -1,24 +1,24 @@
-## Application Engine Core
+# Application Engine Core
 
-### Directories
+## Directories
 
 * 'database' contain registry & gobby sql scripts
 * 'protocol' contain services protocol go files
 * 'service' contain services source, such as getcd/gate/gobby
 * 'shared' contain go source shared by services
 
-### Compiler
+## Compiler
 
 * Go 1.11+
 * Legacy GOPATH mode
 
-### Download
+## Download
 
 ```sh
 go get -u github.com/xcsean/ApplicationEngine
 ```
 
-### Dependencies Installation
+## Dependencies Installation
 
 * Zerolog
 ```sh
@@ -73,7 +73,7 @@ cd $GOPATH/src/github.com/xcsean/ApplicationEngine
 cd core/build && sh -ex build_mac.sh
 ```
 
-### Compile for release
+## Compile for release
 
 * Linux
 ```sh
@@ -92,7 +92,7 @@ cd $GOPATH/src/github.com/xcsean/ApplicationEngine
 cd core/build && sh -ex build_release_mac.sh
 ```
 
-### Deployment
+## Deployment
 
 * Centos 7.x
 * Ansible

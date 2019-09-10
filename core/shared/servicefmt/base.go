@@ -39,13 +39,13 @@ type RegistryGlobalConfig struct {
 
 // RegistryProtocol the protocol limitation config in registry
 type RegistryProtocol struct {
-	ProtoID               int
-	PersonalLimitEnable   int
-	PersonalLimitCount    int
-	PersonalLimitDuration int
-	ServerLimitEnable     int
-	ServerLimitCount      int
-	ServerLimitDuration   int
+	ProtoID             int
+	PlayerLimitEnable   int
+	PlayerLimitCount    int
+	PlayerLimitDuration int
+	ServerLimitEnable   int
+	ServerLimitCount    int
+	ServerLimitDuration int
 }
 
 // MakeLookupKey make the lookup key by three factors

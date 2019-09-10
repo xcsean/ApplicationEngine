@@ -45,6 +45,10 @@ go install github.com/golang/protobuf/protoc-gen-go
 ```sh
 go get -u github.com/dgrijalva/jwt-go
 ```
+* Cross-Compile
+```sh
+go get -u golang.org/x/sys
+```
 
 ### Compile
 * Linux

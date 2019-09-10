@@ -298,9 +298,9 @@ func dumpRegistryGlobalConfig() {
 func dumpRegistryProtoLimit() {
 	log.Info("registry proto limit ===>")
 	for _, v := range protoLimitArr {
-		log.Info("protoID:%d player(%d %d %d) server(%d)",
+		log.Info("protoID:%d player(%d %d %d) server(%d %d %d)",
 			v.ProtoID, v.PlayerLimitEnable, v.PlayerLimitCount, v.PlayerLimitDuration,
-			v.ServerLimitEnable, v.PlayerLimitCount, v.PlayerLimitDuration)
+			v.ServerLimitEnable, v.ServerLimitCount, v.ServerLimitDuration)
 	}
 	log.Info("<===")
 }

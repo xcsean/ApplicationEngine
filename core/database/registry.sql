@@ -39,7 +39,7 @@ CREATE TABLE `t_server` (
   `node_status` int(255) NOT NULL DEFAULT '0' COMMENT 'process status, 0 is ready',
   `service_status` int(255) NOT NULL DEFAULT '0' COMMENT 'service in process status, 0 is ready',
   PRIMARY KEY (`app`,`server`,`division`,`node`) USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for t_service
@@ -56,4 +56,4 @@ CREATE TABLE `t_service` (
   `admin_port` int(10) NOT NULL COMMENT '17001',
   `rpc_port` int(10) NOT NULL COMMENT '17002',
   PRIMARY KEY (`app`,`server`,`division`,`node`,`service`) USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

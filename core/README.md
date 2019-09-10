@@ -1,21 +1,25 @@
 ## Application Engine Core
 
 ### Directories
-* database, contain registry & gobby sql scripts
-* protocol, contain services protocol go files
-* service, contain services source, such as getcd/gate/gobby
-* shared, contain go source shared by services
+
+* 'database' contain registry & gobby sql scripts
+* 'protocol' contain services protocol go files
+* 'service' contain services source, such as getcd/gate/gobby
+* 'shared' contain go source shared by services
 
 ### Compiler
+
 * Go 1.11+
 * Legacy GOPATH mode
 
 ### Download
+
 ```sh
 go get -u github.com/xcsean/ApplicationEngine
 ```
 
 ### Dependencies Installation
+
 * Zerolog
 ```sh
 go get -u github.com/rs/zerolog/log
@@ -50,27 +54,45 @@ go get -u github.com/dgrijalva/jwt-go
 go get -u golang.org/x/sys
 ```
 
-### Compile
+### Compile for testing
+
 * Linux
 ```sh
 cd $GOPATH/src/github.com/xcsean/ApplicationEngine
-cd core/bin && sh -ex build.sh
+cd core/build && sh -ex build.sh
 ```
 * Windows
 ```cmd
 cd %GOPATH%\src\github.com\xcsean\ApplicatonEngine
-cd protocol
-convert_win.bat
-cd ..
-cd core\bin
+cd core\build
 build_win.bat
 ```
 * Mac
 ```sh
 cd $GOPATH/src/github.com/xcsean/ApplicationEngine
-cd core/bin && sh -ex build_mac.sh
+cd core/build && sh -ex build_mac.sh
+```
+
+### Compile for release
+
+* Linux
+```sh
+cd $GOPATH/src/github.com/xcsean/ApplicationEngine
+cd core/build && sh -ex build_release.sh
+```
+* Windows
+```cmd
+cd %GOPATH%\src\github.com\xcsean\ApplicatonEngine
+cd core\build
+build_release_win.bat
+```
+* Mac
+```sh
+cd $GOPATH/src/github.com/xcsean/ApplicationEngine
+cd core/build && sh -ex build_release_mac.sh
 ```
 
 ### Deployment
+
 * Centos 7.x
 * Ansible

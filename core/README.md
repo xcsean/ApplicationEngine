@@ -1,9 +1,10 @@
 ## Application Engine Core
 
-### Features
-* aaa
-* bbb
-* ccc
+### Directories
+* database, contain registry & gobby sql scripts
+* protocol, contain services protocol go files
+* service, contain services source, such as getcd/gate/gobby
+* shared, contain go source shared by services
 
 ### Compiler
 * Go 1.11+

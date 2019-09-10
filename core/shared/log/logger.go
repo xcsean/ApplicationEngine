@@ -31,8 +31,8 @@ func SetupMainLogger(dir, filename, level string) error {
 }
 
 // ChangeLevel change the level of logger
-func ChangeLevel(newLevel string) {
-	setLogLevel(newLevel)
+func ChangeLevel(newLevel string) string {
+	return setLogLevel(newLevel)
 }
 
 // Debug output debug level log
@@ -75,7 +75,7 @@ func getLogLevel(logLevel string) string {
 	}
 }
 
-func setLogLevel(logLevel string) {
+func setLogLevel(logLevel string) string {
 	level := getLogLevel(logLevel)
 	switch level {
 	case "debug":
@@ -91,4 +91,5 @@ func setLogLevel(logLevel string) {
 	case "panic":
 		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	}
+	return level
 }

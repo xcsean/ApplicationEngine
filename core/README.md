@@ -26,7 +26,7 @@ go get -u github.com/rs/zerolog/log
 ```
 * Radix
 ```sh
-go get -u github.com/mediocregopher/radix 
+go get -u github.com/mediocregopher/radix
 ```
 * MySQL
 ```sh
@@ -54,7 +54,7 @@ go get -u github.com/dgrijalva/jwt-go
 go get -u golang.org/x/sys
 ```
 
-### Compile for testing
+## Compile for testing
 
 * Linux
 ```sh
@@ -94,5 +94,5 @@ cd core/build && sh -ex build_release_mac.sh
 
 ## Deployment
 
-* Centos 7.x
-* Ansible
+* centos 7.6
+* ansible 2.8

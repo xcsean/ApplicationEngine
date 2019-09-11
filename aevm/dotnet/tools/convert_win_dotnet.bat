@@ -1,0 +1,1 @@
+grpc.tools\2.23.0\windows_x64\protoc.exe -I ..\..\..\protocol --csharp_out ..\aevm\gRPC --grpc_out ..\aevm\gRPC --plugin=protoc-gen-grpc=grpc.tools\2.23.0\windows_x64\grpc_csharp_plugin.exe ..\..\..\protocol\getcd.proto

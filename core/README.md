@@ -94,5 +94,5 @@ cd core/build && sh -ex build_release_mac.sh
 
 ## Deployment
 
-* centos 7.6
-* ansible 2.8
+* Centos 7.6
+* Ansible 2.8

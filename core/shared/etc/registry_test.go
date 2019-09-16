@@ -64,7 +64,7 @@ func TestQueryRegistry(t *testing.T) {
 	rsp.Services = append(rsp.Services, svc)
 
 	// save to etc
-	saveRegistry(rsp)
+	saveService(rsp)
 
 	// test pick
 	division := "app.globby.1"

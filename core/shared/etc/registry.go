@@ -61,7 +61,7 @@ func setServiceMap(newer map[string]*list.List) {
 	serviceMap = newer
 }
 
-func saveRegistry(rsp *getcd.QueryRegistryRsp) {
+func saveService(rsp *getcd.QueryRegistryRsp) {
 	// make server data
 	server := make(map[string]*sf.RegistryServerConfig)
 	for _, e := range rsp.Servers {
@@ -111,10 +111,10 @@ func saveRegistry(rsp *getcd.QueryRegistryRsp) {
 	ss.replace(server, service)
 
 	// dump the server & service
-	dumpRegistry(oldServer, server, oldService, service)
+	dumpService(oldServer, server, oldService, service)
 }
 
-func dumpRegistry(oldServer, newServer map[string]*sf.RegistryServerConfig, oldService, newService map[string]*list.List) {
+func dumpService(oldServer, newServer map[string]*sf.RegistryServerConfig, oldService, newService map[string]*list.List) {
 	if reflect.DeepEqual(oldServer, newServer) &&
 		reflect.DeepEqual(oldService, newService) &&
 		registryLastPrintTime.Hour() == time.Now().Hour() {
@@ -133,13 +133,13 @@ func dumpRegistry(oldServer, newServer map[string]*sf.RegistryServerConfig, oldS
 	ss.dump()
 }
 
-func queryGetcdPeriodically(t uint32) {
+func queryServicePeriodically(t uint32) {
 	tick := time.NewTicker(time.Duration(t) * time.Second)
 	for {
 		select {
 		case <-tick.C:
 			if err := QueryRegistry(); err != nil {
-				log.Error("query getcd failed: %s", err.Error())
+				log.Error("query service failed: %s", err.Error())
 			}
 		}
 	}
@@ -153,16 +153,16 @@ func SetGetcdAddr(addr string) {
 
 // StartQueryLoop start a timer for query getcd
 func StartQueryLoop(t uint32) error {
-	log.Debug("begin a query loop for registry, duration=%d", t)
-	go queryGetcdPeriodically(t)
+	log.Debug("begin a query loop for registry service, duration=%d", t)
+	go queryServicePeriodically(t)
 	return nil
 }
 
-// QueryRegistry query registry from getcd
+// QueryRegistry query registry service from getcd
 func QueryRegistry() error {
 	defer dbg.Stacktrace()
 
-	log.Debug("query registry from %s begin...", getcdAddr)
+	log.Debug("query registry service from %s begin...", getcdAddr)
 	conn, err := grpc.Dial(getcdAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -178,8 +178,8 @@ func QueryRegistry() error {
 		return err
 	}
 	
-	log.Debug("query registry result: %d", rsp.Result)
-	saveRegistry(rsp)
+	log.Debug("query registry service result: %d", rsp.Result)
+	saveService(rsp)
 	return nil
 }
 

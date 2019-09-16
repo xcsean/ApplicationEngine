@@ -18,29 +18,15 @@ func (e *Endpoint) Addr() string {
 // MysqlConnection mysql config
 type MysqlConnection struct {
 	Endpoint `xml:"endpoint"`
-	Database string   `xml:"database"`
-	Username string   `xml:"username"`
-	Password string   `xml:"password"`
+	Database string `xml:"database"`
+	Username string `xml:"username"`
+	Password string `xml:"password"`
 }
 
 // RedisConnection redis config
 type RedisConnection struct {
 	Endpoint `xml:"endpoint"`
 	AuthPass string `xml:"auth_pass"`
-}
-
-// Getcd go-etc-daemon config
-type Getcd struct {
-	Endpoint `xml:"endpoint"`
-	Protocol        string   `xml:"protocol"`
-	RefreshInterval uint32   `xml:"refresh_interval"`
-}
-
-// Monitor monitor config
-type Monitor struct {
-	Endpoint `xml:"endpoint"`
-	Protocol       string   `xml:"protocol"`
-	ReportInterval uint32   `xml:"report_interval"`
 }
 
 // LogConfig the config for logger

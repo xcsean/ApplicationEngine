@@ -60,10 +60,10 @@ func (sa *serviceAll) fillNewer(newer map[string]*serviceGroup, key string,
 				cursor = currgrp.cursor
 			}
 			grp = &serviceGroup{
-				array:  make([]*sf.RegistryServiceConfig, 1),
+				array:  nil,
 				cursor: cursor,
 			}
-			grp.array[0] = &c
+			grp.array = append(grp.array, &c)
 			newer[c.Service] = grp
 		}
 	}

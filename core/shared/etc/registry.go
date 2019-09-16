@@ -9,6 +9,7 @@ import (
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
+	rc "github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	sf "github.com/xcsean/ApplicationEngine/core/shared/servicefmt"
 	"golang.org/x/net/context"
@@ -27,14 +28,19 @@ var (
 	// the service-all object for RPC-call
 	ss *serviceAll
 
+	// global config
+	gc *globalConfig
+
+	// others...
 	getcdAddr string
 	registryLastPrintTime time.Time
 )
 
 func init() {
-	ss = newServiceAll()
 	serverMap = make(map[string]*sf.RegistryServerConfig)
 	serviceMap = make(map[string]*list.List)
+	ss = newServiceAll()
+	gc = newGlobalConfig()
 }
 
 func getServerMap() map[string]*sf.RegistryServerConfig {
@@ -62,6 +68,10 @@ func setServiceMap(newer map[string]*list.List) {
 }
 
 func saveService(rsp *getcd.QueryRegistryRsp) {
+	if rsp.Result != rc.OK {
+		return
+	}
+
 	// make server data
 	server := make(map[string]*sf.RegistryServerConfig)
 	for _, e := range rsp.Servers {
@@ -138,28 +148,53 @@ func queryServicePeriodically(t uint32) {
 	for {
 		select {
 		case <-tick.C:
-			if err := QueryRegistry(); err != nil {
+			if err := QueryService(); err != nil {
 				log.Error("query service failed: %s", err.Error())
 			}
 		}
 	}
 }
 
-// SetGetcdAddr set the address of Getcd service
-func SetGetcdAddr(addr string) {
-	getcdAddr = addr
-	log.Debug("getcd service set to %s", getcdAddr)
+func saveGlobalConfig(rsp *getcd.QueryGlobalConfigRsp) {
+	if rsp.Result != rc.OK {
+		return
+	}
+
+	newer := make(map[string]*categoryEntry)
+	for _, e := range rsp.Entries {
+		cat := e.Category
+		newerEntry, ok := newer[cat]
+		if !ok {
+			newerEntry = &categoryEntry{
+				category: cat,
+				kv: make(map[string]string),
+			}
+			newer[cat] = newerEntry
+		}
+		for k, v := range e.Kv {
+			newerEntry.kv[k] = v
+		}
+	}
+
+	gc.replace(newer)
+	gc.dump()
 }
 
-// StartQueryLoop start a timer for query getcd
-func StartQueryLoop(t uint32) error {
-	log.Debug("begin a query loop for registry service, duration=%d", t)
+// SetGetcdAddr set the address of getcd service
+func SetGetcdAddr(addr string) {
+	getcdAddr = addr
+	log.Info("getcd service set to %s", getcdAddr)
+}
+
+// StartQueryServiceLoop start a timer for query service from getcd
+func StartQueryServiceLoop(t uint32) error {
+	log.Debug("begin a query service loop from registry, duration=%d", t)
 	go queryServicePeriodically(t)
 	return nil
 }
 
-// QueryRegistry query registry service from getcd
-func QueryRegistry() error {
+// QueryService query registry service from getcd
+func QueryService() error {
 	defer dbg.Stacktrace()
 
 	log.Debug("query registry service from %s begin...", getcdAddr)
@@ -249,4 +284,14 @@ func IsUseAgent(division string) bool {
 		return (status.UseAgent != 0)
 	}
 	return false
+}
+
+// QueryGlobalConfig query a config from global config
+func QueryGlobalConfig(category, key string) (string, bool) {
+	return gc.getValue(category, key)
+}
+
+// InGlobalConfig tell whether the key in category and has a value
+func InGlobalConfig(category, key, pattern string) bool {
+	return gc.contains(category, key, pattern)
 }

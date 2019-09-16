@@ -7,15 +7,12 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
-func TestQueryRegistry(t *testing.T) {
-	log.SetupMainLogger("./", "etc.log", "debug")
-	log.Debug("query registry...")
-
+func testService(t *testing.T) {
 	// fill the response
 	rsp := &getcd.QueryRegistryRsp{
 		Result: 0,
-		Servers: make([]*getcd.RegistryServer, 0),
-		Services: make([]*getcd.RegistryService, 0),
+		Servers: nil,
+		Services: nil,
 	}
 	srv := &getcd.RegistryServer{
 		App: "app",
@@ -104,4 +101,84 @@ func TestQueryRegistry(t *testing.T) {
 		return
 	}
 	t.Logf("use agent: %v %v", use1, use2)
+}
+
+func testGlobalConfig(t *testing.T) {
+	rsp := &getcd.QueryGlobalConfigRsp{
+		Result: 0,
+		Entries: nil,
+	}
+
+	// add permission
+	cat := "permission"
+	entry := &getcd.CategoryEntry{
+		Category: cat,
+		Kv: make(map[string]string),
+	}
+	entry.Kv["ipAdminList"] = "127.0.0.1,192.168.1.10"
+	entry.Kv["ipWhiteList"] = "127.0.0.1"
+	rsp.Entries = append(rsp.Entries, entry)
+
+	// add global
+	cat = "global"
+	entry = &getcd.CategoryEntry{
+		Category: cat,
+		Kv: make(map[string]string),
+	}
+	entry.Kv["wechatLogin"] = "1"
+	entry.Kv["qqLogin"] = "0"
+	entry.Kv["devLogin"] = "0"
+	rsp.Entries = append(rsp.Entries, entry)
+
+	// add permission again
+	cat = "permission"
+	entry = &getcd.CategoryEntry{
+		Category: cat,
+		Kv: make(map[string]string),
+	}
+	entry.Kv["ipBlackList"] = "192.168.1.11"
+	rsp.Entries = append(rsp.Entries, entry)
+	
+	// save to etc
+	saveGlobalConfig(rsp)
+
+	// test in global config
+	ip := "192.168.1.10"
+	exist := InGlobalConfig("permission", "ipAdminList", ip)
+	if !exist {
+		t.Errorf("InGlobalConfig failed")
+		return
+	}
+	t.Logf("ip %s is in global config", ip)
+
+	ip = "192.168.1.11"
+	exist = InGlobalConfig("permission", "ipAdminList", ip)
+	if exist {
+		t.Errorf("InGlobalConfig failed")
+		return
+	}
+	t.Logf("ip %s isn't in global config", ip)
+
+	ip2, exist := QueryGlobalConfig("permission", "ipBlackList")
+	if !exist {
+		t.Errorf("QueryGlobalConfig failed")
+		return
+	}
+	t.Logf("ip black list is %s", ip2)
+
+	if ip != ip2 {
+		t.Errorf("QueryGlobalConfig failed")
+		return
+	}
+	t.Logf("ip %s equal to ip2 %s", ip, ip2)
+}
+
+func TestRegistry(t *testing.T) {
+	log.SetupMainLogger("./", "etc.log", "debug")
+
+	// test service
+	testService(t)
+
+	// test global config
+	testGlobalConfig(t)
 }

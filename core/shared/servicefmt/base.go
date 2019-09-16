@@ -26,8 +26,8 @@ type RegistryServiceConfig struct {
 	Service     string
 	ServiceIP   string
 	ServicePort int32
-	AdminPort   int32
 	RPCPort     int32
+	AdminPort   int32
 }
 
 // RegistryGlobalConfig the global config in registry

@@ -90,14 +90,14 @@ func testService(t *testing.T) {
 	t.Logf("first=%s, second=%s, third=%s", first, second, third)
 
 	// test use agent
-	use1 := IsUseAgent("app.globby.1")
+	use1 := IsServiceUseAgent("app.globby.1")
 	if use1 != false {
-		t.Errorf("IsUseAgent failed")
+		t.Errorf("IsServiceUseAgent failed")
 		return
 	}
-	use2 := IsUseAgent("app.globby.2")
+	use2 := IsServiceUseAgent("app.globby.2")
 	if use2 != true {
-		t.Errorf("IsUseAgent failed")
+		t.Errorf("IsServiceUseAgent failed")
 		return
 	}
 	t.Logf("use agent: %v %v", use1, use2)

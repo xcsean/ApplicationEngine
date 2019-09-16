@@ -271,8 +271,8 @@ func SelectEndpoint(service string) (string, int32, int32, error) {
 	return "", 0, 0, fmt.Errorf("service=%s not found", service)
 }
 
-// IsUseAgent tell whether a node use agent or not
-func IsUseAgent(division string) bool {
+// IsServiceUseAgent tell whether a node use agent or not
+func IsServiceUseAgent(division string) bool {
 	app, server, _, err := sf.ParseDivision(division)
 	if err != nil {
 		return false
@@ -291,7 +291,7 @@ func QueryGlobalConfig(category, key string) (string, bool) {
 	return gc.getValue(category, key)
 }
 
-// InGlobalConfig tell whether the key in category and has a value
+// InGlobalConfig tell whether the key in category and has a sub-string like 'pattern'
 func InGlobalConfig(category, key, pattern string) bool {
 	return gc.contains(category, key, pattern)
 }

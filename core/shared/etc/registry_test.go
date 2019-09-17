@@ -173,6 +173,26 @@ func testGlobalConfig(t *testing.T) {
 	t.Logf("ip %s equal to ip2 %s", ip, ip2)
 }
 
+func testNetwork(t *testing.T) {
+	division := "app.globby.1"
+	ok, err := CanProvideService(division)
+	if err != nil {
+		t.Logf("CanProvideService failed: %s", err.Error())
+	} else {
+		if ok {
+			t.Logf("self can provide service %s", division)
+		} else {
+			t.Logf("self can't provide service %s", division)
+		}
+	}
+
+	loopback := "127.0.0.1"
+	ok = HaveAddress(loopback)
+	if ok {
+		t.Logf("self have loopback addr: %s", loopback)
+	}
+}
+
 func TestRegistry(t *testing.T) {
 	log.SetupMainLogger("./", "etc.log", "debug")
 
@@ -181,4 +201,7 @@ func TestRegistry(t *testing.T) {
 
 	// test global config
 	testGlobalConfig(t)
+
+	// test network
+	testNetwork(t)
 }

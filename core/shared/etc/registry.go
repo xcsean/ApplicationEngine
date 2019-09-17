@@ -3,6 +3,7 @@
 import (
 	"container/list"
 	"fmt"
+	"net"
 	"reflect"
 	"time"
 	"sync"
@@ -33,7 +34,12 @@ var (
 
 	// others...
 	getcdAddr string
-	registryLastPrintTime time.Time
+
+	selfIPv4Addrs map[string]bool
+
+	serviceLastPrintTime time.Time
+	globalconfigLastPrintTime time.Time
+	protolimitLastPrintTime time.Time
 )
 
 func init() {
@@ -41,6 +47,21 @@ func init() {
 	serviceMap = make(map[string]*list.List)
 	ss = newServiceAll()
 	gc = newGlobalConfig()
+
+	// init the self ip-addrs
+	selfIPv4Addrs = make(map[string]bool)
+	addrs, err := net.InterfaceAddrs()
+    if err == nil {
+	    for _, value := range addrs {
+			ipnet, ok := value.(*net.IPNet)
+			if !ok {
+				continue
+			}
+           	if ipnet.IP.To4() != nil {
+				selfIPv4Addrs[ipnet.IP.String()] = true
+        	}
+		}
+	}
 }
 
 func getServerMap() map[string]*sf.RegistryServerConfig {
@@ -127,11 +148,11 @@ func saveService(rsp *getcd.QueryRegistryRsp) {
 func dumpService(oldServer, newServer map[string]*sf.RegistryServerConfig, oldService, newService map[string]*list.List) {
 	if reflect.DeepEqual(oldServer, newServer) &&
 		reflect.DeepEqual(oldService, newService) &&
-		registryLastPrintTime.Hour() == time.Now().Hour() {
+		serviceLastPrintTime.Hour() == time.Now().Hour() {
 		return
 	}
 
-	registryLastPrintTime = time.Now()
+	serviceLastPrintTime = time.Now()
 	for _, v := range newServer {
 		log.Info("server: %+v", v)
 	}
@@ -219,7 +240,7 @@ func QueryService() error {
 }
 
 // QueryEndpoint query an endpoint by app & server & division format
-func QueryEndpoint(app string, server string, division string) (string, int32, int32, int32, error) {
+func QueryEndpoint(app, server, division string) (string, int32, int32, int32, error) {
 	key := sf.MakeLookupKey(app, server, division)
 	s1 := getServerMap()
 	s2 := getServiceMap()
@@ -271,6 +292,30 @@ func SelectEndpoint(service string) (string, int32, int32, error) {
 	return "", 0, 0, fmt.Errorf("service=%s not found", service)
 }
 
+// QueryNode query a node ip, used by service self to bind
+func QueryNode(app, server, division string) (string, int32, int32, int32, error) {
+	key := sf.MakeLookupKey(app, server, division)
+	s1 := getServerMap()
+	s2 := getServiceMap()
+
+	l1, ok := s1[key]
+	if !ok {
+		return "", 0, 0, 0, fmt.Errorf("server %s not found", key)
+	}
+	l2, ok := s2[key]
+	if !ok {
+		return "", 0, 0, 0, fmt.Errorf("service %s not found", key)
+	}
+
+	for e := l2.Front(); e != nil; e = e.Next() {
+		c := e.Value.(sf.RegistryServiceConfig)
+		if c.Node == l1.Node {
+			return c.Node, c.ServicePort, c.AdminPort, c.RPCPort, nil
+		}
+	}
+	return "", 0, 0, 0, fmt.Errorf("node=%s not found in registry", l1.Node)
+}
+
 // IsServiceUseAgent tell whether a node use agent or not
 func IsServiceUseAgent(division string) bool {
 	app, server, _, err := sf.ParseDivision(division)
@@ -294,4 +339,24 @@ func QueryGlobalConfig(category, key string) (string, bool) {
 // InGlobalConfig tell whether the key in category and has a sub-string like 'pattern'
 func InGlobalConfig(category, key, pattern string) bool {
 	return gc.contains(category, key, pattern)
+}
+
+// HaveAddress tell whether myself have the addr or not
+func HaveAddress(addr string) bool {
+	_, ok := selfIPv4Addrs[addr]
+	return ok
+}
+
+// CanProvideService tell whether myself can provide the service
+func CanProvideService(division string) (bool, error) {
+	app, server, _, err := sf.ParseDivision(division)
+	if err != nil {
+		return false, err
+	}
+	ip, _, _, _, err := QueryNode(app, server, division)
+	if err != nil {
+		return false, err
+	}
+	ok := HaveAddress(ip)
+	return ok, nil
 }

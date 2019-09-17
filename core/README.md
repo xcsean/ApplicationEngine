@@ -4,7 +4,7 @@
 
 * 'database' contain registry & gobby sql scripts
 * 'protocol' contain services protocol go files
-* 'service' contain services source, such as getcd/gate/gobby
+* 'service' contain services source, such as getcd/gconnd/globby
 * 'shared' contain go source shared by services
 
 ## Compiler
@@ -94,5 +94,5 @@ cd core/build && sh -ex build_release_mac.sh
 
 ## Deployment
 
-* centos 7.6
-* ansible 2.8
+* Centos 7.6
+* Ansible 2.8

@@ -34,12 +34,11 @@ var (
 
 	// others...
 	getcdAddr string
-
-	selfIPv4Addrs map[string]bool
+	selfAddrs map[string]bool
 
 	serviceLastPrintTime time.Time
-	globalconfigLastPrintTime time.Time
 	protolimitLastPrintTime time.Time
+	globalconfigLastPrintTime time.Time
 )
 
 func init() {
@@ -49,7 +48,7 @@ func init() {
 	gc = newGlobalConfig()
 
 	// init the self ip-addrs
-	selfIPv4Addrs = make(map[string]bool)
+	selfAddrs = make(map[string]bool)
 	addrs, err := net.InterfaceAddrs()
     if err == nil {
 	    for _, value := range addrs {
@@ -58,7 +57,7 @@ func init() {
 				continue
 			}
            	if ipnet.IP.To4() != nil {
-				selfIPv4Addrs[ipnet.IP.String()] = true
+				selfAddrs[ipnet.IP.String()] = true
         	}
 		}
 	}
@@ -343,7 +342,7 @@ func InGlobalConfig(category, key, pattern string) bool {
 
 // HaveAddress tell whether myself have the addr or not
 func HaveAddress(addr string) bool {
-	_, ok := selfIPv4Addrs[addr]
+	_, ok := selfAddrs[addr]
 	return ok
 }
 

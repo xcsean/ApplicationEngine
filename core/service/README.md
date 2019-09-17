@@ -1,14 +1,14 @@
 # Core Service
 
 ## Directories
-* getcd means 'go-etc-daemon', is a configuration center
-* gate provides connection-oriented features
-* gobby means 'go-lobby', provides lobby features
+* getcd, means 'go-etc-daemon', provides configuration service
+* gconnd, means 'go-conn-daemon', provides connection-oriented features such as broadcast/notification
+* globby, means 'go-lobby', provides lobby features
 
-## Getcd
-
-
-## Gate
+## getcd
 
 
-## Gobby
+## gconnd
+
+
+## globby

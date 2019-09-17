@@ -1,4 +1,4 @@
-package gconnfmt
+package conn
 
 import "testing"
 

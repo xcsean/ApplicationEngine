@@ -1,4 +1,4 @@
-package gconnfmt
+package conn
 
 // Header header format
 type Header struct {

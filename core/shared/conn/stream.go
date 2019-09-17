@@ -1,4 +1,4 @@
-package gconnfmt
+package conn
 
 import (
 	"encoding/binary"
@@ -8,7 +8,7 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/streambuffer"
 )
 
-// HandleStream stream handler with gconn
+// HandleStream stream handler
 func HandleStream(conn net.Conn, handler func(net.Conn, []byte, []byte)) error {
 	buffer := streambuffer.New(conn, 2*LengthOfMaxPacket)
 	for {

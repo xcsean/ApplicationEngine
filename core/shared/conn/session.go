@@ -1,4 +1,4 @@
-package gconnfmt
+package conn
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-// packet between gconn and other services
+// packet between conn and other services
 // the format is:
 //  hdr ... session ... body
 

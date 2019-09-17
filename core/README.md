@@ -4,7 +4,7 @@
 
 * 'database' contain registry & gobby sql scripts
 * 'protocol' contain services protocol go files
-* 'service' contain services source, such as getcd/gate/gobby
+* 'service' contain services source, such as getcd/gconnd/globby
 * 'shared' contain go source shared by services
 
 ## Compiler

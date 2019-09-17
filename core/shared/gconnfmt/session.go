@@ -1,4 +1,4 @@
-package gatefmt
+package gconnfmt
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-// packet between gate and other services
+// packet between gconn and other services
 // the format is:
 //  hdr ... session ... body
 
@@ -78,27 +78,27 @@ func ParseSessionPkt(pkt []byte) ([]byte, uint16, []uint64, []byte) {
 	return hdr, sessionNum, sessions, body
 }
 
-// MakeMasterSet make MasterSet packet sent to gate
+// MakeMasterSet make MasterSet packet sent to gconn
 func MakeMasterSet() []byte {
 	return MakeHeader(0, CmdMasterSet, 0, 0)
 }
 
-// MakeMasterYou make MasterYou packet sent to gate
+// MakeMasterYou make MasterYou packet sent to gconn
 func MakeMasterYou() []byte {
 	return MakeHeader(0, CmdMasterYou, 0, 0)
 }
 
-// MakeMasterNot make MasterNot packet sent to gate
+// MakeMasterNot make MasterNot packet sent to gconn
 func MakeMasterNot() []byte {
 	return MakeHeader(0, CmdMasterNot, 0, 0)
 }
 
-// MakeKickAll make KickAll packet sent to gate
+// MakeKickAll make KickAll packet sent to gconn
 func MakeKickAll() []byte {
 	return MakeHeader(0, CmdKickAll, 0, 0)
 }
 
-// MakeBroadcastAll make BroadcastAll packet sent to gate
+// MakeBroadcastAll make BroadcastAll packet sent to gconn
 func MakeBroadcastAll(pkt []byte) ([]byte, error) {
 	pkt2 := MakePkt(CmdBroadcastAll, 0, 0, pkt)
 	if len(pkt2) > LengthOfMaxBody {

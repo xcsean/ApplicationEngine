@@ -1,4 +1,4 @@
-package gatefmt
+package gconnfmt
 
 // Header header format
 type Header struct {

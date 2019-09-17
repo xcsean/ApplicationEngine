@@ -1,4 +1,4 @@
-package gatefmt
+package gconnfmt
 
 import (
 	"bytes"

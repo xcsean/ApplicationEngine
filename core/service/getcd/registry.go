@@ -12,22 +12,22 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
-	sf "github.com/xcsean/ApplicationEngine/core/shared/servicefmt"
+	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
 )
 
 var (
 	// registry server & service
 	serverLock   sync.RWMutex
-	serverMap    map[string]*sf.RegistryServerConfig
+	serverMap    map[string]*svc.RegistryServerConfig
 	serviceLock  sync.RWMutex
 	serviceMap   map[string]*list.List
 
 	// registry global config & proto limitation
-	globalConfigMap map[string][]*sf.RegistryGlobalConfig
-	protoLimitArr   []sf.RegistryProtocol
+	globalConfigMap map[string][]*svc.RegistryGlobalConfig
+	protoLimitArr   []svc.RegistryProtocol
 )
 
-func getServerMap() map[string]*sf.RegistryServerConfig {
+func getServerMap() map[string]*svc.RegistryServerConfig {
 	serverLock.RLock()
 	defer serverLock.RUnlock()
 	return serverMap
@@ -39,11 +39,11 @@ func getServiceMap() map[string]*list.List {
 	return serviceMap
 }
 
-func getGlobalConfigMap() map[string][]*sf.RegistryGlobalConfig {
+func getGlobalConfigMap() map[string][]*svc.RegistryGlobalConfig {
 	return globalConfigMap
 }
 
-func loadServerFromRegistry(db *sql.DB) (map[string]*sf.RegistryServerConfig, error) {
+func loadServerFromRegistry(db *sql.DB) (map[string]*svc.RegistryServerConfig, error) {
 	// load t_server table
 	rows, err := db.Query("SELECT app, server, division, node, use_agent, node_status, service_status FROM t_server")
 	if err != nil {
@@ -52,7 +52,7 @@ func loadServerFromRegistry(db *sql.DB) (map[string]*sf.RegistryServerConfig, er
 	}
 	defer rows.Close()
 
-	m := make(map[string]*sf.RegistryServerConfig, 100)
+	m := make(map[string]*svc.RegistryServerConfig, 100)
 	for rows.Next() {
 		var app string
 		var server string
@@ -69,7 +69,7 @@ func loadServerFromRegistry(db *sql.DB) (map[string]*sf.RegistryServerConfig, er
 
 		log.Debug("server: app=%s, server=%s, division=%s, node=%s, use_agent=%v, node_status=%v, service_status=%v",
 			app, server, division, node, useAgent, nodeStatus, serviceStatus)
-		c := &sf.RegistryServerConfig{
+		c := &svc.RegistryServerConfig{
 			App:           app,
 			Server:        server,
 			Division:      division,
@@ -79,7 +79,7 @@ func loadServerFromRegistry(db *sql.DB) (map[string]*sf.RegistryServerConfig, er
 			ServiceStatus: serviceStatus,
 		}
 
-		key := sf.MakeLookupKey(app, server, division)
+		key := svc.MakeLookupKey(app, server, division)
 		m[key] = c
 	}
 	return m, nil
@@ -113,7 +113,7 @@ func loadServiceFromRegistry(db *sql.DB) (map[string]*list.List, error) {
 
 		log.Debug("service: app=%s, server=%s, division=%s, node=%s, service=%s, serviceIp=%s, servicePort=%d, adminPort=%d, rpcPort=%d",
 			app, server, division, node, service, serviceIP, servicePort, adminPort, rpcPort)
-		c := sf.RegistryServiceConfig{
+		c := svc.RegistryServiceConfig{
 			App:         app,
 			Server:      server,
 			Division:    division,
@@ -125,7 +125,7 @@ func loadServiceFromRegistry(db *sql.DB) (map[string]*list.List, error) {
 			RPCPort:     rpcPort,
 		}
 
-		key := sf.MakeLookupKey(app, server, division)
+		key := svc.MakeLookupKey(app, server, division)
 		l, ok := m[key]
 		if ok {
 			l.PushBack(c)
@@ -138,7 +138,7 @@ func loadServiceFromRegistry(db *sql.DB) (map[string]*list.List, error) {
 	return m, nil
 }
 
-func loadGlobalConfigFromRegistry(db *sql.DB) (map[string][]*sf.RegistryGlobalConfig, error) {
+func loadGlobalConfigFromRegistry(db *sql.DB) (map[string][]*svc.RegistryGlobalConfig, error) {
 	// load t_global_config table
 	rows, err := db.Query("SELECT t_category, t_key, t_value FROM t_global_config")
 	if err != nil {
@@ -147,7 +147,7 @@ func loadGlobalConfigFromRegistry(db *sql.DB) (map[string][]*sf.RegistryGlobalCo
 	}
 	defer rows.Close()
 
-	s := make(map[string][]*sf.RegistryGlobalConfig)
+	s := make(map[string][]*svc.RegistryGlobalConfig)
 	for rows.Next() {
 		var category, key, value string
 		err = rows.Scan(&category, &key, &value)
@@ -155,7 +155,7 @@ func loadGlobalConfigFromRegistry(db *sql.DB) (map[string][]*sf.RegistryGlobalCo
 			log.Error("scan failed, %s", err.Error())
 			return nil, err
 		}
-		s[category] = append(s[category], &sf.RegistryGlobalConfig{
+		s[category] = append(s[category], &svc.RegistryGlobalConfig{
 			Category: category,
 			Key:      key,
 			Value:    value,
@@ -164,7 +164,7 @@ func loadGlobalConfigFromRegistry(db *sql.DB) (map[string][]*sf.RegistryGlobalCo
 	return s, nil
 }
 
-func loadProtocolLimitFromRegistry(db *sql.DB) ([]sf.RegistryProtocol, error) {
+func loadProtocolLimitFromRegistry(db *sql.DB) ([]svc.RegistryProtocol, error) {
 	// load t_protocol table
 	rows, err := db.Query("SELECT proto_id, player_limit_enable, player_limit_count, player_limit_duration, server_limit_enable, server_limit_count, server_limit_duration FROM t_protocol")
 	if err != nil {
@@ -173,7 +173,7 @@ func loadProtocolLimitFromRegistry(db *sql.DB) ([]sf.RegistryProtocol, error) {
 	}
 	defer rows.Close()
 
-	entries := make([]sf.RegistryProtocol, 0)
+	entries := make([]svc.RegistryProtocol, 0)
 	for rows.Next() {
 		var protoID int
 		var playerLimitEnable, playerLimitCount, playerLimitDuration int
@@ -184,7 +184,7 @@ func loadProtocolLimitFromRegistry(db *sql.DB) ([]sf.RegistryProtocol, error) {
 			log.Error("scan protocol failed:%v", err)
 			return nil, err
 		}
-		entries = append(entries, sf.RegistryProtocol{
+		entries = append(entries, svc.RegistryProtocol{
 			ProtoID:             protoID,
 			PlayerLimitEnable:   playerLimitEnable,
 			PlayerLimitCount:    playerLimitCount,
@@ -275,7 +275,7 @@ func dumpRegistryServiceConfig() {
 	for k, v := range serviceMap {
 		log.Info("key=%s", k)
 		for e := v.Front(); e != nil; e = e.Next() {
-			c := e.Value.(sf.RegistryServiceConfig)
+			c := e.Value.(svc.RegistryServiceConfig)
 			log.Info("service: app=%s, server=%s, division=%s, node=%s, service=%s, serviceIp=%s, servicePort=%d, adminPort=%d, rpcPort=%d",
 				c.App, c.Server, c.Division, c.Node, c.Service, c.ServiceIP, c.ServicePort, c.AdminPort, c.RPCPort)
 		}
@@ -305,7 +305,7 @@ func dumpRegistryProtoLimit() {
 	log.Info("<===")
 }
 
-func getServerCount(m map[string]*sf.RegistryServerConfig) uint32 {
+func getServerCount(m map[string]*svc.RegistryServerConfig) uint32 {
 	return uint32(len(m))
 }
 
@@ -348,7 +348,7 @@ func getRegistryPbFormat() ([]byte, error) {
 	i = 0
 	for _, v := range service {
 		for e := v.Front(); e != nil; e = e.Next() {
-			c := e.Value.(sf.RegistryServiceConfig)
+			c := e.Value.(svc.RegistryServiceConfig)
 			s := &getcd.RegistryService{
 				App:         c.App,
 				Server:      c.Server,
@@ -391,7 +391,7 @@ func getRegistryServiceString() string {
 		s += k
 		s += "\n"
 		for e := v.Front(); e != nil; e = e.Next() {
-			c := e.Value.(sf.RegistryServiceConfig)
+			c := e.Value.(svc.RegistryServiceConfig)
 			s1 := fmt.Sprintf("app=%s, server=%s, division=%s, node=%s, service=%s, serviceip=%s, serviceport=%d, adminport=%d, rpcport=%d",
 				c.App, c.Server, c.Division, c.Node, c.Service, c.ServiceIP, c.ServicePort, c.AdminPort, c.RPCPort)
 			s += s1

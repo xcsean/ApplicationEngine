@@ -5,7 +5,7 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	rc "github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
-	sf "github.com/xcsean/ApplicationEngine/core/shared/servicefmt"
+	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
 	"golang.org/x/net/context"
 )
 
@@ -44,7 +44,7 @@ func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryRe
 	i = 0
 	for _, v := range service {
 		for e := v.Front(); e != nil; e = e.Next() {
-			c := e.Value.(sf.RegistryServiceConfig)
+			c := e.Value.(svc.RegistryServiceConfig)
 			s := &getcd.RegistryService{
 				App:         c.App,
 				Server:      c.Server,

@@ -1,15 +1,15 @@
 package main
 
 import (
-	sf "github.com/xcsean/ApplicationEngine/core/shared/servicefmt"
+	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
 )
 
 type getcdConfig struct {
 	Division string `xml:"division"`
-	Log      sf.LogConfig `xml:"log"`
-	RPC      sf.Endpoint `xml:"rpc"`
-	Admin    sf.Endpoint `xml:"admin"`
-	Mysql    sf.MysqlConnection `xml:"mysql"`
+	Log      svc.LogConfig `xml:"log"`
+	RPC      svc.Endpoint `xml:"rpc"`
+	Admin    svc.Endpoint `xml:"admin"`
+	Mysql    svc.MysqlConnection `xml:"mysql"`
 	Refresh  uint32 `xml:"refresh_interval"`
 }
 

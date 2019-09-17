@@ -12,14 +12,14 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	rc "github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
-	sf "github.com/xcsean/ApplicationEngine/core/shared/servicefmt"
+	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 var (
 	// server data
-	serverMap  map[string]*sf.RegistryServerConfig
+	serverMap  map[string]*svc.RegistryServerConfig
 	serverLock sync.RWMutex
 
 	// service data
@@ -42,7 +42,7 @@ var (
 )
 
 func init() {
-	serverMap = make(map[string]*sf.RegistryServerConfig)
+	serverMap = make(map[string]*svc.RegistryServerConfig)
 	serviceMap = make(map[string]*list.List)
 	ss = newServiceAll()
 	gc = newGlobalConfig()
@@ -63,13 +63,13 @@ func init() {
 	}
 }
 
-func getServerMap() map[string]*sf.RegistryServerConfig {
+func getServerMap() map[string]*svc.RegistryServerConfig {
 	serverLock.RLock()
 	defer serverLock.RUnlock()
 	return serverMap
 }
 
-func setServerMap(newer map[string]*sf.RegistryServerConfig) {
+func setServerMap(newer map[string]*svc.RegistryServerConfig) {
 	serverLock.Lock()
 	defer serverLock.Unlock()
 	serverMap = newer
@@ -93,9 +93,9 @@ func saveService(rsp *getcd.QueryRegistryRsp) {
 	}
 
 	// make server data
-	server := make(map[string]*sf.RegistryServerConfig)
+	server := make(map[string]*svc.RegistryServerConfig)
 	for _, e := range rsp.Servers {
-		s := &sf.RegistryServerConfig{
+		s := &svc.RegistryServerConfig{
 			App:           e.App,
 			Server:        e.Server,
 			Division:      e.Division,
@@ -104,7 +104,7 @@ func saveService(rsp *getcd.QueryRegistryRsp) {
 			NodeStatus:    e.NodeStatus,
 			ServiceStatus: e.ServiceStatus,
 		}
-		key := sf.MakeLookupKey(s.App, s.Server, s.Division)
+		key := svc.MakeLookupKey(s.App, s.Server, s.Division)
 		server[key] = s
 	}
 	oldServer := getServerMap()
@@ -113,7 +113,7 @@ func saveService(rsp *getcd.QueryRegistryRsp) {
 	// make service data
 	service := make(map[string]*list.List)
 	for _, e := range rsp.Services {
-		s := sf.RegistryServiceConfig{
+		s := svc.RegistryServiceConfig{
 			App:         e.App,
 			Server:      e.Server,
 			Division:    e.Division,
@@ -124,7 +124,7 @@ func saveService(rsp *getcd.QueryRegistryRsp) {
 			AdminPort:   e.AdminPort,
 			RPCPort:     e.RpcPort,
 		}
-		key := sf.MakeLookupKey(s.App, s.Server, s.Division)
+		key := svc.MakeLookupKey(s.App, s.Server, s.Division)
 		l, ok := service[key]
 		if ok {
 			l.PushBack(s)
@@ -144,7 +144,7 @@ func saveService(rsp *getcd.QueryRegistryRsp) {
 	dumpService(oldServer, server, oldService, service)
 }
 
-func dumpService(oldServer, newServer map[string]*sf.RegistryServerConfig, oldService, newService map[string]*list.List) {
+func dumpService(oldServer, newServer map[string]*svc.RegistryServerConfig, oldService, newService map[string]*list.List) {
 	if reflect.DeepEqual(oldServer, newServer) &&
 		reflect.DeepEqual(oldService, newService) &&
 		serviceLastPrintTime.Hour() == time.Now().Hour() {
@@ -240,7 +240,7 @@ func QueryService() error {
 
 // QueryEndpoint query an endpoint by app & server & division format
 func QueryEndpoint(app, server, division string) (string, int32, int32, int32, error) {
-	key := sf.MakeLookupKey(app, server, division)
+	key := svc.MakeLookupKey(app, server, division)
 	s1 := getServerMap()
 	s2 := getServiceMap()
 
@@ -254,7 +254,7 @@ func QueryEndpoint(app, server, division string) (string, int32, int32, int32, e
 	}
 
 	for e := l2.Front(); e != nil; e = e.Next() {
-		c := e.Value.(sf.RegistryServiceConfig)
+		c := e.Value.(svc.RegistryServiceConfig)
 		if c.Node == l1.Node {
 			return c.ServiceIP, c.ServicePort, c.AdminPort, c.RPCPort, nil
 		}
@@ -264,7 +264,7 @@ func QueryEndpoint(app, server, division string) (string, int32, int32, int32, e
 
 // PickEndpoint pick an endpoint by division format
 func PickEndpoint(division string) (string, int32, int32, int32, error) {
-	app, server, _, err := sf.ParseDivision(division)
+	app, server, _, err := svc.ParseDivision(division)
 	if err != nil {
 		return "", 0, 0, 0, err
 	}
@@ -293,7 +293,7 @@ func SelectEndpoint(service string) (string, int32, int32, error) {
 
 // QueryNode query a node ip, used by service self to bind
 func QueryNode(app, server, division string) (string, int32, int32, int32, error) {
-	key := sf.MakeLookupKey(app, server, division)
+	key := svc.MakeLookupKey(app, server, division)
 	s1 := getServerMap()
 	s2 := getServiceMap()
 
@@ -307,7 +307,7 @@ func QueryNode(app, server, division string) (string, int32, int32, int32, error
 	}
 
 	for e := l2.Front(); e != nil; e = e.Next() {
-		c := e.Value.(sf.RegistryServiceConfig)
+		c := e.Value.(svc.RegistryServiceConfig)
 		if c.Node == l1.Node {
 			return c.Node, c.ServicePort, c.AdminPort, c.RPCPort, nil
 		}
@@ -317,11 +317,11 @@ func QueryNode(app, server, division string) (string, int32, int32, int32, error
 
 // IsServiceUseAgent tell whether a node use agent or not
 func IsServiceUseAgent(division string) bool {
-	app, server, _, err := sf.ParseDivision(division)
+	app, server, _, err := svc.ParseDivision(division)
 	if err != nil {
 		return false
 	}
-	key := sf.MakeLookupKey(app, server, division)
+	key := svc.MakeLookupKey(app, server, division)
 	s := getServerMap()
 	status, ok := s[key]
 	if ok {
@@ -348,7 +348,7 @@ func HaveAddress(addr string) bool {
 
 // CanProvideService tell whether myself can provide the service
 func CanProvideService(division string) (bool, error) {
-	app, server, _, err := sf.ParseDivision(division)
+	app, server, _, err := svc.ParseDivision(division)
 	if err != nil {
 		return false, err
 	}

@@ -47,6 +47,7 @@ const (
 	CmdMasterNot    = 60013
 	CmdBroadcastAll = 60021
 	CmdKickAll      = 60031
+	CmdNotifyClient = 65001
 	CmdPrivateEnd   = 65535
 )
 

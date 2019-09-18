@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+    <division>app.gconnd.1</division>
+
+    <log>
+        <dir>.</dir>
+        <filename>gconnd.log</filename>
+        <log_level>debug</log_level>
+    </log>
+
+    <getcd_addr>47.103.158.190:17000</getcd_addr>
+    <getcd_refresh>60</getcd_refresh>
+
+    <server_queue_size>3000</server_queue_size>
+    <client_queue_size>3000</client_queue_size>
+    <client_max_connections>5000</client_max_connections>
+
+    <profiler_enabled>0</profiler_enabled>
+    <profiler_refresh>10</profiler_refresh>
+    <log_traffic>1</log_traffic>
+    <category>global</category>
+
+</config>

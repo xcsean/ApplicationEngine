@@ -6,6 +6,7 @@ import (
 	"net"
 	"reflect"
 	"time"
+	"strconv"
 	"sync"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
@@ -175,6 +176,18 @@ func queryServicePeriodically(t uint32) {
 	}
 }
 
+func queryGlobalConfigPeriodically(categories []string, t uint32) {
+	tick := time.NewTicker(time.Duration(t) * time.Second)
+	for {
+		select {
+		case <-tick.C:
+			if err := QueryGlobalConfig(categories); err != nil {
+				log.Error("query global config failed: %s", err.Error())
+			}
+		}
+	}
+}
+
 func saveGlobalConfig(rsp *getcd.QueryGlobalConfigRsp) {
 	if rsp.Result != rc.OK {
 		return
@@ -291,7 +304,7 @@ func SelectEndpoint(service string) (string, int32, int32, error) {
 	return "", 0, 0, fmt.Errorf("service=%s not found", service)
 }
 
-// QueryNode query a node ip, used by service self to bind
+// QueryNode query a node ip, used by service self
 func QueryNode(app, server, division string) (string, int32, int32, int32, error) {
 	key := svc.MakeLookupKey(app, server, division)
 	s1 := getServerMap()
@@ -315,6 +328,15 @@ func QueryNode(app, server, division string) (string, int32, int32, int32, error
 	return "", 0, 0, 0, fmt.Errorf("node=%s not found in registry", l1.Node)
 }
 
+// SelectNode select a node ip & port, used by service self
+func SelectNode(division string) (string, int32, int32, int32, error) {
+	app, server, _, err := svc.ParseDivision(division)
+	if err != nil {
+		return "", 0, 0, 0, err
+	}
+	return QueryNode(app, server, division)
+}
+
 // IsServiceUseAgent tell whether a node use agent or not
 func IsServiceUseAgent(division string) bool {
 	app, server, _, err := svc.ParseDivision(division)
@@ -330,13 +352,45 @@ func IsServiceUseAgent(division string) bool {
 	return false
 }
 
-// QueryGlobalConfig query a config from global config
-func QueryGlobalConfig(category, key string) (string, bool) {
+// QueryGlobalConfig query global config from getcd
+func QueryGlobalConfig(categories []string) error {
+	defer dbg.Stacktrace()
+
+	log.Debug("query global config from %s begin...", getcdAddr)
+	conn, err := grpc.Dial(getcdAddr, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	c := getcd.NewGetcdServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rsp, err := c.QueryGlobalConfig(ctx, &getcd.QueryGlobalConfigReq{Categories: categories})
+	if err != nil {
+		return err
+	}
+
+	log.Debug("query global config result: %d", rsp.Result)
+	saveGlobalConfig(rsp)
+	return nil
+}
+
+// StartQueryGlobalConfigLoop start a timer for query global config from getcd
+func StartQueryGlobalConfigLoop(categories []string, t uint32) error {
+	log.Debug("begin a query global config loop from registry, duration=%d", t)
+	go queryGlobalConfigPeriodically(categories, t)
+	return nil
+}
+
+// QueryConfig query a config from global config
+func QueryConfig(category, key string) (string, bool) {
 	return gc.getValue(category, key)
 }
 
-// InGlobalConfig tell whether the key in category and has a sub-string like 'pattern'
-func InGlobalConfig(category, key, pattern string) bool {
+// InConfig tell whether the key in category and has a sub-string like 'pattern'
+func InConfig(category, key, pattern string) bool {
 	return gc.contains(category, key, pattern)
 }
 
@@ -358,4 +412,17 @@ func CanProvideService(division string) (bool, error) {
 	}
 	ok := HaveAddress(ip)
 	return ok, nil
+}
+
+// CompareInt64WithConfig compare two int64 value, if the key isn't exist or not a number, use defaultValue
+func CompareInt64WithConfig(category, key string, givenValue, defaultValue int64, handler func(int64, int64) bool) bool {
+	v, ok := gc.getValue(category, key)
+	if !ok {
+		return handler(givenValue, defaultValue)
+	}
+	i, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return handler(givenValue, defaultValue)
+	}
+	return handler(givenValue, i)
 }

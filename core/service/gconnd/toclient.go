@@ -3,24 +3,21 @@ package main
 import (
 	"net"
 
-	cnn "github.com/xcsean/ApplicationEngine/core/shared/conn"
+	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
-func handleClientConn(conn net.Conn, sessionID uint64, srvMst string, ch chan<- *innerCmd) {
+func handleClientConn(cliConn net.Conn, sessionID uint64, srvMst string, cliChannel chan<- *innerCmd) {
 	defer dbg.Stacktrace()
-	defer conn.Close()
+	defer cliConn.Close()
 
-	cliAddr := conn.RemoteAddr().String()
+	cliAddr := cliConn.RemoteAddr().String()
 	log.Debug("client=%s incoming, session=%d, master=%s", cliAddr, sessionID, srvMst)
 
-	handleCliPkt := func(sessionID uint64, ch chan<- *innerCmd, hdr, body []byte) {
-		ch <- newClientCmd(innerCmdClientUp, sessionID, hdr, body)
-	}
-	err := cnn.HandleStream(conn, func(conn net.Conn, hdr, body []byte) {
-		header := cnn.ParseHeader(hdr)
-		if cnn.IsPrivateCmd(header.CmdID) {
+	err := conn.HandleStream(cliConn, func(_ net.Conn, hdr, body []byte) {
+		header := conn.ParseHeader(hdr)
+		if conn.IsPrivateCmd(header.CmdID) {
 			return
 		}
 
@@ -28,9 +25,9 @@ func handleClientConn(conn net.Conn, sessionID uint64, srvMst string, ch chan<- 
 		dupBody := make([]byte, len(body))
 		copy(dupHdr, hdr)
 		copy(dupBody, body)
-		handleCliPkt(sessionID, ch, dupHdr, dupBody)
+		cliChannel <- newClientCmd(innerCmdClientUp, sessionID, hdr, body)
 	})
 
 	// notify the client leave
-	ch <- newNotifyCmd(innerCmdClientLeave, nil, cliAddr, sessionID, err)
+	cliChannel <- newNotifyCmd(innerCmdClientLeave, nil, cliAddr, sessionID, err)
 }

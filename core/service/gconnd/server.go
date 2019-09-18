@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	cnn "github.com/xcsean/ApplicationEngine/core/shared/conn"
+	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
@@ -37,10 +37,10 @@ func start(cfg *gconndConfig, id int64) {
 	log.SetupMainLogger(cfg.Log.Dir, cfg.Log.FileName, cfg.Log.LogLevel)
 	log.Info("------------------------------------>")
 	log.Info("start with division=%s", cfg.Division)
-	log.Info("getcnn.service addr=%s", cfg.GetcdAddr)
+	log.Info("getcd service addr=%s", cfg.GetcdAddr)
 	log.Debug("server queue size=%d", cfg.SrvQueueSize)
 	log.Debug("client queue size=%d", cfg.CliQueueSize)
-	log.Debug("packet max bodyLen=%d", cnn.LengthOfMaxBody)
+	log.Debug("packet max bodyLen=%d", conn.LengthOfMaxBody)
 
 	// try to query the service & global config
 	//  if failed, just print fatal log and exit
@@ -156,7 +156,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				log.Debug("client connections full, client num=%d", count)
 				cliConn.Close()
 			} else {
-				sessionID := cnn.MakeSessionID(uint16(selfID), seedID)
+				sessionID := conn.MakeSessionID(uint16(selfID), seedID)
 				seedID++
 
 				// the forwardTo field set to master by default
@@ -167,7 +167,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				// send a session enter to master
 				sessions := make([]uint64, 1)
 				sessions[0] = sessionID
-				pkt, _ := cnn.MakeSessionPkt(sessions, cnn.CmdSessionEnter, 0, 0, nil)
+				pkt, _ := conn.MakeSessionPkt(sessions, conn.CmdSessionEnter, 0, 0, nil)
 				_, err := srvConn.Write(pkt)
 				if err != nil {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
@@ -189,7 +189,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		if ok {
 			sessions := make([]uint64, 1)
 			sessions[0] = sessionID
-			pkt, _ := cnn.MakeSessionPkt(sessions, cnn.CmdSessionLeave, 0, 0, nil)
+			pkt, _ := conn.MakeSessionPkt(sessions, conn.CmdSessionLeave, 0, 0, nil)
 			_, err := srvConn.Write(pkt)
 			if err != nil {
 				log.Error("send session=%d leave failed: %s", sessionID, err.Error())
@@ -273,11 +273,11 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 		_, ok := srvMap[srvMst]
 		if ok {
 			log.Debug("master=%s exist, refuse the request from %s", srvMst, srvAddr)
-			cnn.SendMasterNot(srvConn)
+			conn.SendMasterNot(srvConn)
 		} else {
 			srvMst = srvAddr
 			log.Info("master=%s apply", srvMst)
-			cnn.SendMasterYou(srvConn)
+			conn.SendMasterYou(srvConn)
 		}
 	case innerCmdServerBroadcast:
 		srvConn, hdr, body := c.getServerCmd()
@@ -342,7 +342,7 @@ func dispatchProfiler(client, server, admin chan<- *innerCmd) {
 func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {
 	sessions := make([]uint64, 1)
 	sessions[0] = sessionID
-	pkt, cmdID := cnn.CopySessionPkt(sessions, hdr, body)
+	pkt, cmdID := conn.CopySessionPkt(sessions, hdr, body)
 	if pkt != nil {
 		n, err := srvConn.Write(pkt)
 		if config.IsTrafficEnabled() {
@@ -357,9 +357,9 @@ func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {
 }
 
 func broadcastToClients(hdr, body []byte) {
-	sessionNum, sessions, newBody := cnn.ParseSessionBody(body)
+	sessionNum, sessions, newBody := conn.ParseSessionBody(body)
 	log.Debug("broadcast %d client(s)", sessionNum)
-	pkt, cmdID := cnn.CopyCommonPkt(hdr, newBody)
+	pkt, cmdID := conn.CopyCommonPkt(hdr, newBody)
 	for i := 0; i < int(sessionNum); i++ {
 		sessionID := sessions[i]
 		cs, ok := cliMap[sessionID]
@@ -386,8 +386,8 @@ func broadcastAll(pkt []byte) {
 		log.Debug("broadcast all, session=%d, pkt=%d", sessionID, len(pkt))
 		n, err := cs.cliConn.Write(pkt)
 		if config.IsTrafficEnabled() {
-			hdr := cnn.ParseHeader(pkt)
-			log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, hdr.CmdID, cnn.LengthOfHeader, len(pkt)-cnn.LengthOfHeader)
+			hdr := conn.ParseHeader(pkt)
+			log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, hdr.CmdID, conn.LengthOfHeader, len(pkt)-conn.LengthOfHeader)
 			if err != nil {
 				log.Error("DNFORWARD|error=%s", err.Error())
 			} else {
@@ -398,9 +398,9 @@ func broadcastAll(pkt []byte) {
 }
 
 func kickClients(hdr, body []byte) {
-	header := cnn.ParseHeader(hdr)
-	if header.CmdID == cnn.CmdSessionKick {
-		sessionNum, sessions, _ := cnn.ParseSessionBody(body)
+	header := conn.ParseHeader(hdr)
+	if header.CmdID == conn.CmdSessionKick {
+		sessionNum, sessions, _ := conn.ParseSessionBody(body)
 		log.Debug("kick %d client(s)", sessionNum)
 		for i := 0; i < int(sessionNum); i++ {
 			sessionID := sessions[i]
@@ -423,11 +423,11 @@ func kickAllClients() {
 }
 
 func setRouteForClients(hdr, body []byte) {
-	header := cnn.ParseHeader(hdr)
-	if header.CmdID == cnn.CmdSessionRoute {
-		sessionNum, sessions, newBody := cnn.ParseSessionBody(body)
+	header := conn.ParseHeader(hdr)
+	if header.CmdID == conn.CmdSessionRoute {
+		sessionNum, sessions, newBody := conn.ParseSessionBody(body)
 
-		var pb cnn.PrivateBody
+		var pb conn.PrivateBody
 		err := json.Unmarshal(newBody, &pb)
 		if err != nil {
 			log.Error("set route unmarshal failed: %s", err.Error())

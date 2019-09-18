@@ -30,7 +30,7 @@ const (
 
 type innerCmd struct {
 	cmdID  uint8
-	conn   net.Conn
+	c      net.Conn
 	n      uint64
 	err    error
 	str    string
@@ -43,7 +43,7 @@ func (ic *innerCmd) getCmdID() uint8 {
 }
 
 func (ic *innerCmd) getServerCmd() (net.Conn, []byte, []byte) {
-	return ic.conn, ic.hdr, ic.body
+	return ic.c, ic.hdr, ic.body
 }
 
 func (ic *innerCmd) getClientCmd() (uint64, []byte, []byte) {
@@ -55,13 +55,13 @@ func (ic *innerCmd) getAdminCmd() (uint64) {
 }
 
 func (ic *innerCmd) getNotifyCmd() (net.Conn, string, uint64, error) {
-	return ic.conn, ic.str, ic.n, ic.err
+	return ic.c, ic.str, ic.n, ic.err
 }
 
-func newServerCmd(cmdID uint8, conn net.Conn, hdr, body []byte) *innerCmd {
+func newServerCmd(cmdID uint8, c net.Conn, hdr, body []byte) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		conn: conn,
+		c: c,
 		hdr: hdr,
 		body: body,
 	}
@@ -83,10 +83,10 @@ func newAdminCmd(cmdID uint8, sessionID uint64) *innerCmd {
 	}
 }
 
-func newNotifyCmd(cmdID uint8, conn net.Conn, str string, n uint64, err error) *innerCmd {
+func newNotifyCmd(cmdID uint8, c net.Conn, str string, n uint64, err error) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		conn: conn,
+		c: c,
 		str: str,
 		n: n,
 		err: err,

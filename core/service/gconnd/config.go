@@ -11,7 +11,7 @@ type gconndConfig struct {
 	Division     string        `xml:"division"`
 	Log          svc.LogConfig `xml:"log"`
 	GetcdAddr    string        `xml:"getcd_addr"`
-	RefreshTime	 uint32		   `xml:"getcd_refresh"`
+	RefreshTime  uint32        `xml:"getcd_refresh"`
 	SrvQueueSize int32         `xml:"server_queue_size"`
 	CliQueueSize int32         `xml:"client_queue_size"`
 	CliMaxConns  int32         `xml:"client_max_connections"`

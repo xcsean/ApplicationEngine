@@ -24,14 +24,14 @@ func acceptCli(addr string, cliChannel chan<- *innerCmd) {
 	cliChannel <- newNotifyCmd(innerCmdClientListenStart, nil, "", 0, nil)
 
 	for {
-		conn, err := ls.Accept()
+		c, err := ls.Accept()
 		if err != nil {
 			log.Error("accept client failed: %s", err.Error())
 			continue
 		}
 
 		// notify a new client is incoming
-		cliChannel <- newNotifyCmd(innerCmdClientIncoming, conn, "", 0, nil)
+		cliChannel <- newNotifyCmd(innerCmdClientIncoming, c, "", 0, nil)
 	}
 
 	// notify listen stop
@@ -55,14 +55,14 @@ func acceptSrv(addr string, srvChannel chan<- *innerCmd) {
 	srvChannel <- newNotifyCmd(innerCmdServerListenStart, nil, "", 0, nil)
 
 	for {
-		conn, err := ls.Accept()
+		c, err := ls.Accept()
 		if err != nil {
 			log.Error("accept server failed: %s", err.Error())
 			continue
 		}
 
 		// notify a new server is incoming
-		srvChannel <- newNotifyCmd(innerCmdServerIncoming, conn, "", 0, nil)
+		srvChannel <- newNotifyCmd(innerCmdServerIncoming, c, "", 0, nil)
 	}
 
 	// notify listen stop

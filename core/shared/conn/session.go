@@ -18,7 +18,7 @@ func MakeSessionID(id uint16, seed uint16) uint64 {
 //  hdr ... session ... body
 
 // MakeSessionPkt make a session packet
-func MakeSessionPkt(sessions []uint64, cmdID uint16, userData, timestamp uint32, body []byte) ([]byte, error) {
+func MakeSessionPkt(sessionIDs []uint64, cmdID uint16, userData, timestamp uint32, body []byte) ([]byte, error) {
 	bodyLen := len(body)
 	if bodyLen > LengthOfMaxBody {
 		return nil, fmt.Errorf("body length=%d above max body=%d", bodyLen, LengthOfMaxBody)
@@ -28,7 +28,7 @@ func MakeSessionPkt(sessions []uint64, cmdID uint16, userData, timestamp uint32,
 	bufU32 := make([]byte, 4)
 	bufU64 := make([]byte, 8)
 	var buffer bytes.Buffer
-	sessionNum := uint16(len(sessions))
+	sessionNum := uint16(len(sessionIDs))
 	sessionBodyLen := len(body) + 2 + 8*int(sessionNum)
 	if sessionBodyLen > LengthOfMaxBody {
 		return nil, fmt.Errorf("session body length=%d above max body=%d", sessionBodyLen, LengthOfMaxBody)
@@ -48,7 +48,7 @@ func MakeSessionPkt(sessions []uint64, cmdID uint16, userData, timestamp uint32,
 	binary.BigEndian.PutUint16(bufU16, sessionNum)
 	buffer.Write(bufU16)
 	for i := 0; i < int(sessionNum); i++ {
-		binary.BigEndian.PutUint64(bufU64, sessions[i])
+		binary.BigEndian.PutUint64(bufU64, sessionIDs[i])
 		buffer.Write(bufU64)
 	}
 
@@ -59,9 +59,9 @@ func MakeSessionPkt(sessions []uint64, cmdID uint16, userData, timestamp uint32,
 }
 
 // CopySessionPkt create a new session packet by using header & body
-func CopySessionPkt(sessions []uint64, hdr, body []byte) ([]byte, uint16) {
+func CopySessionPkt(sessionIDs []uint64, hdr, body []byte) ([]byte, uint16) {
 	header := ParseHeader(hdr)
-	pkt, err := MakeSessionPkt(sessions, header.CmdID, header.UserData, header.Timestamp, body)
+	pkt, err := MakeSessionPkt(sessionIDs, header.CmdID, header.UserData, header.Timestamp, body)
 	if err != nil {
 		return nil, header.CmdID
 	}
@@ -70,29 +70,29 @@ func CopySessionPkt(sessions []uint64, hdr, body []byte) ([]byte, uint16) {
 
 // MakeOneSessionPkt make a session packet by using sessionID
 func MakeOneSessionPkt(sessionID uint64, cmdID uint16, userData, timestamp uint32, body []byte) ([]byte, error) {
-	sessions := make([]uint64, 1)
-	sessions[0] = sessionID
-	return MakeSessionPkt(sessions, cmdID, userData, timestamp, body)
+	sessionIDs := make([]uint64, 1)
+	sessionIDs[0] = sessionID
+	return MakeSessionPkt(sessionIDs, cmdID, userData, timestamp, body)
 }
 
 // ParseSessionBody parse the session packet body
 func ParseSessionBody(body []byte) (uint16, []uint64, []byte) {
 	sessionNum := binary.BigEndian.Uint16(body[:2])
-	sessions := make([]uint64, sessionNum)
+	sessionIDs := make([]uint64, sessionNum)
 	for i := 0; i < int(sessionNum); i++ {
 		b := 2 + i*8
 		sessionID := binary.BigEndian.Uint64(body[b:(b + 8)])
-		sessions[i] = sessionID
+		sessionIDs[i] = sessionID
 	}
 	b := 2 + sessionNum*8
-	return sessionNum, sessions, body[b:]
+	return sessionNum, sessionIDs, body[b:]
 }
 
 // ParseSessionPkt parse the session packet
 func ParseSessionPkt(pkt []byte) ([]byte, uint16, []uint64, []byte) {
 	hdr := pkt[:LengthOfHeader]
-	sessionNum, sessions, body := ParseSessionBody(pkt[LengthOfHeader:])
-	return hdr, sessionNum, sessions, body
+	sessionNum, sessionIDs, body := ParseSessionBody(pkt[LengthOfHeader:])
+	return hdr, sessionNum, sessionIDs, body
 }
 
 // MakeCommonPkt make a new common packet (no session) by some data & body

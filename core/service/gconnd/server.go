@@ -165,9 +165,9 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				log.Debug("client map size=%d", count + 1)
 
 				// send a session enter to master
-				sessions := make([]uint64, 1)
-				sessions[0] = sessionID
-				pkt, _ := conn.MakeSessionPkt(sessions, conn.CmdSessionEnter, 0, 0, nil)
+				sessionIDs := make([]uint64, 1)
+				sessionIDs[0] = sessionID
+				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, nil)
 				_, err := srvConn.Write(pkt)
 				if err != nil {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
@@ -187,9 +187,9 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		// send a session leave to master
 		srvConn, ok := srvMap[srvMst]
 		if ok {
-			sessions := make([]uint64, 1)
-			sessions[0] = sessionID
-			pkt, _ := conn.MakeSessionPkt(sessions, conn.CmdSessionLeave, 0, 0, nil)
+			sessionIDs := make([]uint64, 1)
+			sessionIDs[0] = sessionID
+			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, nil)
 			_, err := srvConn.Write(pkt)
 			if err != nil {
 				log.Error("send session=%d leave failed: %s", sessionID, err.Error())
@@ -340,9 +340,9 @@ func dispatchProfiler(client, server, admin chan<- *innerCmd) {
 }
 
 func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {
-	sessions := make([]uint64, 1)
-	sessions[0] = sessionID
-	pkt, cmdID := conn.CopySessionPkt(sessions, hdr, body)
+	sessionIDs := make([]uint64, 1)
+	sessionIDs[0] = sessionID
+	pkt, cmdID := conn.CopySessionPkt(sessionIDs, hdr, body)
 	if pkt != nil {
 		n, err := srvConn.Write(pkt)
 		if config.IsTrafficEnabled() {
@@ -357,16 +357,16 @@ func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {
 }
 
 func broadcastToClients(hdr, body []byte) {
-	sessionNum, sessions, newBody := conn.ParseSessionBody(body)
+	sessionNum, sessionIDs, innerBody := conn.ParseSessionBody(body)
 	log.Debug("broadcast %d client(s)", sessionNum)
-	pkt, cmdID := conn.CopyCommonPkt(hdr, newBody)
+	pkt, cmdID := conn.CopyCommonPkt(hdr, innerBody)
 	for i := 0; i < int(sessionNum); i++ {
-		sessionID := sessions[i]
+		sessionID := sessionIDs[i]
 		cs, ok := cliMap[sessionID]
 		if ok {
 			n, err := cs.cliConn.Write(pkt)
 			if config.IsTrafficEnabled() {
-				log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, cmdID, len(hdr), len(newBody))
+				log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, cmdID, len(hdr), len(innerBody))
 				if err != nil {
 					log.Error("DNFORWARD|error=%s", err.Error())
 				} else {
@@ -400,10 +400,10 @@ func broadcastAll(pkt []byte) {
 func kickClients(hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
 	if header.CmdID == conn.CmdSessionKick {
-		sessionNum, sessions, _ := conn.ParseSessionBody(body)
+		sessionNum, sessionIDs, _ := conn.ParseSessionBody(body)
 		log.Debug("kick %d client(s)", sessionNum)
 		for i := 0; i < int(sessionNum); i++ {
-			sessionID := sessions[i]
+			sessionID := sessionIDs[i]
 			cs, ok := cliMap[sessionID]
 			if ok {
 				log.Debug("client kicked, session=%d", sessionID)
@@ -425,25 +425,25 @@ func kickAllClients() {
 func setRouteForClients(hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
 	if header.CmdID == conn.CmdSessionRoute {
-		sessionNum, sessions, newBody := conn.ParseSessionBody(body)
+		sessionNum, sessionIDs, innerBody := conn.ParseSessionBody(body)
 
 		var pb conn.PrivateBody
-		err := json.Unmarshal(newBody, &pb)
+		err := json.Unmarshal(innerBody, &pb)
 		if err != nil {
 			log.Error("set route unmarshal failed: %s", err.Error())
 			return
 		}
 		log.Debug("private body=%v", pb)
 
-		newTarget := pb.StrParam
-		_, ok := srvMap[newTarget]
+		newForwardTo := pb.StrParam
+		_, ok := srvMap[newForwardTo]
 		if ok {
 			for i := 0; i < int(sessionNum); i++ {
-				sessionID := sessions[i]
+				sessionID := sessionIDs[i]
 				cs, ok := cliMap[sessionID]
 				if ok {
-					log.Info("client set route, session=%d from %s to %s", sessionID, cs.forwardTo, newTarget)
-					cs.forwardTo = newTarget
+					log.Info("client set route, session=%d from %s to %s", sessionID, cs.forwardTo, newForwardTo)
+					cs.forwardTo = newForwardTo
 				} else {
 					log.Debug("client set route, session=%d not found", sessionID)
 				}

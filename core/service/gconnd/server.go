@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"path"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
@@ -35,7 +36,7 @@ func start(cfg *gconndConfig, id int64) {
 	selfID = id
 
 	// setup the main logger
-	log.SetupMainLogger(cfg.Log.Dir, cfg.Log.FileName, cfg.Log.LogLevel)
+	log.SetupMainLogger(path.Join(cfg.Log.Dir, cfg.Division), cfg.Log.FileName, cfg.Log.LogLevel)
 	log.Info("------------------------------------>")
 	log.Info("start with division=%s", cfg.Division)
 	log.Info("getcd service addr=%s", cfg.GetcdAddr)

@@ -3,29 +3,42 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func printHelp() {
-	fmt.Printf("getcd start getcd.xml")
+	fmt.Printf("getcd start getcd.xml id\n")
 }
 
 func main() {
-	if len(os.Args) < 2 {
+	if len(os.Args) < 4 {
 		printHelp()
 		return
 	}
 
 	switch os.Args[1] {
 	case "start":
-		if len(os.Args) < 3 {
-			printHelp()
+		c, err := newConfig(os.Args[2])
+		if err != nil {
+			fmt.Println(err.Error())
 			return
 		}
-		r := start(os.Args[2])
-		if !r {
-			fmt.Printf("start failed, find the error in log\n")
+		id, err := strconv.ParseInt(os.Args[3], 10, 64)
+		if err != nil {
+			fmt.Println(err.Error())
 			return
 		}
+		// validate the start argument
+		id2, err := c.GetID()
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		if id2 != id {
+			fmt.Printf("start id=%d not equal the id in division=%s", id, c.Division)
+			return
+		}
+		start(c, id)
 	default:
 		printHelp()
 	}

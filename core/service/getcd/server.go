@@ -1,9 +1,7 @@
 ﻿package main
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"path"
@@ -14,32 +12,22 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func start(fileName string) bool {
-	fileData, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		return false
-	}
+func start(c *getcdConfig, _ int64) bool {
+	// save cfg
+	config = c
 
-	err = xml.Unmarshal(fileData, &config)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		return false
-	}
-
-	// set the log
-	log.SetupMainLogger(path.Join(config.Log.Dir, config.Division), config.Log.FileName, config.Log.LogLevel)
-
-	// print the server config
-	log.Info("%s start with config=%s", config.Division, fileName)
-	log.Debug("log dir=%s, log name=%s, log level=%s", config.Log.Dir, config.Log.FileName, config.Log.LogLevel)
-	log.Debug("rpc addr=%s, admin addr=%s", config.RPC.Addr(), config.Admin.Addr())
-	log.Debug("mysql addr=%s, database=%s, username=%s, password=%s", config.Mysql.Addr(), config.Mysql.Database, config.Mysql.Username, config.Mysql.Password)
-	log.Debug("mysql registry refresh=%d", config.Refresh)
+	// set the main logger
+	log.SetupMainLogger(path.Join(c.Log.Dir, c.Division), c.Log.FileName, c.Log.LogLevel)
+	log.Info("------------------------------------>")
+	log.Info("start with division=%s", c.Division)
+	log.Debug("log dir=%s, log name=%s, log level=%s", c.Log.Dir, c.Log.FileName, c.Log.LogLevel)
+	log.Debug("rpc addr=%s, admin addr=%s", c.RPC.Addr(), c.Admin.Addr())
+	log.Debug("mysql addr=%s, database=%s, username=%s, password=%s", c.Mysql.Addr(), c.Mysql.Database, c.Mysql.Username, c.Mysql.Password)
+	log.Debug("mysql registry refresh=%d", c.Refresh)
 
 	// start RPC service
 	ch := make(chan string, 1)
-	go startRPC(config, ch)
+	go startRPC(c, ch)
 	select {
 	case s, _ := <-ch:
 		if s == "ready" {
@@ -53,11 +41,11 @@ func start(fileName string) bool {
 	}
 
 	// provide admin service by http
-	adminAddr := config.Admin.Addr()
+	adminAddr := c.Admin.Addr()
 	log.Info("admin start binding addr=%s", adminAddr)
 	http.HandleFunc("/admin", adminWebHandler)
 	admin := &http.Server{Addr: adminAddr, Handler: nil}
-	err = admin.ListenAndServe()
+	err := admin.ListenAndServe()
 	if err != nil {
 		log.Fatal("admin listen failed: %s", err.Error())
 		log.Info("admin exit")
@@ -68,8 +56,8 @@ func start(fileName string) bool {
 	return true
 }
 
-func startRPC(config getcdConfig, ch chan<- string) {
-	s := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", config.Mysql.Username, config.Mysql.Password, config.Mysql.Addr(), config.Mysql.Database)
+func startRPC(c *getcdConfig, ch chan<- string) {
+	s := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", c.Mysql.Username, c.Mysql.Password, c.Mysql.Addr(), c.Mysql.Database)
 
 	// load registry from mysql immediately
 	// if failed, just send error message and exit
@@ -80,10 +68,10 @@ func startRPC(config getcdConfig, ch chan<- string) {
 	}
 
 	// start a timer, load registry from mysql periodically
-	go loadRegistryPeriodically(s, config.Refresh)
+	go loadRegistryPeriodically(s, c.Refresh)
 
 	// listen and start work
-	rpcAddr := config.RPC.Addr()
+	rpcAddr := c.RPC.Addr()
 	ls, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
 		log.Error("RPC service listen failed: %s", err.Error())

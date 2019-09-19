@@ -173,7 +173,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				sessionIDs := make([]uint64, 1)
 				sessionIDs[0] = sessionID
 
-				pb := &conn.PrivateBody{StrParam: cliAddr,}
+				pb := &conn.PrivateBody{StrParam: cliAddr, }
 				body, _ := json.Marshal(pb)
 
 				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, body)
@@ -193,12 +193,16 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 			log.Error("client leave: reason=%s", err.Error())
 		}
 
-		// send a session leave to master
+		// send a session leave to master, with "client address" in body
 		srvConn, ok := srvMap[srvMst]
 		if ok {
 			sessionIDs := make([]uint64, 1)
 			sessionIDs[0] = sessionID
-			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, nil)
+
+			pb := &conn.PrivateBody{StrParam: cliAddr, }
+			body, _ := json.Marshal(pb)
+
+			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, pb)
 			_, err := srvConn.Write(pkt)
 			if err != nil {
 				log.Error("send session=%d leave failed: %s", sessionID, err.Error())

@@ -4,21 +4,46 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
+	"time"
 
+	ui "github.com/jroimartin/gocui"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 )
 
-func lobbyLoop(srvAddr string, srvChannel chan<- string) {
+const (
+	lobbyView  = "lobbyView"
+	lobbyTitle = "lobby message"
+)
+
+func getLobbyView() string {
+	return lobbyView
+}
+
+func getLobbyTitle() string {
+	return lobbyTitle
+}
+
+func lobbyLoop(srvAddr string, g *ui.Gui) {
+	// delay 1 second
+	time.Sleep(1 * time.Second)
+
+	lobbyLog := func(s string) {
+		g.Update(func(g *ui.Gui) error {
+			v, _ := g.View(lobbyView)
+			fmt.Fprintln(v, s)
+			return nil
+		})
+	}
+
 	// try to connect gconnd as lobby
 	c, err := net.Dial("tcp", srvAddr)
 	if err != nil {
-		fmt.Printf("[LOBBY] %s\n", err.Error())
-		srvChannel <- "exit"
+		lobbyLog(fmt.Sprintf("[S] %s", err.Error()))
 		return
 	}
 	defer c.Close()
-	fmt.Printf("[LOBBY] connect to %s ok\n", srvAddr)
+
+	lobbyLog(fmt.Sprintf("[S] connect to %s ok", srvAddr))
 
 	// try to request master
 	conn.SendMasterSet(c)
@@ -31,37 +56,47 @@ func lobbyLoop(srvAddr string, srvChannel chan<- string) {
 			// common packet deal
 			b := make([]byte, len(body))
 			copy(b, body)
-			fmt.Printf("[LOBBY] cmd=%d\n", h.CmdID)
 			if h.CmdID == conn.CmdSessionEnter {
 				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
 				sessionID := sessionIDs[0]
-
 				// get the client address
 				var pb conn.PrivateBody
 				err = json.Unmarshal(innerBody, &pb)
 				if err != nil {
-					fmt.Printf("[LOBBY] client session=%d enter... %s\n", sessionID, err.Error())
+					lobbyLog(fmt.Sprintf("[P] client session=%d enter... %s", sessionID, err.Error()))
 				} else {
-					fmt.Printf("[LOBBY] client session=%d addr=%s enter...\n", sessionID, pb.StrParam)
+					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s enter...", sessionID, pb.StrParam))
+				}
+			} else if h.CmdID == conn.CmdSessionLeave {
+				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
+				sessionID := sessionIDs[0]
+				// get the client address
+				var pb conn.PrivateBody
+				err = json.Unmarshal(innerBody, &pb)
+				if err != nil {
+					lobbyLog(fmt.Sprintf("[P] client session=%d leave... %s", sessionID, err.Error()))
+				} else {
+					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s leave...", sessionID, pb.StrParam))
 				}
 			}
 		} else {
 			// wait the CmdMasterYou or CmdMasterNot
 			switch h.CmdID {
 			case conn.CmdMasterYou:
-				fmt.Println("[LOBBY] I'm master, that's ok")
+				lobbyLog(fmt.Sprintf("[S] I'm master, that's ok"))
 				isMaster = true
-				srvChannel <- "master"
+				// active the client input
+				g.Update(func(g *ui.Gui) error {
+					g.SetCurrentView(getClientEdit())
+					return nil
+				})
 			case conn.CmdMasterNot:
-				fmt.Println("[LOBBY] I can't be master, so exit")
-				os.Exit(-1)
+				lobbyLog(fmt.Sprintf("[S] I can't be master, so exit"))
 			}
 		}
 	})
-	if err != nil {
-		fmt.Printf("[LOBBY] %s\n", err.Error())
-	}
 
-	// notify lobby exit
-	srvChannel <- "exit"
+	if err != nil {
+		lobbyLog(fmt.Sprintf("[S] %s", err.Error()))
+	}
 }

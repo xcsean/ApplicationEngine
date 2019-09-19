@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	ui "github.com/jroimartin/gocui"
 )
 
 func printHelp() {
@@ -15,37 +17,78 @@ func main() {
 		return
 	}
 
-	fmt.Println("[MAIN] loop start...")
-	cliAddr := fmt.Sprintf("%s:%s", os.Args[1], os.Args[2])
-	srvAddr := fmt.Sprintf("%s:%s", "127.0.0.1", os.Args[3])
-
-	srvChannel := make(chan string, 100)
-	cliChannel := make(chan string, 100)
-
-	go lobbyLoop(srvAddr, srvChannel)
-
-	for {
-		exit := false
-		select {
-		case cmd := <-srvChannel:
-			if cmd == "exit" {
-				fmt.Println("[MAIN] lobby exit...")
-				exit = true
-			} else if cmd == "master" {
-				fmt.Println("[MAIN] lobby is master now")
-				go clientLoop(cliAddr, cliChannel)
-			}
-		case cmd := <-cliChannel:
-			if cmd == "exit" {
-				fmt.Println("[MAIN] client exit...")
-				exit = true
-			}
-		}
-
-		if exit {
-			break
-		}
+	g, err := ui.NewGui(ui.OutputNormal)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
+	defer g.Close()
 
-	fmt.Println("[MAIN] loop exit...")
+	g.Cursor = true
+
+	g.SetManagerFunc(layout)
+	g.SetKeybinding("", ui.KeyCtrlC, ui.ModNone, quit)
+
+	// run lobby routine
+	srvAddr := fmt.Sprintf("%s:%s", "127.0.0.1", os.Args[3])
+	go lobbyLoop(srvAddr, g)
+
+	// run client routine
+	cliAddr := fmt.Sprintf("%s:%s", os.Args[1], os.Args[2])
+	go clientLoop(cliAddr, g)
+
+	// run main loop
+	if err := g.MainLoop(); err != nil && err != ui.ErrQuit {
+		fmt.Println(err)
+		return
+	}
+}
+
+func layout(g *ui.Gui) error {
+	maxX, maxY := g.Size()
+	if v, err := g.SetView(getClientView(), 0, 0, maxX/2-1, maxY-4); err != nil {
+		if err != ui.ErrUnknownView {
+			return err
+		}
+		v.Title = getClientViewTitle()
+		v.Wrap = true
+		v.Autoscroll = true
+	}
+	if v, err := g.SetView(getLobbyView(), maxX/2, 0, maxX-1, maxY-4); err != nil {
+		if err != ui.ErrUnknownView {
+			return err
+		}
+		v.Title = getLobbyTitle()
+		v.Wrap = true
+		v.Autoscroll = true
+	}
+	name := getClientEdit()
+	if v, err := g.SetView(name, 0, maxY-3, maxX-1, maxY-1); err != nil {
+		if err != ui.ErrUnknownView {
+			return err
+		}
+		v.Title = getClientEditTitle()
+		v.Editable = true
+		v.Wrap = true
+		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, input)
+	}
+	return nil
+}
+
+func quit(g *ui.Gui, v *ui.View) error {
+	return ui.ErrQuit
+}
+
+func input(g *ui.Gui, v *ui.View) error {
+	text := v.Buffer()
+
+	// clear the input
+	v.SetCursor(0, 0)
+	v.Clear()
+
+	// send input text to client routine
+	if text != "" {
+		sendClientKeyboard(text)
+	}
+	return nil
 }

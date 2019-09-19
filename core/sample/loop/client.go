@@ -3,78 +3,103 @@ package main
 import (
 	"fmt"
 	"net"
-	"time"
+	"strings"
 
+	ui "github.com/jroimartin/gocui"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 )
 
-type netCmd struct {
-	cmdID uint8
-	hdr []byte
-	body []byte
+const (
+	clientView      = "clientView"
+	clientViewTitle = "client message"
+	clientEdit      = "clientEdit"
+	clientEditTitle = "client input"
+)
+
+var (
+	kbdChannel chan string
+	netChannel chan *netCmd
+	cliAddr    string
+	cliConn    net.Conn
+)
+
+func getClientView() string {
+	return clientView
 }
 
-func clientLoop(cliAddr string, cliChannel chan<- string) {
-	// delay 1 second
-	time.Sleep(1*time.Second)
-	fmt.Println("[CLIENT] start...")
+func getClientViewTitle() string {
+	return clientViewTitle
+}
 
-	// try to connect as client
-	c, err := net.Dial("tcp", cliAddr)
-	if err != nil {
-		fmt.Printf("[CLIENT] %s\n", err.Error())
-		cliChannel <- "exit"
-		return
+func getClientEdit() string {
+	return clientEdit
+}
+
+func getClientEditTitle() string {
+	return clientEditTitle
+}
+
+func sendClientKeyboard(text string) {
+	kbdChannel <- text
+}
+
+type netCmd struct {
+	cmdID uint8
+	hdr   []byte
+	body  []byte
+}
+
+func clientLoop(addr string, g *ui.Gui) {
+	cliAddr = addr
+	kbdChannel = make(chan string, 100)
+	netChannel = make(chan *netCmd, 100)
+	cliLog := func(s string) {
+		g.Update(func(g *ui.Gui) error {
+			v, _ := g.View(clientView)
+			fmt.Fprintf(v, "%s\n", s)
+			return nil
+		})
 	}
-	defer c.Close()
-
-	// create a network routine & channel
-	netChannel := make(chan *netCmd, 100)
-	go netLoop(c, netChannel)
-
-	// create a keyboard routine & channel
-	kbdChannel := make(chan string, 100)
-	go kbdLoop(kbdChannel)
 
 	// wait for message from netChannel & kbdChannel
 	for {
-		exit := false
 		select {
 		case cmd := <-kbdChannel:
-			if cmd == "exit" {
-				exit = true
-			}
+			dealKeyboard(cmd, cliLog)
 		case cmd := <-netChannel:
-			fmt.Printf("[CLIENT] net cmd=%d\n", cmd.cmdID)
-			if cmd.cmdID == 0 {
-				exit = true
-			}
-		}
-
-		if exit {
-			break
+			cliLog(fmt.Sprintf("[CLIENT] net cmd=%d\n", cmd.cmdID))
 		}
 	}
-
-	// notify lobby exit
-	cliChannel <- "exit"
 }
 
-func kbdLoop(kbdChannel chan<- string) {
-	line := ""
-	for {
-		fmt.Printf("[CLIENT]$> ")
-		fmt.Scanln(&line)
-		kbdChannel <- line
-		if line == "exit" {
-			break
+func dealKeyboard(cmd string, cliLog func(s string)) {
+	cmd = strings.Replace(cmd, "\n", "", -1)
+	if cmd == "conn" {
+		if cliConn == nil {
+			c, err := net.Dial("tcp", cliAddr)
+			if err != nil {
+				cliLog(fmt.Sprintf("[C] connect %s failed: %s", cliAddr, err.Error()))
+			} else {
+				cliConn = c
+				cliLog(fmt.Sprintf("[C] connect %s ok", cliAddr))
+			}
+		} else {
+			cliLog("[C] alreay connected!")
+		}
+	} else if cmd == "disc" {
+		if cliConn == nil {
+			cliLog("[C] please type 'conn' first!")
+		} else {
+			cliConn.Close()
+			cliConn = nil
+			cliLog(fmt.Sprintf("[C] disconnect from %s ok", cliAddr))
 		}
 	}
 }
 
 func netLoop(c net.Conn, netChannel chan<- *netCmd) {
 	conn.HandleStream(c, func(_ net.Conn, hdr, body []byte) {
-		netChannel <- &netCmd{cmdID: 1, hdr: hdr, body: body, }
+		netChannel <- &netCmd{cmdID: 1, hdr: hdr, body: body}
 	})
-	netChannel <- &netCmd{cmdID: 0, }
+	netChannel <- &netCmd{cmdID: 0}
 }

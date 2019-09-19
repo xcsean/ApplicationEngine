@@ -1,1 +1,5 @@
 core/build/getcd
+core/build/gconnd
+core/build/loop
+core/build/gconnd.xml
+core/build/app.gconnd.*

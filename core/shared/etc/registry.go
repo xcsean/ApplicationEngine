@@ -11,7 +11,7 @@ import (
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
-	rc "github.com/xcsean/ApplicationEngine/core/shared/errno"
+	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
 	"golang.org/x/net/context"
@@ -89,7 +89,7 @@ func setServiceMap(newer map[string]*list.List) {
 }
 
 func saveService(rsp *getcd.QueryRegistryRsp) {
-	if rsp.Result != rc.OK {
+	if rsp.Result != errno.OK {
 		return
 	}
 
@@ -189,7 +189,7 @@ func queryGlobalConfigPeriodically(categories []string, t uint32) {
 }
 
 func saveGlobalConfig(rsp *getcd.QueryGlobalConfigRsp) {
-	if rsp.Result != rc.OK {
+	if rsp.Result != errno.OK {
 		return
 	}
 

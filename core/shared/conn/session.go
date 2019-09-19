@@ -167,3 +167,10 @@ func SendMasterNot(w io.Writer) error {
 	_, err := w.Write(hdr)
 	return err
 }
+
+// SendNotifyToClient send the notify packet to client
+func SendNotifyToClient(w io.Writer, result int32) error {
+	hdr := MakeHeader(0, CmdNotifyClient, uint32(result), 0)
+	_, err := w.Write(hdr)
+	return err
+}

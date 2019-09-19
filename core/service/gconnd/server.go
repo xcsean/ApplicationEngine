@@ -10,6 +10,7 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
+	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
@@ -145,15 +146,15 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		srvConn, ok := srvMap[srvMst]
 		if !ok {
 			// master isn't ready, so kick the client
-			// TODO add a rsp to client
 			log.Debug("master is nil, so close the connection from client=%s", cliAddr)
+			conn.SendNotifyToClient(cliConn, errno.CONNMASTEROFFLINE)
 			cliConn.Close()
 		} else {
 			count := len(cliMap)
 			funGE := func(a, b int64) bool {return a >= b}
 			if etc.CompareInt64WithConfig("global", "maxClientConnections", int64(count), int64(config.CliMaxConns), funGE) {
-				// TODO add a rsp to client
 				log.Debug("client connections full, client num=%d", count)
+				conn.SendNotifyToClient(cliConn, errno.CONNMAXCONNECTIONS)
 				cliConn.Close()
 			} else {
 				sessionID := conn.MakeSessionID(uint16(selfID), seedID)
@@ -331,12 +332,12 @@ func dispatchAdmCmd(c *innerCmd, _ chan<- *innerCmd) {
 	}
 }
 
-func dispatchProfiler(client, server, admin chan<- *innerCmd) {
+func dispatchProfiler(cliChannel, srvChannel, admChannel chan<- *innerCmd) {
 	defer dbg.Stacktrace()
 
-	log.Debug("client cmd queue size=%d", len(client))
-	log.Debug("server cmd queue size=%d", len(server))
-	log.Debug("admin  cmd queue size=%d", len(admin))
+	log.Debug("cliChannel cmd queue size=%d", len(cliChannel))
+	log.Debug("srvChannel cmd queue size=%d", len(srvChannel))
+	log.Debug("admChannel cmd queue size=%d", len(admChannel))
 }
 
 func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {

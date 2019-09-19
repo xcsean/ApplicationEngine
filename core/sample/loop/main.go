@@ -20,4 +20,24 @@ func main() {
 
 	fmt.Println(cliAddr)
 	fmt.Println(srvAddr)
+
+	srvChannel := make(chan string, 1000)
+	cliChannel := make(chan string, 1000)
+
+	go lobbyLoop(srvAddr, srvChannel)
+
+	for {
+		select {
+		case cmd := <-srvChannel:
+			if cmd == "exit" {
+				break
+			}
+		case cmd := <-cliChannel:
+			if cmd == "exit" {
+				break
+			}
+		}
+	}
+
+	fmt.Println("exit...")
 }

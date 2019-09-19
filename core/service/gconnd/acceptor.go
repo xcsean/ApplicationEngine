@@ -70,20 +70,20 @@ func acceptSrv(addr string, srvChannel chan<- *innerCmd) {
 	log.Info("acceptor for server exit")
 }
 
-func acceptAdm(addr string, admChannel chan<- *innerCmd) {
-	log.Info("start acceptor for admin: %s", addr)
+func acceptRPC(addr string, rpcChannel chan<- *innerCmd) {
+	log.Info("start acceptor for rpc: %s", addr)
 
-	http.HandleFunc("/admin", func(rsp http.ResponseWriter, req *http.Request) {
-		handleAdminRequest(rsp, req, admChannel)
+	http.HandleFunc("/rpc", func(rsp http.ResponseWriter, req *http.Request) {
+		handleAdminRequest(rsp, req, rpcChannel)
 	})
 
-	admChannel <- newNotifyCmd(innerCmdAdminListenStart, nil, "", 0, nil)
+	rpcChannel <- newNotifyCmd(innerCmdAdminListenStart, nil, "", 0, nil)
 
-	admin := &http.Server{Addr: addr, Handler: nil}
-	err := admin.ListenAndServe()
+	rpc := &http.Server{Addr: addr, Handler: nil}
+	err := rpc.ListenAndServe()
 	if err != nil {
-		log.Error("admin ListenAndServe: %s", err.Error())
+		log.Error("rpc ListenAndServe: %s", err.Error())
 	}
 
-	admChannel <- newNotifyCmd(innerCmdAdminListenStop, nil, "", 0, nil)
+	rpcChannel <- newNotifyCmd(innerCmdAdminListenStop, nil, "", 0, nil)
 }

@@ -65,7 +65,7 @@ func start(cfg *gconndConfig, id int64) {
 	}
 
 	// validate the division can be selected
-	nodeIP, svcPort, admPort, rpcPort, err := etc.SelectNode(cfg.Division)
+	nodeIP, cliPort, srvPort, rpcPort, err := etc.SelectNode(cfg.Division)
 	if err != nil {
 		log.Fatal("server select node %s failed: %s", cfg.Division, err.Error())
 	}
@@ -78,23 +78,24 @@ func start(cfg *gconndConfig, id int64) {
 	// create the channels for communication between server and client
 	srvChannel := make(chan *innerCmd, cfg.SrvQueueSize)
 	cliChannel := make(chan *innerCmd, cfg.CliQueueSize)
-	admChannel := make(chan *innerCmd, 10)
+	rpcChannel := make(chan *innerCmd, 10)
 
 	// create the maps for server and client connections
 	srvMst = ""
 	srvMap = make(map[string]srvSession)
 	cliMap = make(map[uint64]*cliSession)
 
-	// start the acceptors for server/client/admin by using channels
-	//  client acceptor will use node:service_port
-	//  server acceptor will use 127.0.0.1:rpc_port
-	//  admin  acceptor will use node:admin_port
-	cliAddr := fmt.Sprintf("%s:%d", nodeIP, svcPort)
-	srvAddr := fmt.Sprintf("%s:%d", "127.0.0.1", rpcPort)
-	admAddr := fmt.Sprintf("%s:%d", nodeIP, admPort)
+	// start the acceptors for server/client/rpc by using channels
+	//  cli acceptor will use node:service_port in registry
+	//  srv acceptor will use 127.0.0.1:admin_port in registry
+	//  rpc acceptor will use node:rpc_port in registry
+	// TODO: rpc change from http to rpc
+	cliAddr := fmt.Sprintf("%s:%d", nodeIP, cliPort)
+	srvAddr := fmt.Sprintf("%s:%d", "127.0.0.1", srvPort)
+	rpcAddr := fmt.Sprintf("%s:%d", nodeIP, rpcPort)
 	go acceptCli(cliAddr, cliChannel)
 	go acceptSrv(srvAddr, srvChannel)
-	go acceptAdm(admAddr, admChannel)
+	go acceptRPC(rpcAddr, rpcChannel)
 
 	// start a profiler timer, print the performance information periodically
 	tick := time.NewTicker(time.Duration(cfg.ProfilerTime) * time.Second)
@@ -110,11 +111,14 @@ func start(cfg *gconndConfig, id int64) {
 			if exit {
 				break
 			}
-		case c := <-admChannel:
-			dispatchAdmCmd(c, admChannel)
+		case c := <-rpcChannel:
+			exit := dispatchRPCCmd(c, rpcChannel)
+			if exit {
+				break
+			}
 		case <-tick.C:
 			if config.IsProfilerEnabled() {
-				dispatchProfiler(cliChannel, srvChannel, admChannel)
+				dispatchProfiler(cliChannel, srvChannel, rpcChannel)
 			}
 		}
 	}
@@ -165,10 +169,14 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				cliMap[sessionID] = cs
 				log.Debug("client map size=%d", count + 1)
 
-				// send a session enter to master
+				// send a session enter to master, with "client address" in body
 				sessionIDs := make([]uint64, 1)
 				sessionIDs[0] = sessionID
-				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, nil)
+
+				pb := &conn.PrivateBody{StrParam: cliAddr,}
+				body, _ := json.Marshal(pb)
+
+				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, body)
 				_, err := srvConn.Write(pkt)
 				if err != nil {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
@@ -307,15 +315,17 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 	return exit
 }
 
-func dispatchAdmCmd(c *innerCmd, _ chan<- *innerCmd) {
+func dispatchRPCCmd(c *innerCmd, _ chan<- *innerCmd) bool {
 	defer dbg.Stacktrace()
 
+	exit := false
 	cmdID := c.getCmdID()
 	switch cmdID {
 	case innerCmdAdminListenStart:
-		log.Debug("start listen admin ok")
+		log.Info("start listen admin ok")
 	case innerCmdAdminListenStop:
-		log.Debug("stop listen admin ok")
+		log.Info("stop listen admin")
+		exit = true
 	case innerCmdAdminKick:
 		sessionID := c.getAdminCmd()
 		log.Debug("admin kick session=%d", sessionID)
@@ -330,14 +340,15 @@ func dispatchAdmCmd(c *innerCmd, _ chan<- *innerCmd) {
 		log.Info("admin kick all")
 		kickAllClients()
 	}
+	return exit
 }
 
-func dispatchProfiler(cliChannel, srvChannel, admChannel chan<- *innerCmd) {
+func dispatchProfiler(cliChannel, srvChannel, rpcChannel chan<- *innerCmd) {
 	defer dbg.Stacktrace()
 
 	log.Debug("cliChannel cmd queue size=%d", len(cliChannel))
 	log.Debug("srvChannel cmd queue size=%d", len(srvChannel))
-	log.Debug("admChannel cmd queue size=%d", len(admChannel))
+	log.Debug("rpcChannel cmd queue size=%d", len(rpcChannel))
 }
 
 func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {

@@ -154,6 +154,13 @@ func MakeBroadcastAll(pkt []byte) ([]byte, error) {
 	return pkt2, nil
 }
 
+// SendMasterSet send the MasterSet packet to conn
+func SendMasterSet(w io.Writer) error {
+	hdr := MakeMasterSet()
+	_, err := w.Write(hdr)
+	return err
+}
+
 // SendMasterYou send the MasterYou packet to backend
 func SendMasterYou(w io.Writer) error {
 	hdr := MakeMasterYou()

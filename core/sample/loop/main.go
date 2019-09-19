@@ -15,29 +15,39 @@ func main() {
 		return
 	}
 
+	fmt.Println("[MAIN] loop start...")
 	cliAddr := fmt.Sprintf("%s:%s", os.Args[1], os.Args[2])
 	srvAddr := fmt.Sprintf("%s:%s", "127.0.0.1", os.Args[3])
 
-	fmt.Println(cliAddr)
-	fmt.Println(srvAddr)
-
-	srvChannel := make(chan string, 1000)
-	cliChannel := make(chan string, 1000)
+	srvChannel := make(chan string, 100)
+	cliChannel := make(chan string, 100)
 
 	go lobbyLoop(srvAddr, srvChannel)
 
 	for {
+		exit := false
 		select {
 		case cmd := <-srvChannel:
 			if cmd == "exit" {
+				fmt.Println("[MAIN] lobby exit...")
+				exit = true
 				break
+			} else if cmd == "master" {
+				fmt.Println("[MAIN] lobby is master now")
+				go clientLoop(cliAddr, cliChannel)
 			}
 		case cmd := <-cliChannel:
 			if cmd == "exit" {
+				fmt.Println("[MAIN] client exit...")
+				exit = true
 				break
 			}
 		}
+
+		if exit {
+			break
+		}
 	}
 
-	fmt.Println("exit...")
+	fmt.Println("[MAIN] loop exit...")
 }

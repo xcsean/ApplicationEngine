@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/xml"
-	"io/ioutil"
 
+	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
 )
 
@@ -24,7 +24,7 @@ type gconndConfig struct {
 var config *gconndConfig
 
 func newConfig(fileName string) (*gconndConfig, error) {
-	fileData, err := ioutil.ReadFile(fileName)
+	fileData, err := etc.ReadFromXMLFile(fileName)
 	if err != nil {
 		return nil, err
 	}

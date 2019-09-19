@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -28,6 +29,22 @@ func lobbyLoop(srvAddr string, srvChannel chan<- string) {
 		h := conn.ParseHeader(hdr)
 		if isMaster {
 			// common packet deal
+			b := make([]byte, len(body))
+			copy(b, body)
+			fmt.Printf("[LOBBY] cmd=%d\n", h.CmdID)
+			if h.CmdID == conn.CmdSessionEnter {
+				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
+				sessionID := sessionIDs[0]
+
+				// get the client address
+				var pb conn.PrivateBody
+				err = json.Unmarshal(innerBody, &pb)
+				if err != nil {
+					fmt.Printf("[LOBBY] client session=%d enter... %s\n", sessionID, err.Error())
+				} else {
+					fmt.Printf("[LOBBY] client session=%d addr=%s enter...\n", sessionID, pb.StrParam)
+				}
+			}
 		} else {
 			// wait the CmdMasterYou or CmdMasterNot
 			switch h.CmdID {

@@ -174,7 +174,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				sessionIDs := make([]uint64, 1)
 				sessionIDs[0] = sessionID
 
-				pb := &conn.PrivateBody{StrParam: cliAddr, }
+				pb := conn.PrivateBody{StrParam: cliAddr, }
 				body, _ := json.Marshal(pb)
 
 				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, body)
@@ -200,7 +200,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 			sessionIDs := make([]uint64, 1)
 			sessionIDs[0] = sessionID
 
-			pb := &conn.PrivateBody{StrParam: cliAddr, }
+			pb := conn.PrivateBody{StrParam: cliAddr, }
 			body, _ := json.Marshal(pb)
 
 			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, body)

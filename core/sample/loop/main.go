@@ -31,7 +31,6 @@ func main() {
 			if cmd == "exit" {
 				fmt.Println("[MAIN] lobby exit...")
 				exit = true
-				break
 			} else if cmd == "master" {
 				fmt.Println("[MAIN] lobby is master now")
 				go clientLoop(cliAddr, cliChannel)
@@ -40,7 +39,6 @@ func main() {
 			if cmd == "exit" {
 				fmt.Println("[MAIN] client exit...")
 				exit = true
-				break
 			}
 		}
 

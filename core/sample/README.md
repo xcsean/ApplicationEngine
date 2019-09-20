@@ -20,3 +20,5 @@ while 192.168.1.10 is the ip address of gconnd, port 18001 is the client port of
 * test
 
 loop has a Console-UI, you could type command in the 'client input' at bottom, such as 'conn', 'disc'
+
+![loop](https://github.com/xcsean/ApplicationEngine/core/sample/loop.png)

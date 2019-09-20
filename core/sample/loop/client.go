@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
@@ -72,8 +73,15 @@ func clientLoop(addr string, g *ui.Gui) {
 	}
 }
 
-func dealKeyboard(cmd string, cliLog func(s string)) {
-	cmd = strings.Replace(cmd, "\n", "", -1)
+func dealKeyboard(text string, cliLog func(s string)) {
+	text = strings.Replace(text, "\n", "", -1)
+	text = strings.Replace(text, "\t", " ", -1)
+	array := strings.Fields(text)
+	if array == nil {
+		return
+	}
+
+	cmd := array[0]
 	if cmd == "conn" {
 		if cliConn == nil {
 			c, err := net.Dial("tcp", cliAddr)
@@ -93,6 +101,19 @@ func dealKeyboard(cmd string, cliLog func(s string)) {
 			cliConn.Close()
 			cliConn = nil
 			cliLog(fmt.Sprintf("[C] disconnect from %s ok", cliAddr))
+		}
+	} else if cmd == "say" {
+		if cliConn == nil {
+			cliLog("[C] please type 'conn' first!")
+		} else {
+			if len(array) >= 2 {
+				var innerBody sayBody
+				innerBody.StrParam = array[1]
+				body, _ := json.Marshal(innerBody)
+				pkt := conn.MakeCommonPkt(cmdSAY, 0, 0, body)
+				cliConn.Write(pkt)
+				cliLog(fmt.Sprintf("[C] say '%s'", array[1]))
+			}
 		}
 	}
 }

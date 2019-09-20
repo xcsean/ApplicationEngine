@@ -78,6 +78,14 @@ func lobbyLoop(srvAddr string, g *ui.Gui) {
 				} else {
 					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s leave...", sessionID, pb.StrParam))
 				}
+			} else if h.CmdID == cmdSAY {
+				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
+				sessionID := sessionIDs[0]
+				var say sayBody
+				err := json.Unmarshal(innerBody, &say)
+				if err == nil {
+					lobbyLog(fmt.Sprintf("[P] client session=%d say '%s'", sessionID, say.StrParam))
+				}
 			}
 		} else {
 			// wait the CmdMasterYou or CmdMasterNot

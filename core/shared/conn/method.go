@@ -1,7 +1,6 @@
 package conn
 
 import (
-	"bytes"
 	"encoding/binary"
 )
 
@@ -41,27 +40,4 @@ func MakeHeader(bodyLen, cmdID uint16, userData, timestamp uint32) []byte {
 	timestampBuf := hdr[TimestampStart:TimestampEnd]
 	binary.BigEndian.PutUint32(timestampBuf, timestamp)
 	return hdr
-}
-
-// MakePkt make packet sent to client
-func MakePkt(cmdID uint16, userData, timestamp uint32, body []byte) []byte {
-	var buffer bytes.Buffer
-	bufU16 := make([]byte, 2)
-	bufU32 := make([]byte, 4)
-	bodyLen := uint16(len(body))
-
-	// fill the header
-	binary.BigEndian.PutUint16(bufU16, bodyLen)
-	buffer.Write(bufU16)
-	binary.BigEndian.PutUint16(bufU16, cmdID)
-	buffer.Write(bufU16)
-	binary.BigEndian.PutUint32(bufU32, userData)
-	buffer.Write(bufU32)
-	binary.BigEndian.PutUint32(bufU32, timestamp)
-	buffer.Write(bufU32)
-
-	// fill the body
-	buffer.Write(body)
-
-	return buffer.Bytes()
 }

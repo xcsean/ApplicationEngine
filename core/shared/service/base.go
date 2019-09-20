@@ -62,7 +62,7 @@ func MakeDivision(app, server string, id int64) string {
 func ParseDivision(division string) (string, string, int64, error) {
 	s := strings.Split(division, ".")
 	if len(s) != 3 {
-		return "", "", 0, fmt.Errorf("division should be a.b.c format")
+		return "", "", 0, fmt.Errorf("division=%s should be a.b.c format", division)
 	}
 	id, err := strconv.ParseInt(s[2], 10, 64)
 	if err != nil {

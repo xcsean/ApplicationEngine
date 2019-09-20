@@ -9,12 +9,12 @@ import (
 )
 
 // HandleStream stream handler
-func HandleStream(conn net.Conn, handler func(net.Conn, []byte, []byte)) error {
-	buffer := streambuffer.New(conn, 2*LengthOfMaxPacket)
+func HandleStream(c net.Conn, handler func(net.Conn, []byte, []byte)) error {
+	buffer := streambuffer.New(c, 2*LengthOfMaxPacket)
 	for {
 		_, err := buffer.Read()
 		if err != nil {
-			log.Debug("read conn=%s failed: %s", conn.RemoteAddr().String(), err.Error())
+			log.Debug("read conn=%s failed: %s", c.RemoteAddr().String(), err.Error())
 			return err
 		}
 		shift := false
@@ -33,7 +33,7 @@ func HandleStream(conn net.Conn, handler func(net.Conn, []byte, []byte)) error {
 				shift = true
 				if bodyLen <= LengthOfMaxBody {
 					// trigger the custom handler
-					handler(conn, hdr, body)
+					handler(c, hdr, body)
 				} else {
 					cmdID := binary.BigEndian.Uint16(hdr[CmdIDStart:CmdIDEnd])
 					log.Error("body=%d above max body, cmd=%d, discarded!", bodyLen, cmdID)

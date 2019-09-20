@@ -144,30 +144,30 @@ func testGlobalConfig(t *testing.T) {
 
 	// test in global config
 	ip := "192.168.1.10"
-	exist := InGlobalConfig("permission", "ipAdminList", ip)
+	exist := InConfig("permission", "ipAdminList", ip)
 	if !exist {
-		t.Errorf("InGlobalConfig failed")
+		t.Errorf("InConfig failed")
 		return
 	}
 	t.Logf("ip %s is in global config", ip)
 
 	ip = "192.168.1.11"
-	exist = InGlobalConfig("permission", "ipAdminList", ip)
+	exist = InConfig("permission", "ipAdminList", ip)
 	if exist {
-		t.Errorf("InGlobalConfig failed")
+		t.Errorf("InConfig failed")
 		return
 	}
 	t.Logf("ip %s isn't in global config", ip)
 
-	ip2, exist := QueryGlobalConfig("permission", "ipBlackList")
+	ip2, exist := QueryConfig("permission", "ipBlackList")
 	if !exist {
-		t.Errorf("QueryGlobalConfig failed")
+		t.Errorf("QueryConfig failed")
 		return
 	}
 	t.Logf("ip black list is %s", ip2)
 
 	if ip != ip2 {
-		t.Errorf("QueryGlobalConfig failed")
+		t.Errorf("QueryConfig failed")
 		return
 	}
 	t.Logf("ip %s equal to ip2 %s", ip, ip2)
@@ -193,6 +193,14 @@ func testNetwork(t *testing.T) {
 	}
 }
 
+func testRemoteGetcd(t *testing.T) {
+	getcdAddr := "47.103.158.190:17000"
+	cats := make([]string, 0)
+	SetGetcdAddr(getcdAddr)
+	QueryGlobalConfig(cats)
+	QueryService()
+}
+
 func TestRegistry(t *testing.T) {
 	log.SetupMainLogger("./", "etc.log", "debug")
 
@@ -204,4 +212,7 @@ func TestRegistry(t *testing.T) {
 
 	// test network
 	testNetwork(t)
+
+	// test service & global config from appengine
+	testRemoteGetcd(t)
 }

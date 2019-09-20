@@ -7,7 +7,7 @@ import (
 )
 
 func printHelp() {
-	fmt.Printf("getcd start getcd.xml id\n")
+	fmt.Printf("gconnd start gconnd.xml id\n")
 }
 
 func main() {
@@ -41,5 +41,6 @@ func main() {
 		start(c, id)
 	default:
 		printHelp()
+		return
 	}
 }

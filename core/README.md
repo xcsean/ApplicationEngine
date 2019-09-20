@@ -1,9 +1,10 @@
 # Application Engine Core
 
-## Directories
+## Directory
 
-* 'database' contain registry & gobby sql scripts
+* 'database' contain registry & globby sql scripts
 * 'protocol' contain services protocol go files
+* 'sample' contain some samples such as lobby/client demostration
 * 'service' contain services source, such as getcd/gconnd/globby
 * 'shared' contain go source shared by services
 

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
-	rc "github.com/xcsean/ApplicationEngine/core/shared/errno"
+	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -24,17 +24,17 @@ func TestCallGetcd(t * testing.T) {
 	defer cancel()
 
 	categories := []string{"global"}
-	r, err := c.QueryGlobalConfig(ctx, &getcd.QueryGlobalConfigReq{Categories: categories})
+	rsp, err := c.QueryGlobalConfig(ctx, &getcd.QueryGlobalConfigReq{Categories: categories})
 	if err != nil {
 		t.Errorf("call c.QueryGlobalConfig failed: %s", err.Error())
 		return
 	}
 
-	if r.Result != rc.OK {
-		t.Errorf("c.QueryGlobalConfig result=%d", r.Result)
+	if rsp.Result != errno.OK {
+		t.Errorf("c.QueryGlobalConfig result=%d", rsp.Result)
 		return
 	}
 
-	t.Logf("entries=%v", r.Entries)
+	t.Logf("entries=%v", rsp.Entries)
 	t.Logf("test ok")
 }

@@ -97,10 +97,10 @@ func ParseSessionPkt(pkt []byte) ([]byte, uint16, []uint64, []byte) {
 
 // MakeCommonPkt make a new common packet (no session) by some data & body
 func MakeCommonPkt(cmdID uint16, userData, timestamp uint32, body []byte) []byte {
-	bufU16 := make([]byte, 2)
-	bufU32 := make([]byte, 4)
 	var buffer bytes.Buffer
 
+	bufU16 := make([]byte, 2)
+	bufU32 := make([]byte, 4)
 	bodyLen := uint16(len(body))
 
 	// fill the header
@@ -147,7 +147,7 @@ func MakeKickAll() []byte {
 
 // MakeBroadcastAll make BroadcastAll packet
 func MakeBroadcastAll(pkt []byte) ([]byte, error) {
-	pkt2 := MakePkt(CmdBroadcastAll, 0, 0, pkt)
+	pkt2 := MakeCommonPkt(CmdBroadcastAll, 0, 0, pkt)
 	if len(pkt2) > LengthOfMaxBody {
 		return nil, fmt.Errorf("broadcast all length=%d above max body=%d", len(pkt2), LengthOfMaxBody)
 	}

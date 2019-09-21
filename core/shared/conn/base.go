@@ -38,16 +38,20 @@ const (
 // private command
 const (
 	CmdPrivateBegin = 60000
-	CmdSessionEnter = 60001
-	CmdSessionLeave = 60002
-	CmdSessionRoute = 60003
-	CmdSessionKick  = 60004
-	CmdMasterSet    = 60011
-	CmdMasterYou    = 60012
-	CmdMasterNot    = 60013
-	CmdBroadcastAll = 60021
-	CmdKickAll      = 60031
-	CmdNotifyClient = 65001
+	CmdSessionEnter = 60001 // conn --> backend
+	CmdSessionLeave = 60002 // conn --> backend
+	CmdSessionRoute = 60003 // conn <-- backend
+	CmdSessionKick  = 60004 // conn <-- backend
+	CmdSessionPing  = 60005 // conn <-- backend
+	CmdSessionPong  = 60006 // conn --> backend
+	CmdMasterSet    = 60011 // conn <-- backend
+	CmdMasterYou    = 60012 // conn --> backend
+	CmdMasterNot    = 60013 // conn --> backend
+	CmdBroadcastAll = 60021 // conn <-- backend
+	CmdKickAll      = 60031 // conn <-- backend
+	CmdNotifyClient = 65001 // client <-- conn
+	CmdPing         = 65011 // client <-> conn <-> backend
+	CmdPong         = 65012 // client <-> conn <-> backend
 	CmdPrivateEnd   = 65535
 )
 

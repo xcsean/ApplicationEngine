@@ -23,7 +23,9 @@
 * traffic statistics
 
 ## ghostd
-* packet forwarding between logic module or process with client(s)
-* important data save to database and load interface
-* protocol frequency limitation and protection
+* notify status to vm(s) registered
+* packet forwarding between vm(s) and client(s)
+* important data save to database and load interface exported to vm(s)
+* protocol frequency limitation and protection for vm(s)
 * overload protection
+

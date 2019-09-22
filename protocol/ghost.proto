@@ -1,0 +1,104 @@
+syntax = "proto3";
+package ghost;
+
+// ghost
+
+message ghost_packet {
+    uint32 cmd_id = 1;
+    uint32 user_data = 2;
+    uint32 timestamp = 3;
+    repeated uint64 sessions = 4;
+    string body = 5;
+}
+
+message ghost_userasset {
+    uint64 uuid = 1;
+    uint64 version = 2;
+    string asset = 3;
+}
+
+// ghost service
+
+message register_vm_req {
+    string division = 1;
+}
+
+message register_vm_rsp {
+    int32 result = 1;
+    string desc = 2;
+}
+
+message unregister_vm_req {
+    string division = 1;
+    string desc = 2;
+}
+
+message unregister_vm_rsp {
+    int32 result = 1;
+    string desc = 2;
+}
+
+message send_packet_req {
+    repeated ghost_packet packets = 1;
+}
+
+message send_packet_rsp {
+    int32 result = 1;
+    string desc = 2;
+}
+
+message load_userasset_req {
+    repeated uint64 uuids = 1;
+}
+
+message load_userasset_rsp {
+    int32 result = 1;
+    repeated ghost_userasset userassets = 2;
+}
+
+message save_userasset_req {
+    repeated ghost_userasset userassets = 1;
+}
+
+message save_userasset_rsp {
+    repeated uint64 ok = 1;
+    repeated uint64 fail = 2;
+    repeated int32 fail_errno = 3;
+}
+
+service GhostService {
+    // vm management
+    rpc RegisterVM(register_vm_req) returns(register_vm_rsp) {}
+    rpc UnregisterVM(unregister_vm_req) returns(unregister_vm_rsp) {}
+
+    // user asset load & save
+    rpc LoadUserAsset(load_userasset_req) returns(load_userasset_rsp) {}
+    rpc SaveUserAsset(save_userasset_req) returns(save_userasset_rsp) {}
+
+    // send packet to client(s)
+    rpc SendPacket(send_packet_req) returns(send_packet_rsp) {}
+}
+
+// vm service
+
+message notify_status_req {
+    uint32 status = 1;
+}
+
+message notify_status_rsp {
+    int32 result = 1;
+    string desc = 2;
+}
+
+message notify_packet_req {
+    repeated ghost_packet packets = 1;
+}
+
+message notify_packet_rsp {
+    int32 result = 1;
+}
+
+service VmService {
+    rpc OnNotifyStatus(notify_status_req) returns(notify_status_rsp) {}
+    rpc OnNotifyPacket(notify_packet_req) returns(notify_packet_rsp) {}
+}

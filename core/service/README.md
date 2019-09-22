@@ -4,7 +4,7 @@
 * getcd, means 'go-etc-daemon', provides configuration service
 * gconnd, means 'go-connection-daemon', provides connection-oriented features
 * gconnless, means 'go-connection-less', provides connectionless features
-* ghostd, means 'go-host-daemon', provides packet forwarding and storage features
+* ghost, means 'go-host', provides vm management & packet forwarding & data storage features
 * ws2tcp provides websocket to tcp conversion
 
 ## getcd
@@ -22,7 +22,8 @@
 * keep-alive check such as ping/pong
 * traffic statistics
 
-## ghostd
+## ghost
+* vm register & unregister interface
 * notify status to vm(s) registered
 * packet forwarding between vm(s) and client(s)
 * asset data save to database and load interface exported to vm(s)

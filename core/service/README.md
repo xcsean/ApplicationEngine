@@ -25,7 +25,6 @@
 ## ghostd
 * notify status to vm(s) registered
 * packet forwarding between vm(s) and client(s)
-* important data save to database and load interface exported to vm(s)
+* asset data save to database and load interface exported to vm(s)
 * protocol frequency limitation and protection for vm(s)
 * overload protection
-

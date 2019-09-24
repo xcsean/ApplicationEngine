@@ -2,9 +2,9 @@
 
 ## Directory
 * getcd, means 'go-etc-daemon', provides configuration service
-* gconnd, means 'go-connection-daemon', provides connection-oriented features such as broadcast/notification
+* gconnd, means 'go-connection-daemon', provides connection-oriented features
 * gconnless, means 'go-connection-less', provides connectionless features
-* globby, means 'go-lobby', provides lobby features
+* ghost, means 'go-host', provides vm management & packet forwarding & data storage features
 * ws2tcp provides websocket to tcp conversion
 
 ## getcd
@@ -15,16 +15,17 @@
 
 ## gconnd
 * connection-oriented
-* packet forward to backend or frontend
+* packet forwarding to backend or frontend by sequence
 * broadcast to the frontend(s) specified
 * notify to the frontend(s) specified
 * enter/leave notification to backend
-* keep-alive such as ping/pong
+* keep-alive check such as ping/pong
 * traffic statistics
 
-## globby
-* packet forwarding between logic module or process and client(s)
-* player assets data save to database and load interface
-* protocol frequency limitation and protection
+## ghost
+* vm register & unregister interface
+* notify status to vm(s) registered
+* packet forwarding between vm(s) and client(s)
+* asset data save to database and load interface exported to vm(s)
+* protocol frequency limitation and protection for vm(s)
 * overload protection
-* 3rd-sdk import

@@ -79,6 +79,7 @@ func startRPC(c *getcdConfig, ch chan<- string) {
 		return
 	}
 	defer ls.Close()
+
 	log.Info("RPC service listen addr=%s ok", rpcAddr)
 	ch <- "ready"
 

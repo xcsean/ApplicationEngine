@@ -1,17 +1,18 @@
 package main
 
-import ( 
+import (
+	"context"
+
 	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
-	"golang.org/x/net/context"
 )
 
 type myService struct{}
 
-func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryReq) (*getcd.QueryRegistryRsp, error) {
+func (s *myService) QueryRegistry(ctx context.Context, req *getcd.QueryRegistryReq) (*getcd.QueryRegistryRsp, error) {
 	defer dbg.Stacktrace()
 
 	rsp := &getcd.QueryRegistryRsp{Result: errno.OK}
@@ -36,7 +37,7 @@ func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryRe
 			ServiceStatus: c.ServiceStatus,
 		}
 		serverArray[i] = s
-		i ++
+		i++
 	}
 	rsp.Servers = serverArray
 
@@ -57,7 +58,7 @@ func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryRe
 				AdminPort:   c.AdminPort,
 			}
 			serviceArray[i] = s
-			i ++
+			i++
 		}
 	}
 	rsp.Services = serviceArray
@@ -65,14 +66,14 @@ func (s *myService) QueryRegistry(ctx context.Context, in *getcd.QueryRegistryRe
 	return rsp, nil
 }
 
-func (s *myService) QueryGlobalConfig(ctx context.Context, in *getcd.QueryGlobalConfigReq) (*getcd.QueryGlobalConfigRsp, error) {
+func (s *myService) QueryGlobalConfig(ctx context.Context, req *getcd.QueryGlobalConfigReq) (*getcd.QueryGlobalConfigRsp, error) {
 	defer dbg.Stacktrace()
 
 	rsp := &getcd.QueryGlobalConfigRsp{Result: errno.OK}
 
 	allConfig := getGlobalConfigMap()
 	var entries []*getcd.CategoryEntry
-	if len(in.Categories) == 0 {
+	if len(req.Categories) == 0 {
 		entries = make([]*getcd.CategoryEntry, 0, len(allConfig))
 		for category, categoryArray := range allConfig {
 			kv := make(map[string]string)
@@ -82,8 +83,8 @@ func (s *myService) QueryGlobalConfig(ctx context.Context, in *getcd.QueryGlobal
 			entries = append(entries, &getcd.CategoryEntry{Category: category, Kv: kv})
 		}
 	} else {
-		entries = make([]*getcd.CategoryEntry, 0, len(in.Categories))
-		for _, category := range in.Categories {
+		entries = make([]*getcd.CategoryEntry, 0, len(req.Categories))
+		for _, category := range req.Categories {
 			categoryArray, ok := allConfig[category]
 			if !ok {
 				log.Error("category:%s not exist", category)
@@ -101,7 +102,7 @@ func (s *myService) QueryGlobalConfig(ctx context.Context, in *getcd.QueryGlobal
 	return rsp, nil
 }
 
-func (s *myService) QueryProtoLimit(ctx context.Context, in *getcd.QueryProtoLimitReq) (*getcd.QueryProtoLimitRsp, error) {
+func (s *myService) QueryProtoLimit(ctx context.Context, req *getcd.QueryProtoLimitReq) (*getcd.QueryProtoLimitRsp, error) {
 	defer dbg.Stacktrace()
 
 	rsp := &getcd.QueryProtoLimitRsp{Result: errno.OK}

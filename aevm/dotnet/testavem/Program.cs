@@ -10,11 +10,12 @@ namespace testavem
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("start grpc client!");
 
             gRPCClient client = new gRPCClient();
 
-            client.connect("47.103.158.190:17000");
+            //client.connect("47.103.158.190:17000");
+            client.connect("localhost:9007");
 
             query_global_config_req cat = new query_global_config_req();
             cat.Categories.Add("global");

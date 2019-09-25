@@ -7,8 +7,6 @@ type innerCmd struct {
 	rsp   chan *rspRPC
 }
 
-type reqRPC innerCmd
-
 type rspRPC struct {
 	cmdID  uint8
 	result int32
@@ -31,8 +29,8 @@ func (rsp *rspRPC) getRPCRsp() int32 {
 	return rsp.result
 }
 
-func newRPCReq(cmdID uint8, s1, s2 string, ch chan *rspRPC) *reqRPC {
-	return &reqRPC{
+func newRPCReq(cmdID uint8, s1, s2 string, ch chan *rspRPC) *innerCmd {
+	return &innerCmd{
 		cmdID: cmdID,
 		s1:    s1,
 		s2:    s2,

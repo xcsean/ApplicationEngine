@@ -101,7 +101,7 @@ func start(c *ghostConfig, _ int64) bool {
 	return true
 }
 
-func startRPC(ls net.Listener, rpcChannel chan<- *innerCmd) {
+func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
 	defer ls.Close()
 
 	reqChannel = rpcChannel

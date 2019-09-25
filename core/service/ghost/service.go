@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	reqChannel chan<- *innerCmd
+	reqChannel chan *innerCmd
 )
 
 type myService struct{}
@@ -27,11 +27,11 @@ func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*
 		return rsp, nil
 	}
 
-	rspChannel := make(chan *innerCmd, 1)
+	rspChannel := make(chan *rspRPC, 1)
 	reqChannel <- newRPCReq(innerCmdRegisterVM, req.Division, req.Version, rspChannel)
 
 	cmd := <-rspChannel
-	result, _ = cmd.getRPCRsp()
+	result = cmd.getRPCRsp()
 
 	rsp.Result = result
 	return rsp, nil
@@ -47,11 +47,11 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 		return rsp, nil
 	}
 
-	rspChannel := make(chan *innerCmd, 1)
+	rspChannel := make(chan *rspRPC, 1)
 	reqChannel <- newRPCReq(innerCmdUnregisterVM, req.Division, req.Version, rspChannel)
 
 	cmd := <-rspChannel
-	result, _ = cmd.getRPCRsp()
+	result = cmd.getRPCRsp()
 
 	rsp.Result = result
 	return rsp, nil

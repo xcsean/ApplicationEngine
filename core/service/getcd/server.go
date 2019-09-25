@@ -16,7 +16,7 @@ func start(c *getcdConfig, _ int64) bool {
 	// save cfg
 	config = c
 
-	// set the main logger
+	// setup the main logger
 	log.SetupMainLogger(path.Join(c.Log.Dir, c.Division), c.Log.FileName, c.Log.LogLevel)
 	log.Info("------------------------------------>")
 	log.Info("start with division=%s", c.Division)

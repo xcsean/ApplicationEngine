@@ -9,10 +9,15 @@
     </log>
 
     <mysql>
-        <ip>192.168.5.131</ip>
+        <ip>192.168.95.182</ip>
         <port>3306</port>
         <database>app_ghost_1</database>
         <username>root</username>
         <password>123456</password>
     </mysql>
+
+    <getcd_addr>47.103.158.190:17000</getcd_addr>
+    <getcd_refresh>60</getcd_refresh>
+    <gconnd>app.gconnd.1</gconnd>
+
 </config>

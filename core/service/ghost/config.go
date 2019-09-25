@@ -8,9 +8,13 @@ import (
 )
 
 type ghostConfig struct {
-	Division string              `xml:"division"`
-	Log      svc.LogConfig       `xml:"log"`
-	Mysql    svc.MysqlConnection `xml:"mysql"`
+	Division    string              `xml:"division"`
+	Log         svc.LogConfig       `xml:"log"`
+	Mysql       svc.MysqlConnection `xml:"mysql"`
+	GetcdAddr   string              `xml:"getcd_addr"`
+	RefreshTime uint32              `xml:"getcd_refresh"`
+	Gconnd      string              `xml:"gconnd"`
+	Categories  []string            `xml:"category"`
 }
 
 var config *ghostConfig
@@ -33,4 +37,8 @@ func newConfig(fileName string) (*ghostConfig, error) {
 func (cfg *ghostConfig) GetID() (int64, error) {
 	_, _, id, err := svc.ParseDivision(cfg.Division)
 	return id, err
+}
+
+func (cfg *ghostConfig) GetGetcdAddr() string {
+	return cfg.GetcdAddr
 }

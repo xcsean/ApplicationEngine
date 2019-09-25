@@ -10,8 +10,8 @@ import (
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
-	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
+	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
@@ -30,55 +30,55 @@ var (
 	cliMap map[uint64]*cliSession
 )
 
-func start(cfg *gconndConfig, id int64) {
+func start(c *gconndConfig, id int64) {
 	// save cfg & id
-	config = cfg
+	config = c
 	selfID = id
 
 	// setup the main logger
-	log.SetupMainLogger(path.Join(cfg.Log.Dir, cfg.Division), cfg.Log.FileName, cfg.Log.LogLevel)
+	log.SetupMainLogger(path.Join(c.Log.Dir, c.Division), c.Log.FileName, c.Log.LogLevel)
 	log.Info("------------------------------------>")
-	log.Info("start with division=%s", cfg.Division)
-	log.Info("getcd service addr=%s", cfg.GetcdAddr)
-	log.Debug("server queue size=%d", cfg.SrvQueueSize)
-	log.Debug("client queue size=%d", cfg.CliQueueSize)
+	log.Info("start with division=%s", c.Division)
+	log.Info("getcd service addr=%s", c.GetcdAddr)
+	log.Debug("server queue size=%d", c.SrvQueueSize)
+	log.Debug("client queue size=%d", c.CliQueueSize)
 	log.Debug("packet max bodyLen=%d", conn.LengthOfMaxBody)
 
 	// try to query the service & global config
 	//  if failed, just print fatal log and exit
-	etc.SetGetcdAddr(cfg.GetcdAddr)
+	etc.SetGetcdAddr(c.GetcdAddr)
 	if err := etc.QueryService(); err != nil {
-		log.Fatal("query service from %s failed: %s", cfg.GetcdAddr, err.Error())
+		log.Fatal("query service from %s failed: %s", c.GetcdAddr, err.Error())
 	}
 	log.Info("query service ok")
-	if err := etc.QueryGlobalConfig(cfg.Categories); err != nil {
-		log.Fatal("query global config from %s failed: %s", cfg.GetcdAddr, err.Error())
+	if err := etc.QueryGlobalConfig(c.Categories); err != nil {
+		log.Fatal("query global config from %s failed: %s", c.GetcdAddr, err.Error())
 	}
 	log.Info("query global config ok")
 
 	// validate the host which could provide the service specified by division
-	ok, err := etc.CanProvideService(cfg.Division)
+	ok, err := etc.CanProvideService(c.Division)
 	if err != nil {
-		log.Fatal("server provides service %s failed: %s", cfg.Division,  err.Error())
+		log.Fatal("server provides service %s failed: %s", c.Division, err.Error())
 	}
 	if !ok {
-		log.Fatal("server can't provide service %s", cfg.Division)
+		log.Fatal("server can't provide service %s", c.Division)
 	}
 
 	// validate the division can be selected
-	nodeIP, cliPort, srvPort, rpcPort, err := etc.SelectNode(cfg.Division)
+	nodeIP, cliPort, srvPort, rpcPort, err := etc.SelectNode(c.Division)
 	if err != nil {
-		log.Fatal("server select node %s failed: %s", cfg.Division, err.Error())
+		log.Fatal("server select node %s failed: %s", c.Division, err.Error())
 	}
 
 	// start query service & global config periodically
-	etc.StartQueryServiceLoop(cfg.RefreshTime)
-	etc.StartQueryGlobalConfigLoop(cfg.Categories, cfg.RefreshTime)
+	etc.StartQueryServiceLoop(c.RefreshTime)
+	etc.StartQueryGlobalConfigLoop(c.Categories, c.RefreshTime)
 	//etc.StartReportWithAddr(config.Division, fmt.Sprintf("%s:%s", config.Mon.Ep.Ip, config.Mon.Ep.Port), config.Mon.ReportInterval)
 
 	// create the channels for communication between server and client
-	srvChannel := make(chan *innerCmd, cfg.SrvQueueSize)
-	cliChannel := make(chan *innerCmd, cfg.CliQueueSize)
+	srvChannel := make(chan *innerCmd, c.SrvQueueSize)
+	cliChannel := make(chan *innerCmd, c.CliQueueSize)
 	rpcChannel := make(chan *innerCmd, 10)
 
 	// create the maps for server and client connections
@@ -88,39 +88,34 @@ func start(cfg *gconndConfig, id int64) {
 
 	// start the acceptors for server/client/rpc by using channels
 	//  cli acceptor will use node:service_port in registry
-	//  srv acceptor will use 127.0.0.1:admin_port in registry
+	//  srv acceptor will use node:admin_port in registry
 	//  rpc acceptor will use node:rpc_port in registry
 	// TODO: rpc change from http to rpc
 	cliAddr := fmt.Sprintf("%s:%d", nodeIP, cliPort)
-	srvAddr := fmt.Sprintf("%s:%d", "127.0.0.1", srvPort)
+	srvAddr := fmt.Sprintf("%s:%d", nodeIP, srvPort)
 	rpcAddr := fmt.Sprintf("%s:%d", nodeIP, rpcPort)
 	go acceptCli(cliAddr, cliChannel)
 	go acceptSrv(srvAddr, srvChannel)
 	go acceptRPC(rpcAddr, rpcChannel)
 
 	// start a profiler timer, print the performance information periodically
-	tick := time.NewTicker(time.Duration(cfg.ProfilerTime) * time.Second)
+	tick := time.NewTicker(time.Duration(c.ProfilerTime) * time.Second)
 	for {
+		exit := false
 		select {
-		case c := <-cliChannel:
-			exit := dispatchCliCmd(c, cliChannel)
-			if exit {
-				break
-			}
-		case c := <-srvChannel:
-			exit := dispatchSrvCmd(c, srvChannel)
-			if exit {
-				break
-			}
-		case c := <-rpcChannel:
-			exit := dispatchRPCCmd(c, rpcChannel)
-			if exit {
-				break
-			}
+		case cmd := <-cliChannel:
+			exit = dispatchCliCmd(cmd, cliChannel)
+		case cmd := <-srvChannel:
+			exit = dispatchSrvCmd(cmd, srvChannel)
+		case cmd := <-rpcChannel:
+			exit = dispatchRPCCmd(cmd, rpcChannel)
 		case <-tick.C:
 			if config.IsProfilerEnabled() {
 				dispatchProfiler(cliChannel, srvChannel, rpcChannel)
 			}
+		}
+		if exit {
+			break
 		}
 	}
 
@@ -156,7 +151,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 			cliConn.Close()
 		} else {
 			count := len(cliMap)
-			funGE := func(a, b int64) bool {return a >= b}
+			funGE := func(a, b int64) bool { return a >= b }
 			if etc.CompareInt64WithConfig("global", "maxClientConnections", int64(count), int64(config.CliMaxConns), funGE) {
 				log.Debug("client connections full, client num=%d", count)
 				conn.SendNotifyToClient(cliConn, errno.CONNMAXCONNECTIONS)
@@ -166,15 +161,15 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				seedID++
 
 				// the forwardTo field set to master by default
-				cs := &cliSession{cliConn: cliConn, forwardTo: srvMst, }
+				cs := &cliSession{cliConn: cliConn, forwardTo: srvMst}
 				cliMap[sessionID] = cs
-				log.Debug("client map size=%d", count + 1)
+				log.Debug("client map size=%d", count+1)
 
 				// send a session enter to master, with "client address" in body
 				sessionIDs := make([]uint64, 1)
 				sessionIDs[0] = sessionID
 
-				pb := conn.PrivateBody{StrParam: cliAddr, }
+				pb := conn.PrivateBody{StrParam: cliAddr}
 				body, _ := json.Marshal(pb)
 
 				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, body)
@@ -200,7 +195,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 			sessionIDs := make([]uint64, 1)
 			sessionIDs[0] = sessionID
 
-			pb := conn.PrivateBody{StrParam: cliAddr, }
+			pb := conn.PrivateBody{StrParam: cliAddr}
 			body, _ := json.Marshal(pb)
 
 			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, body)

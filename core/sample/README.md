@@ -1,5 +1,6 @@
 # Sample
 * Loop has a client routine to connect to gconnd, while it also has a lobby routine connected to gconnd
+* Vmcli has a client routine to connect to gconnd, while it also has a vm routine connected to ghost
 
 ## Loop
 * install dependencies

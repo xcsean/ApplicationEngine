@@ -1,15 +1,18 @@
 package main
 
-import "net"
-
 type innerCmd struct {
+	cmdID uint8
+	s1    string
+	s2    string
+	rsp   chan *rspRPC
+}
+
+type reqRPC innerCmd
+
+type rspRPC struct {
 	cmdID  uint8
 	result int32
-	err    error
-	c      net.Conn
-	s1     string
-	s2     string
-	rsp    chan *innerCmd
+	data   []byte
 }
 
 const (
@@ -24,16 +27,12 @@ func (ic *innerCmd) getID() uint8 {
 	return ic.cmdID
 }
 
-func (ic *innerCmd) getRPCReq() chan<- *innerCmd {
-	return ic.rsp
+func (rsp *rspRPC) getRPCRsp() int32 {
+	return rsp.result
 }
 
-func (ic *innerCmd) getRPCRsp() (int32, error) {
-	return ic.result, ic.err
-}
-
-func newRPCReq(cmdID uint8, s1, s2 string, ch chan *innerCmd) *innerCmd {
-	return &innerCmd{
+func newRPCReq(cmdID uint8, s1, s2 string, ch chan *rspRPC) *reqRPC {
+	return &reqRPC{
 		cmdID: cmdID,
 		s1:    s1,
 		s2:    s2,
@@ -41,10 +40,9 @@ func newRPCReq(cmdID uint8, s1, s2 string, ch chan *innerCmd) *innerCmd {
 	}
 }
 
-func newRPCRsp(cmdID uint8, result int32, err error) *innerCmd {
-	return &innerCmd{
+func newRPCRsp(cmdID uint8, result int32) *rspRPC {
+	return &rspRPC{
 		cmdID:  cmdID,
 		result: result,
-		err:    err,
 	}
 }

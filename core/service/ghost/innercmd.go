@@ -3,10 +3,13 @@ package main
 import "net"
 
 type innerCmd struct {
-	cmdID uint8
-	err   error
-	c     net.Conn
-	ch    chan<- *innerCmd
+	cmdID  uint8
+	result int32
+	err    error
+	c      net.Conn
+	s1     string
+	s2     string
+	rsp    chan *innerCmd
 }
 
 const (
@@ -17,13 +20,31 @@ const (
 	innerCmdSendPacket    = 105
 )
 
-func (ic *innerCmd) getRPCCmd() chan<- *innerCmd {
-	return ic.ch
+func (ic *innerCmd) getID() uint8 {
+	return ic.cmdID
 }
 
-func newRPCCmd(cmdID uint8, ch chan<- *innerCmd) *innerCmd {
+func (ic *innerCmd) getRPCReq() chan<- *innerCmd {
+	return ic.rsp
+}
+
+func (ic *innerCmd) getRPCRsp() (int32, error) {
+	return ic.result, ic.err
+}
+
+func newRPCReq(cmdID uint8, s1, s2 string, ch chan *innerCmd) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		ch:    ch,
+		s1:    s1,
+		s2:    s2,
+		rsp:   ch,
+	}
+}
+
+func newRPCRsp(cmdID uint8, result int32, err error) *innerCmd {
+	return &innerCmd{
+		cmdID:  cmdID,
+		result: result,
+		err:    err,
 	}
 }

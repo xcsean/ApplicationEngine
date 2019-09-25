@@ -21,6 +21,7 @@ message ghost_userasset {
 
 message register_vm_req {
     string division = 1;
+    string version = 2;
 }
 
 message register_vm_rsp {
@@ -30,7 +31,8 @@ message register_vm_rsp {
 
 message unregister_vm_req {
     string division = 1;
-    string desc = 2;
+    string version = 2;
+    string desc = 3;
 }
 
 message unregister_vm_rsp {

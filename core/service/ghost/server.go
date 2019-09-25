@@ -62,11 +62,11 @@ func start(c *ghostConfig, _ int64) bool {
 
 	// create the channels for communication between gconnd and vm(s)
 	connChannel := make(chan string, 10)
-	rpcChannel := make(chan string, 10)
+	rpcChannel := make(chan *innerCmd, 3000)
 
 	// start the acceptor and client
-	//  connAddr is the gconnd address which we should connect as a client
 	//  rpcAddr is the rpc address we should bind and provide service
+	//  connAddr is the gconnd address which we should connect as a client
 	rpcAddr := fmt.Sprintf("%s:%d", nodeIP, rpcPort)
 	ls, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
@@ -87,7 +87,8 @@ func start(c *ghostConfig, _ int64) bool {
 		exit := false
 		select {
 		//case _ := <-connChannel:
-		//case _ := <-rpcChannel:
+		case cmd := <-rpcChannel:
+			log.Debug("cmd=%d", cmd.getID())
 		case <-tick.C:
 
 		}
@@ -100,8 +101,10 @@ func start(c *ghostConfig, _ int64) bool {
 	return true
 }
 
-func startRPC(ls net.Listener, rpcChannel chan<- string) {
+func startRPC(ls net.Listener, rpcChannel chan<- *innerCmd) {
 	defer ls.Close()
+
+	reqChannel = rpcChannel
 
 	srv := grpc.NewServer()
 	ghost.RegisterGhostServiceServer(srv, &myService{})

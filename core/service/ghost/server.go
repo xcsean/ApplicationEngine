@@ -88,7 +88,7 @@ func start(c *ghostConfig, _ int64) bool {
 		select {
 		//case _ := <-connChannel:
 		case cmd := <-rpcChannel:
-			log.Debug("cmd=%d", cmd.getID())
+			exit = dispatchRPC(cmd)
 		case <-tick.C:
 
 		}

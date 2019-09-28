@@ -63,11 +63,21 @@ func layout(g *ui.Gui) error {
 		v.Autoscroll = true
 	}
 	name := getClientEdit()
-	if v, err := g.SetView(name, 0, maxY-3, maxX-1, maxY-1); err != nil {
+	if v, err := g.SetView(name, 0, maxY-3, maxX/2-1, maxY-1); err != nil {
 		if err != ui.ErrUnknownView {
 			return err
 		}
 		v.Title = getClientEditTitle()
+		v.Editable = true
+		v.Wrap = true
+		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, input)
+	}
+	name = getVMEdit()
+	if v, err := g.SetView(name, maxX/2, maxY-3, maxX-1, maxY-1); err != nil {
+		if err != ui.ErrUnknownView {
+			return err
+		}
+		v.Title = getVMEditTitle()
 		v.Editable = true
 		v.Wrap = true
 		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, input)

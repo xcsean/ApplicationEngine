@@ -3,3 +3,7 @@ core/build/gconnd
 core/build/loop
 core/build/gconnd.xml
 core/build/app.gconnd.*
+core/build/ghost
+core/build/ghost.xml
+core/build/vmcli
+core/build/start_vmcli.sh

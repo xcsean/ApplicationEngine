@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	vmView  = "VMView"
-	vmTitle = "vm message"
+	vmView      = "VMView"
+	vmTitle     = "vm message"
+	vmEdit      = "VMEdit"
+	vmEditTitle = "vm input"
 )
 
 func getVMView() string {
@@ -21,6 +23,14 @@ func getVMView() string {
 
 func getVMTitle() string {
 	return vmTitle
+}
+
+func getVMEdit() string {
+	return vmEdit
+}
+
+func getVMEditTitle() string {
+	return vmEditTitle
 }
 
 func vmLoop(hostAddr string, g *ui.Gui) {

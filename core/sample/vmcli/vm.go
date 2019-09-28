@@ -10,6 +10,7 @@ import (
 
 	ui "github.com/jroimartin/gocui"
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"google.golang.org/grpc"
 )
 
@@ -27,6 +28,7 @@ var (
 	rpcVMChannel chan string
 	hostAddr     string
 	vmsvcAddr    string
+	vmUuid       uint64
 )
 
 func getVMView() string {
@@ -106,8 +108,12 @@ func dealVMKeyboard(text string, vmLog func(s string)) {
 		callUnregisterVM(division, version, vmLog)
 	} else if cmd == "debug" {
 		if len(array) >= 2 {
-			cmdLine := array[1]
-			callDebug(division, cmdLine, vmLog)
+			cmdOp := array[1]
+			cmdParam := ""
+			if len(array) >= 3 {
+				cmdParam = array[2]
+			}
+			callDebug(division, cmdOp, cmdParam, vmLog)
 		} else {
 			vmLog("help debug: debug cmdline")
 		}
@@ -126,7 +132,10 @@ func callRegisterVM(division, version string, vmLog func(s string)) {
 			return err
 		}
 
-		vmLog(fmt.Sprintf("[VM] register result=%d", rsp.Result))
+		vmLog(fmt.Sprintf("[VM] register result=%d, uuid=%d", rsp.Result, rsp.Uuid))
+		if rsp.Result == errno.OK {
+			vmUuid = rsp.Uuid
+		}
 		return nil
 	}, 3)
 }
@@ -136,6 +145,7 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 		req := &ghost.UnregisterVmReq{
 			Division: division,
 			Version:  version,
+			Uuid:     vmUuid,
 		}
 		rsp, err := c.UnregisterVM(ctx, req)
 		if err != nil {
@@ -143,15 +153,19 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 		}
 
 		vmLog(fmt.Sprintf("[VM] unregister result=%d", rsp.Result))
+		if rsp.Result == errno.OK {
+			vmUuid = 0
+		}
 		return nil
 	}, 3)
 }
 
-func callDebug(division, cmdLine string, vmLog func(s string)) {
+func callDebug(division, cmdOp, cmdParam string, vmLog func(s string)) {
 	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
 		req := &ghost.DebugReq{
 			Division: division,
-			Cmdline:  cmdLine,
+			Cmdop:    cmdOp,
+			Cmdparam: cmdParam,
 		}
 		rsp, err := c.Debug(ctx, req)
 		if err != nil {

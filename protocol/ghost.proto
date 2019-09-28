@@ -26,13 +26,15 @@ message register_vm_req {
 
 message register_vm_rsp {
     int32 result = 1;
-    string desc = 2;
+    uint64 uuid = 2;
+    string desc = 3;
 }
 
 message unregister_vm_req {
     string division = 1;
     string version = 2;
-    string desc = 3;
+    uint64 uuid = 3;
+    string desc = 4;
 }
 
 message unregister_vm_rsp {
@@ -70,7 +72,8 @@ message save_userasset_rsp {
 
 message debug_req {
     string division = 1;
-    string cmdline = 2;
+    string cmdop = 2;
+    string cmdparam = 3;
 }
 
 message debug_rsp {
@@ -115,5 +118,5 @@ message notify_packet_rsp {
 
 service VMService {
     rpc OnNotifyStatus(notify_status_req) returns(notify_status_rsp) {}
-    rpc OnNotifyPacket(stream notify_packet_req) returns(notify_packet_rsp) {}
+    rpc OnNotifyPacket(stream ghost_packet) returns(notify_packet_rsp) {}
 }

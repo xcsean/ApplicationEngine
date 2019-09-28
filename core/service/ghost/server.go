@@ -9,12 +9,17 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
+	"github.com/xcsean/ApplicationEngine/core/shared/id"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-func start(c *ghostConfig, _ int64) bool {
+var (
+	vmmgr *vmMgr
+)
+
+func start(c *ghostConfig, selfID int64) bool {
 	// save cfg
 	config = c
 
@@ -60,9 +65,17 @@ func start(c *ghostConfig, _ int64) bool {
 		log.Fatal("server select node %s failed: %s", c.Gconnd, err.Error())
 	}
 
+	// init the id maker settings
+	settings := id.Settings{
+		StartTime:      time.Now(),
+		MachineID:      func() (uint16, error) { return uint16(selfID), nil },
+		CheckMachineID: func(uint16) bool { return true },
+	}
+
 	// create the channels for communication between gconnd and vm(s)
 	connChannel := make(chan string, 10)
 	rpcChannel := make(chan *innerCmd, 3000)
+	vmmChannel := make(chan *innerCmd, 3000)
 
 	// start the acceptor and client
 	//  rpcAddr is the rpc address we should bind and provide service
@@ -82,13 +95,16 @@ func start(c *ghostConfig, _ int64) bool {
 	go startConn(csk, connChannel)
 
 	// start a timer, print the performance information periodically
+	vmmgr = newVMMgr(id.NewSnowflake(settings), vmmChannel)
 	tick := time.NewTicker(time.Duration(10) * time.Second)
 	for {
 		exit := false
 		select {
 		//case _ := <-connChannel:
 		case cmd := <-rpcChannel:
-			exit = dispatchRPC(cmd)
+			exit = dispatchRPC(vmmgr, cmd)
+		case cmd := <-vmmChannel:
+			exit = dispatchVMM(vmmgr, cmd)
 		case <-tick.C:
 
 		}

@@ -14,12 +14,20 @@ import (
 type myService struct{}
 
 func (s *myService) OnNotifyStatus(ctx context.Context, req *ghost.NotifyStatusReq) (*ghost.NotifyStatusRsp, error) {
-	sendRPCVMText(fmt.Sprintf("[VM] notify status = %d", req.Status))
+	sendRPCVMText(fmt.Sprintf("[CB] notify status = %d", req.Status))
 	rsp := &ghost.NotifyStatusRsp{Result: errno.OK, Desc: ""}
 	return rsp, nil
 }
 
 func (s *myService) OnNotifyPacket(srv ghost.VMService_OnNotifyPacketServer) error {
+	for {
+		if pkt, err := srv.Recv(); err == nil {
+			sendRPCVMText(fmt.Sprintf("[CB] notify packet cmd=%d body=%s", pkt.CmdId, pkt.Body))
+		} else {
+			sendRPCVMText(fmt.Sprintf("[CB] notify packet failed: %s", err.Error()))
+			break
+		}
+	}
 	return nil
 }
 

@@ -1,30 +1,33 @@
 package main
 
-var (
-	vmmgr *vmMgr
-)
-
-func init() {
-	vmmgr = newVMMgr()
-}
-
 // all dispatchXXX functions run in the main routine context!!!
 
-func dispatchRPC(cmd *innerCmd) bool {
+func dispatchRPC(vmm *vmMgr, cmd *innerCmd) bool {
 	cmdID := cmd.getID()
 	switch cmdID {
 	case innerCmdRegisterVM:
-		division, version, rspChannel := cmd.getRPCReq()
-		result := vmmgr.addVM(&vmEntity{division: division, version: version})
-		rspChannel <- newRPCRsp(innerCmdRegisterVM, result)
+		division, version, addr, _, rspChannel := cmd.getRPCReq()
+		uuid, result := vmm.addVM(division, version, addr)
+		rspChannel <- newRPCRsp(innerCmdRegisterVM, result, uuid)
 	case innerCmdUnregisterVM:
-		division, _, rspChannel := cmd.getRPCReq()
-		result := vmmgr.delVM(division)
-		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result)
+		division, _, _, uuid, rspChannel := cmd.getRPCReq()
+		result := vmm.delVM(division, uuid)
+		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, 0)
 	case innerCmdDebug:
-		division, cmdLine, rspChannel := cmd.getRPCReq()
-		result := vmmgr.debug(division, cmdLine)
-		rspChannel <- newRPCRsp(innerCmdDebug, result)
+		division, cmdOp, cmdParam, _, rspChannel := cmd.getRPCReq()
+		result := vmm.debug(division, cmdOp, cmdParam)
+		rspChannel <- newRPCRsp(innerCmdDebug, result, 0)
 	}
+	return false
+}
+
+func dispatchVMM(vmm *vmMgr, cmd *innerCmd) bool {
+	cmdID := cmd.getID()
+	switch cmdID {
+	case innerCmdVMStreamConnFault, innerCmdVMStreamSendFault:
+		division, _, _, uuid := cmd.getVMMCmd()
+		vmm.delVM(division, uuid)
+	}
+
 	return false
 }

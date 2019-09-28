@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
@@ -22,20 +23,21 @@ func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*
 	defer dbg.Stacktrace()
 
 	rsp := &ghost.RegisterVmRsp{Result: errno.OK}
-	result := validateRemote(ctx, req.Division)
+	addr, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
 		return rsp, nil
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdRegisterVM, req.Division, req.Version, rspChannel)
+	reqChannel <- newRPCReq(innerCmdRegisterVM, req.Division, req.Version, addr, 0, rspChannel)
 
 	cmd := <-rspChannel
-	result = cmd.getRPCRsp()
+	result, uuid := cmd.getRPCRsp()
 	log.Debug("register vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
+	rsp.Uuid = uuid
 	return rsp, nil
 }
 
@@ -43,17 +45,17 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 	defer dbg.Stacktrace()
 
 	rsp := &ghost.UnregisterVmRsp{Result: errno.OK}
-	result := validateRemote(ctx, req.Division)
+	_, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
 		return rsp, nil
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdUnregisterVM, req.Division, req.Version, rspChannel)
+	reqChannel <- newRPCReq(innerCmdUnregisterVM, req.Division, req.Version, "", req.Uuid, rspChannel)
 
 	cmd := <-rspChannel
-	result = cmd.getRPCRsp()
+	result, _ = cmd.getRPCRsp()
 	log.Debug("unregister vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
@@ -85,18 +87,18 @@ func (s *myService) Debug(ctx context.Context, req *ghost.DebugReq) (*ghost.Debu
 	defer dbg.Stacktrace()
 
 	rsp := &ghost.DebugRsp{Result: errno.OK, Desc: ""}
-	result := validateRemote(ctx, req.Division)
+	_, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
 		return rsp, nil
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdDebug, req.Division, req.Cmdline, rspChannel)
+	reqChannel <- newRPCReq(innerCmdDebug, req.Division, req.Cmdop, req.Cmdparam, 0, rspChannel)
 
 	cmd := <-rspChannel
-	result = cmd.getRPCRsp()
-	log.Debug("debug vm %s %s, result=%d", req.Division, req.Cmdline, result)
+	result, _ = cmd.getRPCRsp()
+	log.Debug("debug vm %s op='%s' param='%s', result=%d", req.Division, req.Cmdop, req.Cmdparam, result)
 
 	rsp.Result = result
 	return rsp, nil
@@ -114,19 +116,19 @@ func getRemoteIP(ctx context.Context) (string, int32) {
 	return remoteIP, errno.OK
 }
 
-func validateRemote(ctx context.Context, division string) int32 {
+func validateRemote(ctx context.Context, division string) (string, int32) {
 	ip, result := getRemoteIP(ctx)
 	if result != errno.OK {
-		return result
+		return "", result
 	}
 
-	requiredIP, _, _, _, err := etc.SelectNode(division)
+	requiredIP, _, _, rpcPort, err := etc.PickEndpoint(division)
 	if err != nil {
-		return errno.NODENOTFOUNDINREGISTRY
+		return "", errno.NODENOTFOUNDINREGISTRY
 	}
 	if requiredIP != ip {
-		return errno.NODEIPNOTEQUALREGISTRY
+		return "", errno.NODEIPNOTEQUALREGISTRY
 	}
 
-	return errno.OK
+	return fmt.Sprintf("%s:%d", requiredIP, rpcPort), errno.OK
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
@@ -25,16 +26,20 @@ func callVM(vmAddr string, handler func(c ghost.VMServiceClient, ctx context.Con
 	return handler(c, ctx)
 }
 
-func debugNotifyStatusToVM(division string) {
+func debugNotifyStatusToVM(division, cmdParam string) {
 	ip, _, _, rpcPort, err := etc.PickEndpoint(division)
 	if err != nil {
 		log.Error("debug notify to vm %s failed: %s", division, err.Error())
 		return
 	}
 	vmAddr := fmt.Sprintf("%s:%d", ip, rpcPort)
+	status, err := strconv.ParseInt(cmdParam, 10, 32)
+	if err != nil {
+		status = 0
+	}
 	err = callVM(vmAddr, func(c ghost.VMServiceClient, ctx context.Context) error {
 		req := &ghost.NotifyStatusReq{
-			Status: 1,
+			Status: uint32(status),
 		}
 		rsp, err := c.OnNotifyStatus(ctx, req)
 		if err != nil {

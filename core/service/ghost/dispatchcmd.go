@@ -21,6 +21,10 @@ func dispatchRPC(cmd *innerCmd) bool {
 		division, _, rspChannel := cmd.getRPCReq()
 		result := vmmgr.delVM(division)
 		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result)
+	case innerCmdDebug:
+		division, cmdLine, rspChannel := cmd.getRPCReq()
+		result := vmmgr.debug(division, cmdLine)
+		rspChannel <- newRPCRsp(innerCmdDebug, result)
 	}
 	return false
 }

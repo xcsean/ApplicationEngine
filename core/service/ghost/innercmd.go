@@ -19,6 +19,7 @@ const (
 	innerCmdLoadUserAsset = 103
 	innerCmdSaveUserAsset = 104
 	innerCmdSendPacket    = 105
+	innerCmdDebug         = 106
 )
 
 func (ic *innerCmd) getID() uint8 {

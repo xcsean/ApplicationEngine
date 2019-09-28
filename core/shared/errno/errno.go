@@ -24,4 +24,7 @@ const (
 
 	// HOSTVMALREADYEXIST means the vm identified by division already exist
 	HOSTVMALREADYEXIST = -31
+
+	// HOSTVMNOTEXIST means the vm identified by division is not exist in host
+	HOSTVMNOTEXIST = -32
 )

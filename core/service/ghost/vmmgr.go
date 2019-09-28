@@ -1,8 +1,6 @@
 package main
 
 import (
-	"sync"
-
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 )
 
@@ -12,8 +10,7 @@ type vmEntity struct {
 }
 
 type vmMgr struct {
-	vms  map[string]vmEntity
-	lock sync.RWMutex
+	vms map[string]vmEntity
 }
 
 func newVMMgr() *vmMgr {
@@ -23,9 +20,6 @@ func newVMMgr() *vmMgr {
 }
 
 func (vmm *vmMgr) addVM(vm *vmEntity) int32 {
-	vmm.lock.Lock()
-	defer vmm.lock.Unlock()
-
 	_, ok := vmm.vms[vm.division]
 	if ok {
 		return errno.HOSTVMALREADYEXIST
@@ -35,9 +29,18 @@ func (vmm *vmMgr) addVM(vm *vmEntity) int32 {
 }
 
 func (vmm *vmMgr) delVM(division string) int32 {
-	vmm.lock.Lock()
-	defer vmm.lock.Unlock()
-
 	delete(vmm.vms, division)
+	return errno.OK
+}
+
+func (vmm *vmMgr) debug(division, cmdLine string) int32 {
+	_, ok := vmm.vms[division]
+	if !ok {
+		return errno.HOSTVMNOTEXIST
+	}
+
+	if cmdLine == "status" {
+		go debugNotifyStatusToVM(division)
+	}
 	return errno.OK
 }

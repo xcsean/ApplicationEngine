@@ -31,7 +31,8 @@ func main() {
 
 	// run vm routine
 	hostAddr := fmt.Sprintf("%s:%s", os.Args[3], os.Args[4])
-	go vmLoop(hostAddr, g)
+	vmAddr := fmt.Sprintf("%s:%d", os.Args[3], 18023)
+	go vmLoop(hostAddr, vmAddr, g)
 
 	// run client routine
 	connAddr := fmt.Sprintf("%s:%s", os.Args[1], os.Args[2])

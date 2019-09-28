@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -22,7 +24,9 @@ const (
 
 var (
 	kbdVMChannel chan string
+	rpcVMChannel chan string
 	hostAddr     string
+	vmsvcAddr    string
 )
 
 func getVMView() string {
@@ -45,9 +49,15 @@ func sendVMKeyboard(text string) {
 	kbdVMChannel <- text
 }
 
-func vmLoop(addr string, g *ui.Gui) {
+func sendRPCVMText(text string) {
+	rpcVMChannel <- text
+}
+
+func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	hostAddr = addr
+	vmsvcAddr = vmAddr
 	kbdVMChannel = make(chan string, 100)
+	rpcVMChannel = make(chan string, 100)
 	vmLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(vmView)
@@ -61,11 +71,22 @@ func vmLoop(addr string, g *ui.Gui) {
 		return nil
 	})
 
+	// bind the service to vmsvcAddr
+	ls, err := net.Listen("tcp", vmsvcAddr)
+	if err != nil {
+		vmLog(fmt.Sprintf("[VM] can't bind %s", vmsvcAddr))
+		time.Sleep(1 * time.Second)
+		os.Exit(-1)
+	}
+	go startRPC(ls)
+
 	// wait for message from kbdVMChannel & netVMChannel
 	for {
 		select {
 		case cmd := <-kbdVMChannel:
 			dealVMKeyboard(cmd, vmLog)
+		case cmd := <-rpcVMChannel:
+			vmLog(cmd)
 		}
 	}
 }
@@ -83,6 +104,13 @@ func dealVMKeyboard(text string, vmLog func(s string)) {
 		callRegisterVM(division, version, vmLog)
 	} else if cmd == "unregister" {
 		callUnregisterVM(division, version, vmLog)
+	} else if cmd == "debug" {
+		if len(array) >= 2 {
+			cmdLine := array[1]
+			callDebug(division, cmdLine, vmLog)
+		} else {
+			vmLog("help debug: debug cmdline")
+		}
 	}
 
 }
@@ -115,6 +143,22 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 		}
 
 		vmLog(fmt.Sprintf("[VM] unregister result=%d", rsp.Result))
+		return nil
+	}, 3)
+}
+
+func callDebug(division, cmdLine string, vmLog func(s string)) {
+	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
+		req := &ghost.DebugReq{
+			Division: division,
+			Cmdline:  cmdLine,
+		}
+		rsp, err := c.Debug(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		vmLog(fmt.Sprintf("[VM] debug result=%d", rsp.Result))
 		return nil
 	}, 3)
 }

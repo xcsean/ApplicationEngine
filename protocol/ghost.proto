@@ -68,6 +68,16 @@ message save_userasset_rsp {
     repeated int32 fail_errno = 3;
 }
 
+message debug_req {
+    string division = 1;
+    string cmdline = 2;
+}
+
+message debug_rsp {
+    int32 result = 1;
+    string desc = 2;
+}
+
 service GhostService {
     // vm management
     rpc RegisterVM(register_vm_req) returns(register_vm_rsp) {}
@@ -79,6 +89,9 @@ service GhostService {
 
     // send packet to client(s)
     rpc SendPacket(send_packet_req) returns(send_packet_rsp) {}
+
+    // debug
+    rpc Debug(debug_req) returns(debug_rsp) {}
 }
 
 // vm service
@@ -93,7 +106,7 @@ message notify_status_rsp {
 }
 
 message notify_packet_req {
-    repeated ghost_packet packets = 1;
+    ghost_packet packets = 1;
 }
 
 message notify_packet_rsp {
@@ -102,5 +115,5 @@ message notify_packet_rsp {
 
 service VMService {
     rpc OnNotifyStatus(notify_status_req) returns(notify_status_rsp) {}
-    rpc OnNotifyPacket(notify_packet_req) returns(notify_packet_rsp) {}
+    rpc OnNotifyPacket(stream notify_packet_req) returns(notify_packet_rsp) {}
 }

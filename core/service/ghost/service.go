@@ -81,6 +81,27 @@ func (s *myService) SendPacket(ctx context.Context, req *ghost.SendPacketReq) (*
 	return rsp, nil
 }
 
+func (s *myService) Debug(ctx context.Context, req *ghost.DebugReq) (*ghost.DebugRsp, error) {
+	defer dbg.Stacktrace()
+
+	rsp := &ghost.DebugRsp{Result: errno.OK, Desc: ""}
+	result := validateRemote(ctx, req.Division)
+	if result != errno.OK {
+		rsp.Result = result
+		return rsp, nil
+	}
+
+	rspChannel := make(chan *rspRPC, 1)
+	reqChannel <- newRPCReq(innerCmdDebug, req.Division, req.Cmdline, rspChannel)
+
+	cmd := <-rspChannel
+	result = cmd.getRPCRsp()
+	log.Debug("debug vm %s %s, result=%d", req.Division, req.Cmdline, result)
+
+	rsp.Result = result
+	return rsp, nil
+}
+
 func getRemoteIP(ctx context.Context) (string, int32) {
 	pr, ok := peer.FromContext(ctx)
 	if !ok {

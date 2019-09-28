@@ -21,4 +21,7 @@ const (
 
 	// RPCDONOTHAVEPEERINFO means peer info not found in rpc context
 	RPCDONOTHAVEPEERINFO = -21
+
+	// HOSTVMALREADYEXIST means the vm identified by division already exist
+	HOSTVMALREADYEXIST = -31
 )

@@ -7,3 +7,4 @@ core/build/ghost
 core/build/ghost.xml
 core/build/vmcli
 core/build/start_vmcli.sh
+core/build/app.ghost.*

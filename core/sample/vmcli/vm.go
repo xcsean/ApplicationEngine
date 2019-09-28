@@ -1,13 +1,14 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"net"
+	"strings"
 	"time"
 
 	ui "github.com/jroimartin/gocui"
-	"github.com/xcsean/ApplicationEngine/core/shared/conn"
+	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -15,6 +16,13 @@ const (
 	vmTitle     = "vm message"
 	vmEdit      = "VMEdit"
 	vmEditTitle = "vm input"
+	division    = "app.td.2"
+	version     = "1.1.1.1"
+)
+
+var (
+	kbdVMChannel chan string
+	hostAddr     string
 )
 
 func getVMView() string {
@@ -33,10 +41,13 @@ func getVMEditTitle() string {
 	return vmEditTitle
 }
 
-func vmLoop(hostAddr string, g *ui.Gui) {
-	// delay 1 second
-	time.Sleep(1 * time.Second)
+func sendVMKeyboard(text string) {
+	kbdVMChannel <- text
+}
 
+func vmLoop(addr string, g *ui.Gui) {
+	hostAddr = addr
+	kbdVMChannel = make(chan string, 100)
 	vmLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(vmView)
@@ -45,76 +56,79 @@ func vmLoop(hostAddr string, g *ui.Gui) {
 		})
 	}
 
-	// try to connect gconnd as lobby
-	c, err := net.Dial("tcp", hostAddr)
-	if err != nil {
-		vmLog(fmt.Sprintf("[S] %s", err.Error()))
-		return
-	}
-	defer c.Close()
-
-	vmLog(fmt.Sprintf("[S] connect to %s ok", hostAddr))
-
-	// try to request master
-	conn.SendMasterSet(c)
-
-	// handle the stream between gconnd and self
-	isMaster := false
-	err = conn.HandleStream(c, func(_ net.Conn, hdr, body []byte) {
-		h := conn.ParseHeader(hdr)
-		if isMaster {
-			// common packet deal
-			b := make([]byte, len(body))
-			copy(b, body)
-			if h.CmdID == conn.CmdSessionEnter {
-				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
-				sessionID := sessionIDs[0]
-				// get the client address
-				var pb conn.PrivateBody
-				err = json.Unmarshal(innerBody, &pb)
-				if err != nil {
-					vmLog(fmt.Sprintf("[P] client session=%d enter... %s", sessionID, err.Error()))
-				} else {
-					vmLog(fmt.Sprintf("[P] client session=%d addr=%s enter...", sessionID, pb.StrParam))
-				}
-			} else if h.CmdID == conn.CmdSessionLeave {
-				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
-				sessionID := sessionIDs[0]
-				// get the client address
-				var pb conn.PrivateBody
-				err = json.Unmarshal(innerBody, &pb)
-				if err != nil {
-					vmLog(fmt.Sprintf("[P] client session=%d leave... %s", sessionID, err.Error()))
-				} else {
-					vmLog(fmt.Sprintf("[P] client session=%d addr=%s leave...", sessionID, pb.StrParam))
-				}
-			} else if h.CmdID == cmdSAY {
-				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
-				sessionID := sessionIDs[0]
-				var say sayBody
-				err := json.Unmarshal(innerBody, &say)
-				if err == nil {
-					vmLog(fmt.Sprintf("[P] client session=%d say '%s'", sessionID, say.StrParam))
-				}
-			}
-		} else {
-			// wait the CmdMasterYou or CmdMasterNot
-			switch h.CmdID {
-			case conn.CmdMasterYou:
-				vmLog(fmt.Sprintf("[S] I'm master, that's ok"))
-				isMaster = true
-				// active the client input
-				g.Update(func(g *ui.Gui) error {
-					g.SetCurrentView(getClientEdit())
-					return nil
-				})
-			case conn.CmdMasterNot:
-				vmLog(fmt.Sprintf("[S] I can't be master, so exit"))
-			}
-		}
+	g.Update(func(g *ui.Gui) error {
+		g.SetCurrentView(getVMEdit())
+		return nil
 	})
 
-	if err != nil {
-		vmLog(fmt.Sprintf("[S] %s", err.Error()))
+	// wait for message from kbdVMChannel & netVMChannel
+	for {
+		select {
+		case cmd := <-kbdVMChannel:
+			dealVMKeyboard(cmd, vmLog)
+		}
 	}
+}
+
+func dealVMKeyboard(text string, vmLog func(s string)) {
+	text = strings.Replace(text, "\n", "", -1)
+	text = strings.Replace(text, "\t", " ", -1)
+	array := strings.Fields(text)
+	if array == nil {
+		return
+	}
+
+	cmd := array[0]
+	if cmd == "register" {
+		callRegisterVM(division, version, vmLog)
+	} else if cmd == "unregister" {
+		callUnregisterVM(division, version, vmLog)
+	}
+
+}
+
+func callRegisterVM(division, version string, vmLog func(s string)) {
+	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
+		req := &ghost.RegisterVmReq{
+			Division: division,
+			Version:  version,
+		}
+		rsp, err := c.RegisterVM(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		vmLog(fmt.Sprintf("[VM] register result=%d", rsp.Result))
+		return nil
+	}, 3)
+}
+
+func callUnregisterVM(division, version string, vmLog func(s string)) {
+	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
+		req := &ghost.UnregisterVmReq{
+			Division: division,
+			Version:  version,
+		}
+		rsp, err := c.UnregisterVM(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		vmLog(fmt.Sprintf("[VM] unregister result=%d", rsp.Result))
+		return nil
+	}, 3)
+}
+
+func callGhost(handler func(c ghost.GhostServiceClient, ctx context.Context) error, timeout time.Duration) error {
+	conn, err := grpc.Dial(hostAddr, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	c := ghost.NewGhostServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	defer cancel()
+
+	return handler(c, ctx)
 }

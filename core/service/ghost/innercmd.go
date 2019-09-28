@@ -25,6 +25,10 @@ func (ic *innerCmd) getID() uint8 {
 	return ic.cmdID
 }
 
+func (ic *innerCmd) getRPCReq() (string, string, chan *rspRPC) {
+	return ic.s1, ic.s2, ic.rsp
+}
+
 func (rsp *rspRPC) getRPCRsp() int32 {
 	return rsp.result
 }

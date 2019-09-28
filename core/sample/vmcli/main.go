@@ -80,7 +80,7 @@ func layout(g *ui.Gui) error {
 		v.Title = getVMEditTitle()
 		v.Editable = true
 		v.Wrap = true
-		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, input)
+		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, inputForVM)
 	}
 	return nil
 }
@@ -99,6 +99,20 @@ func input(g *ui.Gui, v *ui.View) error {
 	// send input text to client routine
 	if text != "" {
 		sendClientKeyboard(text)
+	}
+	return nil
+}
+
+func inputForVM(g *ui.Gui, v *ui.View) error {
+	text := v.Buffer()
+
+	// clear the input
+	v.SetCursor(0, 0)
+	v.Clear()
+
+	// send input text to client routine
+	if text != "" {
+		sendVMKeyboard(text)
 	}
 	return nil
 }

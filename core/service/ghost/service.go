@@ -8,6 +8,7 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
+	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"google.golang.org/grpc/peer"
 )
 
@@ -32,6 +33,7 @@ func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*
 
 	cmd := <-rspChannel
 	result = cmd.getRPCRsp()
+	log.Debug("register vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
 	return rsp, nil
@@ -52,6 +54,7 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 
 	cmd := <-rspChannel
 	result = cmd.getRPCRsp()
+	log.Debug("unregister vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
 	return rsp, nil

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	ui "github.com/jroimartin/gocui"
+	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 )
 
 func printHelp() {
@@ -30,6 +31,38 @@ func main() {
 	}
 	config = c
 
+	// try to query service
+	etc.SetGetcdAddr(c.GetcdAddr)
+	if err := etc.QueryService(); err != nil {
+		fmt.Printf("query service from %s failed: %s", c.GetcdAddr, err.Error())
+		return
+	}
+
+	// validate the host
+	_, err = etc.CanProvideService(c.Division)
+	if err != nil {
+		fmt.Printf("can't provide service %s", c.Division)
+		return
+	}
+
+	selfIP, _, _, selfPort, err := etc.SelectNode(c.Division)
+	if err != nil {
+		fmt.Printf("select node %s failed: %s", c.Division, err.Error())
+		return
+	}
+
+	connIP, connPort, _, _, err := etc.SelectNode(c.Gconnd)
+	if err != nil {
+		fmt.Printf("select node %s failed: %s", c.Gconnd, err.Error())
+		return
+	}
+
+	hostIP, _, _, hostPort, err := etc.SelectNode(c.Ghost)
+	if err != nil {
+		fmt.Printf("select node %s failed: %s", c.Ghost, err.Error())
+		return
+	}
+
 	g, err := ui.NewGui(ui.OutputNormal)
 	if err != nil {
 		fmt.Println(err)
@@ -43,12 +76,12 @@ func main() {
 	g.SetKeybinding("", ui.KeyCtrlC, ui.ModNone, quit)
 
 	// run vm routine
-	hostAddr := fmt.Sprintf("%s:%s", os.Args[3], os.Args[4])
-	vmAddr := fmt.Sprintf("%s:%d", os.Args[3], 18023)
-	go vmLoop(hostAddr, vmAddr, g)
+	hostAddr := fmt.Sprintf("%s:%d", hostIP, hostPort)
+	selfAddr := fmt.Sprintf("%s:%d", selfIP, selfPort)
+	go vmLoop(hostAddr, selfAddr, g)
 
 	// run client routine
-	connAddr := fmt.Sprintf("%s:%s", os.Args[1], os.Args[2])
+	connAddr := fmt.Sprintf("%s:%d", connIP, connPort)
 	go clientLoop(connAddr, g)
 
 	// run main loop

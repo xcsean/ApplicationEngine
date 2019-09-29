@@ -19,7 +19,6 @@ const (
 	vmTitle     = "vm message"
 	vmEdit      = "VMEdit"
 	vmEditTitle = "vm input"
-	division    = "app.td.2"
 	version     = "1.1.1.1"
 )
 
@@ -29,6 +28,7 @@ var (
 	hostAddr     string
 	vmsvcAddr    string
 	vmUUID       uint64
+	division     string
 )
 
 func getVMView() string {
@@ -58,6 +58,7 @@ func sendRPCVMText(text string) {
 func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	hostAddr = addr
 	vmsvcAddr = vmAddr
+	division = config.Division
 	kbdVMChannel = make(chan string, 100)
 	rpcVMChannel = make(chan string, 100)
 	vmLog := func(s string) {
@@ -113,9 +114,12 @@ func dealVMKeyboard(text string, vmLog func(s string)) {
 			if len(array) >= 3 {
 				cmdParam = array[2]
 			}
+			if cmdOp == "dump" {
+				cmdParam = fmt.Sprintf("%d", vmUUID)
+			}
 			callDebug(division, cmdOp, cmdParam, vmLog)
 		} else {
-			vmLog("help debug: debug cmdline")
+			vmLog("help debug: debug op param")
 		}
 	}
 
@@ -172,10 +176,7 @@ func callDebug(division, cmdOp, cmdParam string, vmLog func(s string)) {
 			return err
 		}
 
-		vmLog(fmt.Sprintf("[VM] debug result=%d", rsp.Result))
-		if rsp.Desc != "" {
-			vmLog(fmt.Sprintf("[VM] debug desc=%s", rsp.Desc))
-		}
+		vmLog(fmt.Sprintf("[VM] debug result=%d desc='%s'", rsp.Result, rsp.Desc))
 		return nil
 	}, 3)
 }

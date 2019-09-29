@@ -8,14 +8,27 @@ import (
 )
 
 func printHelp() {
-	fmt.Println("vmcli gconnd_ip gconnd_port ghost_ip ghost_port")
+	fmt.Println("vmcli start vmcli.xml")
 }
 
 func main() {
-	if len(os.Args) < 5 {
+	if len(os.Args) < 3 {
 		printHelp()
 		return
 	}
+
+	if os.Args[1] != "start" {
+		printHelp()
+		return
+	}
+
+	// save config
+	c, err := newConfig(os.Args[2])
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	config = c
 
 	g, err := ui.NewGui(ui.OutputNormal)
 	if err != nil {

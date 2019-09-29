@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+    <division>app.td.1</division>
+
+    <getcd_addr>47.103.158.190:17000</getcd_addr>
+    <getcd_refresh>60</getcd_refresh>
+
+    <gconnd>app.gconnd.1</gconnd>
+    <ghost>app.ghost.1</ghost>
+
+</config>

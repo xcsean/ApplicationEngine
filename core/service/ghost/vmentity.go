@@ -48,6 +48,7 @@ func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan
 					log.Info("vm %s %s %s %d stream ready", division, version, addr, uuid)
 				}
 			} else if cmdID == innerCmdVMShouldExit {
+				log.Info("vm %s %s %s %d recv VMShouldExit command, so exit", division, version, addr, uuid)
 				exit = true
 			}
 		case pkt := <-pktChannel:

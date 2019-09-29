@@ -1,8 +1,8 @@
 package etc
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"io/ioutil"
 	"strconv"
 
@@ -52,6 +52,19 @@ func CompareInt64WithConfig(category, key string, givenValue, defaultValue int64
 	return handler(givenValue, i)
 }
 
+// GetInt64WithDefault get a int64 value by categroy and key, if not exist, use the defaultValue
+func GetInt64WithDefault(category, key string, defaultValue int64) int64 {
+	v, ok := gc.getValue(category, key)
+	if !ok {
+		return defaultValue
+	}
+	i, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return defaultValue
+	}
+	return i
+}
+
 // ReadFromXMLFile read context from a xml file
 func ReadFromXMLFile(fileName string) ([]byte, error) {
 	fileData, err := ioutil.ReadFile(fileName)
@@ -68,4 +81,3 @@ func ReadFromXMLFile(fileName string) ([]byte, error) {
 
 	return fileData, nil
 }
-

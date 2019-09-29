@@ -7,16 +7,18 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
+	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/id"
 )
 
 type vmEntity struct {
-	uuid     uint64
-	division string
-	version  string
-	addr     string
-	pkt      chan *ghost.GhostPacket
-	in       chan *innerCmd
+	uuid      uint64
+	division  string
+	version   string
+	addr      string
+	pkt       chan *ghost.GhostPacket
+	in        chan *innerCmd
+	checkTime int64
 }
 
 type vmEntityStatus struct {
@@ -57,13 +59,15 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 	uuid, _ := vmm.sf.NextID()
 	pkt := make(chan *ghost.GhostPacket, 1000)
 	in := make(chan *innerCmd, 10)
+	checkTime := time.Now().Unix() + etc.GetInt64WithDefault("global", "keepAlive", 10)
 	vm := &vmEntity{
-		uuid:     uuid,
-		division: division,
-		version:  version,
-		addr:     addr,
-		pkt:      pkt,
-		in:       in,
+		uuid:      uuid,
+		division:  division,
+		version:   version,
+		addr:      addr,
+		pkt:       pkt,
+		in:        in,
+		checkTime: checkTime,
 	}
 
 	// division ---> vm
@@ -102,6 +106,25 @@ func (vmm *vmMgr) delVM(division string, uuid uint64) int32 {
 	return errno.OK
 }
 
+func (vmm *vmMgr) onTick(duration time.Duration) {
+	now := time.Now().Unix()
+
+	// check keep-alive with all vm(s)
+	interval := etc.GetInt64WithDefault("global", "keepAlive", 10)
+	for _, vm := range vmm.vms {
+		if now >= vm.checkTime {
+			vm.pkt <- &ghost.GhostPacket{
+				CmdId:     conn.CmdPing,
+				UserData:  0,
+				Timestamp: uint32(now),
+				Sessions:  []uint64{0},
+				Body:      "KEEP-ALIVE",
+			}
+			vm.checkTime = now + interval
+		}
+	}
+}
+
 func (vmm *vmMgr) dump(division string, uuid uint64) string {
 	vm, ok := vmm.vms[division]
 	if !ok {
@@ -137,15 +160,13 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 		if count > 10 {
 			count = 10
 		}
-		sessions := make([]uint64, 1)
-		sessions[0] = 12345678
 		for i := int64(0); i < count; i++ {
 			vm.pkt <- &ghost.GhostPacket{
 				CmdId:     conn.CmdPing,
 				UserData:  uint32(i),
 				Timestamp: uint32(time.Now().Unix()),
-				Sessions:  sessions,
-				Body:      "ABCDEFG",
+				Sessions:  []uint64{0},
+				Body:      "DEBUG-PING",
 			}
 		}
 	}

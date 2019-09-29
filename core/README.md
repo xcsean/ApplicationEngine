@@ -4,7 +4,7 @@
 
 * 'database' contain registry & globby sql scripts
 * 'protocol' contain services protocol go files
-* 'sample' contain some samples such as lobby/client demostration
+* 'sample' contain some samples such as host/vm/client
 * 'service' contain services source, such as getcd/gconnd/ghost
 * 'shared' contain go source shared by services
 

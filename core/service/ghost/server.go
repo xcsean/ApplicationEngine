@@ -94,9 +94,10 @@ func start(c *ghostConfig, selfID int64) bool {
 	}
 	go startConn(csk, connChannel)
 
-	// start a timer, print the performance information periodically
+	// create the vm-manager, and launch a timer for vmm
 	vmmgr = newVMMgr(id.NewSnowflake(settings), vmmChannel)
-	tick := time.NewTicker(time.Duration(10) * time.Second)
+	duration := time.Duration(1)
+	tick := time.NewTicker(duration * time.Second)
 	for {
 		exit := false
 		select {
@@ -106,7 +107,7 @@ func start(c *ghostConfig, selfID int64) bool {
 		case cmd := <-vmmChannel:
 			exit = dispatchVMM(vmmgr, cmd)
 		case <-tick.C:
-
+			vmmgr.onTick(duration)
 		}
 		if exit {
 			break

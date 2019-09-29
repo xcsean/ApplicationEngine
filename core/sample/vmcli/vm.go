@@ -69,11 +69,6 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 		})
 	}
 
-	g.Update(func(g *ui.Gui) error {
-		g.SetCurrentView(getVMEdit())
-		return nil
-	})
-
 	// bind the service to vmsvcAddr
 	ls, err := net.Listen("tcp", vmsvcAddr)
 	if err != nil {

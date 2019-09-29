@@ -74,6 +74,7 @@ func main() {
 
 	g.SetManagerFunc(layout)
 	g.SetKeybinding("", ui.KeyCtrlC, ui.ModNone, quit)
+	g.SetKeybinding("", ui.KeyTab, ui.ModNone, tab)
 
 	// run vm routine
 	hostAddr := fmt.Sprintf("%s:%d", hostIP, hostPort)
@@ -128,12 +129,24 @@ func layout(g *ui.Gui) error {
 		v.Editable = true
 		v.Wrap = true
 		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, inputForVM)
+		g.SetCurrentView(name)
 	}
 	return nil
 }
 
 func quit(g *ui.Gui, v *ui.View) error {
 	return ui.ErrQuit
+}
+
+func tab(g *ui.Gui, v *ui.View) error {
+	currView := g.CurrentView()
+	name := currView.Name()
+	if name == getVMEdit() {
+		g.SetCurrentView(getClientEdit())
+	} else {
+		g.SetCurrentView(getVMEdit())
+	}
+	return nil
 }
 
 func input(g *ui.Gui, v *ui.View) error {

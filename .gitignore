@@ -8,3 +8,6 @@ core/build/ghost.xml
 core/build/vmcli
 core/build/start_vmcli.sh
 core/build/app.ghost.*
+core/sample/vmcli/vmcli.exe
+core/service/gconnd/gconnd.exe
+core/service/ghost/ghost.exe

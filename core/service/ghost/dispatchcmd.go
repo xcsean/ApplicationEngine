@@ -8,15 +8,15 @@ func dispatchRPC(vmm *vmMgr, cmd *innerCmd) bool {
 	case innerCmdRegisterVM:
 		division, version, addr, _, rspChannel := cmd.getRPCReq()
 		uuid, result := vmm.addVM(division, version, addr)
-		rspChannel <- newRPCRsp(innerCmdRegisterVM, result, uuid)
+		rspChannel <- newRPCRsp(innerCmdRegisterVM, result, uuid, "")
 	case innerCmdUnregisterVM:
 		division, _, _, uuid, rspChannel := cmd.getRPCReq()
 		result := vmm.delVM(division, uuid)
-		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, 0)
+		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, 0, "")
 	case innerCmdDebug:
 		division, cmdOp, cmdParam, _, rspChannel := cmd.getRPCReq()
-		result := vmm.debug(division, cmdOp, cmdParam)
-		rspChannel <- newRPCRsp(innerCmdDebug, result, 0)
+		desc, result := vmm.debug(division, cmdOp, cmdParam)
+		rspChannel <- newRPCRsp(innerCmdDebug, result, 0, desc)
 	}
 	return false
 }

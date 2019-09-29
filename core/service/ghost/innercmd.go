@@ -13,6 +13,7 @@ type rspRPC struct {
 	cmdID  uint8
 	result int32
 	i1     uint64
+	s1     string
 	data   []byte
 }
 
@@ -38,8 +39,8 @@ func (ic *innerCmd) getRPCReq() (string, string, string, uint64, chan *rspRPC) {
 	return ic.s1, ic.s2, ic.s3, ic.i1, ic.rsp
 }
 
-func (rsp *rspRPC) getRPCRsp() (int32, uint64) {
-	return rsp.result, rsp.i1
+func (rsp *rspRPC) getRPCRsp() (int32, uint64, string) {
+	return rsp.result, rsp.i1, rsp.s1
 }
 
 func newRPCReq(cmdID uint8, s1, s2, s3 string, i1 uint64, ch chan *rspRPC) *innerCmd {
@@ -53,10 +54,11 @@ func newRPCReq(cmdID uint8, s1, s2, s3 string, i1 uint64, ch chan *rspRPC) *inne
 	}
 }
 
-func newRPCRsp(cmdID uint8, result int32, i1 uint64) *rspRPC {
+func newRPCRsp(cmdID uint8, result int32, i1 uint64, s1 string) *rspRPC {
 	return &rspRPC{
 		cmdID:  cmdID,
 		result: result,
+		s1:     s1,
 		i1:     i1,
 	}
 }

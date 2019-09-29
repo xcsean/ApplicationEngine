@@ -37,7 +37,7 @@ func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan
 			cmdID := cmd.getID()
 			if cmdID == innerCmdVMStart {
 				division, version, addr, uuid = cmd.getVMMCmd()
-				log.Debug("vm %s %s %s %d start", division, version, addr, uuid)
+				log.Info("vm %s %s %s %d start", division, version, addr, uuid)
 				ctx, err = vmEntityInitStream(addr)
 				if err != nil {
 					log.Error("vm %s %s %s %d stream conn failed: %s", division, version, addr, uuid, err.Error())
@@ -45,7 +45,7 @@ func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan
 					exit = true
 				} else {
 					defer ctx.conn.Close()
-					log.Debug("vm %s %s %s %d stream ready", division, version, addr, uuid)
+					log.Info("vm %s %s %s %d stream ready", division, version, addr, uuid)
 				}
 			} else if cmdID == innerCmdVMShouldExit {
 				exit = true
@@ -53,7 +53,7 @@ func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan
 		case pkt := <-pktChannel:
 			err = ctx.stream.Send(pkt)
 			if err != nil {
-				log.Debug("vm %s %s %s %d steam send failed: %s", division, version, addr, uuid, err.Error())
+				log.Info("vm %s %s %s %d steam send failed: %s", division, version, addr, uuid, err.Error())
 				outChannel <- newVMMCmd(innerCmdVMStreamSendFault, division, version, addr, uuid)
 				exit = true
 			}
@@ -64,5 +64,5 @@ func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan
 		}
 	}
 
-	log.Debug("vm %s %s %s %d exit", division, version, addr, uuid)
+	log.Info("vm %s %s %s %d exit", division, version, addr, uuid)
 }

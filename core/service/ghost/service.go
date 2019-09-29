@@ -33,7 +33,7 @@ func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*
 	reqChannel <- newRPCReq(innerCmdRegisterVM, req.Division, req.Version, addr, 0, rspChannel)
 
 	cmd := <-rspChannel
-	result, uuid := cmd.getRPCRsp()
+	result, uuid, _ := cmd.getRPCRsp()
 	log.Debug("register vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
@@ -55,7 +55,7 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 	reqChannel <- newRPCReq(innerCmdUnregisterVM, req.Division, req.Version, "", req.Uuid, rspChannel)
 
 	cmd := <-rspChannel
-	result, _ = cmd.getRPCRsp()
+	result, _, _ = cmd.getRPCRsp()
 	log.Debug("unregister vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
@@ -97,10 +97,11 @@ func (s *myService) Debug(ctx context.Context, req *ghost.DebugReq) (*ghost.Debu
 	reqChannel <- newRPCReq(innerCmdDebug, req.Division, req.Cmdop, req.Cmdparam, 0, rspChannel)
 
 	cmd := <-rspChannel
-	result, _ = cmd.getRPCRsp()
+	result, _, desc := cmd.getRPCRsp()
 	log.Debug("debug vm %s op='%s' param='%s', result=%d", req.Division, req.Cmdop, req.Cmdparam, result)
 
 	rsp.Result = result
+	rsp.Desc = desc
 	return rsp, nil
 }
 

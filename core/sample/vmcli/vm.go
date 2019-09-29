@@ -28,7 +28,7 @@ var (
 	rpcVMChannel chan string
 	hostAddr     string
 	vmsvcAddr    string
-	vmUuid       uint64
+	vmUUID       uint64
 )
 
 func getVMView() string {
@@ -134,7 +134,7 @@ func callRegisterVM(division, version string, vmLog func(s string)) {
 
 		vmLog(fmt.Sprintf("[VM] register result=%d, uuid=%d", rsp.Result, rsp.Uuid))
 		if rsp.Result == errno.OK {
-			vmUuid = rsp.Uuid
+			vmUUID = rsp.Uuid
 		}
 		return nil
 	}, 3)
@@ -145,7 +145,7 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 		req := &ghost.UnregisterVmReq{
 			Division: division,
 			Version:  version,
-			Uuid:     vmUuid,
+			Uuid:     vmUUID,
 		}
 		rsp, err := c.UnregisterVM(ctx, req)
 		if err != nil {
@@ -154,7 +154,7 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 
 		vmLog(fmt.Sprintf("[VM] unregister result=%d", rsp.Result))
 		if rsp.Result == errno.OK {
-			vmUuid = 0
+			vmUUID = 0
 		}
 		return nil
 	}, 3)
@@ -173,6 +173,9 @@ func callDebug(division, cmdOp, cmdParam string, vmLog func(s string)) {
 		}
 
 		vmLog(fmt.Sprintf("[VM] debug result=%d", rsp.Result))
+		if rsp.Desc != "" {
+			vmLog(fmt.Sprintf("[VM] debug desc=%s", rsp.Desc))
+		}
 		return nil
 	}, 3)
 }

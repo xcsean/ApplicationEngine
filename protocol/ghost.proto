@@ -108,10 +108,6 @@ message notify_status_rsp {
     string desc = 2;
 }
 
-message notify_packet_req {
-    ghost_packet packets = 1;
-}
-
 message notify_packet_rsp {
     int32 result = 1;
 }

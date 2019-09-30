@@ -126,15 +126,7 @@ func (vmm *vmMgr) onTick(duration time.Duration) {
 	}
 }
 
-func (vmm *vmMgr) dump(division string, uuid uint64) string {
-	vm, ok := vmm.vms[division]
-	if !ok {
-		return ""
-	}
-	if vm.uuid != uuid {
-		return ""
-	}
-
+func (vmm *vmMgr) dump() string {
 	s := ""
 	for _, vm := range vmm.vms {
 		s = s + fmt.Sprintf("%s ", vm.division)
@@ -144,17 +136,15 @@ func (vmm *vmMgr) dump(division string, uuid uint64) string {
 
 func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 	s := ""
-	vm, ok := vmm.vms[division]
-	if !ok {
-		return s, errno.HOSTVMNOTEXIST
-	}
-
 	if cmdOp == "status" {
 		go debugNotifyStatusToVM(division, cmdParam)
 	} else if cmdOp == "dump" {
-		uuid, _ := strconv.ParseInt(cmdParam, 10, 64)
-		s = vmm.dump(division, uint64(uuid))
+		s = vmm.dump()
 	} else if cmdOp == "ping" {
+		vm, ok := vmm.vms[division]
+		if !ok {
+			return s, errno.HOSTVMNOTEXIST
+		}
 		count, err := strconv.ParseInt(cmdParam, 10, 64)
 		if err != nil {
 			count = 1

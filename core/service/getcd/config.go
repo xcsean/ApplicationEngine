@@ -33,7 +33,7 @@ func newConfig(fileName string) (*getcdConfig, error) {
 	return &cfg, nil
 }
 
-func (cfg *getcdConfig) GetID() (int64, error) {
+func (cfg *getcdConfig) getID() (int64, error) {
 	_, _, id, err := svc.ParseDivision(cfg.Division)
 	return id, err
 }

@@ -9,6 +9,7 @@ core/build/vmcli
 core/build/start_vmcli.sh
 core/build/app.ghost.*
 core/sample/vmcli/vmcli.exe
+core/service/getcd/getcd.exe
 core/service/gconnd/gconnd.exe
 core/service/gconnd/app.gconnd.*
 core/service/ghost/ghost.exe

@@ -65,13 +65,6 @@ func start(c *ghostConfig, selfID int64) bool {
 		log.Fatal("server select node %s failed: %s", c.Gconnd, err.Error())
 	}
 
-	// init the id maker settings
-	settings := id.Settings{
-		StartTime:      time.Now(),
-		MachineID:      func() (uint16, error) { return uint16(selfID), nil },
-		CheckMachineID: func(uint16) bool { return true },
-	}
-
 	// create the channels for communication between gconnd and vm(s)
 	connChannel := make(chan *innerCmd, 3000)
 	rpcChannel := make(chan *innerCmd, 1000)
@@ -94,10 +87,17 @@ func start(c *ghostConfig, selfID int64) bool {
 	}
 	go startConn(csk, connChannel)
 
-	// create the vm-manager, and launch a timer for vmm
+	// create the vm-manager, and add a global timer for the vmm
+	settings := id.Settings{
+		StartTime:      time.Now(),
+		MachineID:      func() (uint16, error) { return uint16(selfID), nil },
+		CheckMachineID: func(uint16) bool { return true },
+	}
 	vmmgr = newVMMgr(id.NewSnowflake(settings), vmmChannel)
-	duration := time.Duration(1)
-	tick := time.NewTicker(duration * time.Second)
+	tmmAddGlobalPeriodicTask("vmm", 1*time.Second, func(c chan *timerCmd) {
+		c <- &timerCmd{Type: timerCmdVMMOnTick}
+	})
+	tmmChannel := tmmGetChannel()
 	for {
 		exit := false
 		select {
@@ -107,8 +107,8 @@ func start(c *ghostConfig, selfID int64) bool {
 			exit = dispatchRPC(vmmgr, cmd)
 		case cmd := <-vmmChannel:
 			exit = dispatchVMM(vmmgr, cmd)
-		case <-tick.C:
-			vmmgr.onTick(duration)
+		case cmd := <-tmmChannel:
+			exit = dispatchTMM(vmmgr, cmd)
 		}
 		if exit {
 			break

@@ -57,7 +57,7 @@ func clientLoop(addr string, g *ui.Gui) {
 	cliLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(clientView)
-			fmt.Fprintf(v, "%s\n", s)
+			fmt.Fprintln(v, s)
 			return nil
 		})
 	}
@@ -68,7 +68,7 @@ func clientLoop(addr string, g *ui.Gui) {
 		case cmd := <-kbdChannel:
 			dealCliKeyboard(cmd, cliLog)
 		case cmd := <-netChannel:
-			cliLog(fmt.Sprintf("[CLIENT] net cmd=%d\n", cmd.cmdID))
+			cliLog(fmt.Sprintf("[CLIENT] net cmd=%d", cmd.cmdID))
 		}
 	}
 }
@@ -101,6 +101,21 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 			cliConn.Close()
 			cliConn = nil
 			cliLog(fmt.Sprintf("[C] disconnect from %s ok", connAddr))
+		}
+	} else if cmd == "ver" {
+		if cliConn == nil {
+			cliLog("[C] please type 'conn' first!")
+		} else {
+			if len(array) >= 2 {
+				var rb conn.ReservedBody
+				rb.StrParam = array[1]
+				body, _ := json.Marshal(rb)
+				pkt := conn.MakeCommonPkt(conn.CmdVersionCheck, 0, 0, body)
+				cliConn.Write(pkt)
+				cliLog(fmt.Sprintf("[C] version=%s", array[1]))
+			} else {
+				cliLog("[C] help: version 1.1.1.1")
+			}
 		}
 	} else if cmd == "say" {
 		if cliConn == nil {

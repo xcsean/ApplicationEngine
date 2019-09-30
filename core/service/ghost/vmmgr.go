@@ -107,7 +107,7 @@ func (vmm *vmMgr) delVM(division string, uuid uint64) int32 {
 	return errno.OK
 }
 
-func (vmm *vmMgr) onTick(duration time.Duration) {
+func (vmm *vmMgr) onTick() {
 	now := time.Now().Unix()
 
 	// check keep-alive with all vm(s)

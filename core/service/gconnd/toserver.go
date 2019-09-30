@@ -10,7 +10,7 @@ import (
 
 func handleSrvPkt(srvConn net.Conn, srvChannel chan<- *innerCmd, hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
-	if conn.IsPublicCmd(header.CmdID)
+	if conn.IsPublicCmd(header.CmdID) {
 		// this is a public cmd, just wrap as a server broadcast
 		srvChannel <- newServerCmd(innerCmdServerBroadcast, srvConn, hdr, body)
 		return

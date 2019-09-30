@@ -34,11 +34,7 @@ func newConfig(fileName string) (*ghostConfig, error) {
 	return &cfg, nil
 }
 
-func (cfg *ghostConfig) GetID() (int64, error) {
+func (cfg *ghostConfig) getID() (int64, error) {
 	_, _, id, err := svc.ParseDivision(cfg.Division)
 	return id, err
-}
-
-func (cfg *ghostConfig) GetGetcdAddr() string {
-	return cfg.GetcdAddr
 }

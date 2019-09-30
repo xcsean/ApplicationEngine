@@ -110,7 +110,7 @@ func start(c *gconndConfig, id int64) {
 		case cmd := <-rpcChannel:
 			exit = dispatchRPCCmd(cmd, rpcChannel)
 		case <-tick.C:
-			if config.IsProfilerEnabled() {
+			if config.isProfilerEnabled() {
 				dispatchProfiler(cliChannel, srvChannel, rpcChannel)
 			}
 		}
@@ -357,7 +357,7 @@ func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {
 	pkt, cmdID := conn.CopySessionPkt(sessionIDs, hdr, body)
 	if pkt != nil {
 		n, err := srvConn.Write(pkt)
-		if config.IsTrafficEnabled() {
+		if config.isTrafficEnabled() {
 			log.Info("UP|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, cmdID, len(hdr), len(body))
 			if err != nil {
 				log.Error("UPFORWARD|error=%s", err.Error())
@@ -377,7 +377,7 @@ func broadcastToClients(hdr, body []byte) {
 		cs, ok := cliMap[sessionID]
 		if ok {
 			n, err := cs.cliConn.Write(pkt)
-			if config.IsTrafficEnabled() {
+			if config.isTrafficEnabled() {
 				log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, cmdID, len(hdr), len(innerBody))
 				if err != nil {
 					log.Error("DNFORWARD|error=%s", err.Error())
@@ -397,7 +397,7 @@ func broadcastAll(pkt []byte) {
 	for sessionID, cs := range cliMap {
 		log.Debug("broadcast all, session=%d, pkt=%d", sessionID, len(pkt))
 		n, err := cs.cliConn.Write(pkt)
-		if config.IsTrafficEnabled() {
+		if config.isTrafficEnabled() {
 			hdr := conn.ParseHeader(pkt)
 			log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, hdr.CmdID, conn.LengthOfHeader, len(pkt)-conn.LengthOfHeader)
 			if err != nil {

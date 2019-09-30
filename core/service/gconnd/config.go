@@ -38,19 +38,15 @@ func newConfig(fileName string) (*gconndConfig, error) {
 	return &cfg, nil
 }
 
-func (cfg *gconndConfig) GetID() (int64, error) {
+func (cfg *gconndConfig) getID() (int64, error) {
 	_, _, id, err := svc.ParseDivision(cfg.Division)
 	return id, err
 }
 
-func (cfg *gconndConfig) GetGetcdAddr() string {
-	return cfg.GetcdAddr
-}
-
-func (cfg *gconndConfig) IsTrafficEnabled() bool {
+func (cfg *gconndConfig) isTrafficEnabled() bool {
 	return cfg.LogTraffic != 0
 }
 
-func (cfg *gconndConfig) IsProfilerEnabled() bool {
+func (cfg *gconndConfig) isProfilerEnabled() bool {
 	return cfg.ProfilerFlag != 0
 }

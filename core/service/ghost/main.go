@@ -29,7 +29,7 @@ func main() {
 			return
 		}
 		// validate the start argument
-		id2, err := c.GetID()
+		id2, err := c.getID()
 		if err != nil {
 			fmt.Println(err.Error())
 			return

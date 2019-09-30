@@ -1,5 +1,10 @@
 package main
 
+import (
+	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
+	"github.com/xcsean/ApplicationEngine/core/shared/log"
+)
+
 // all dispatchXXX functions run in the main routine context!!!
 
 func dispatchRPC(vmm *vmMgr, cmd *innerCmd) bool {
@@ -28,6 +33,14 @@ func dispatchVMM(vmm *vmMgr, cmd *innerCmd) bool {
 		division, _, _, uuid := cmd.getVMMCmd()
 		vmm.delVM(division, uuid)
 	}
+
+	return false
+}
+
+func dispatchConn(vmm *vmMgr, cmd *innerCmd) bool {
+	defer dbg.Stacktrace()
+
+	log.Debug("cmd from conn: %d", cmd.getID())
 
 	return false
 }

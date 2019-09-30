@@ -7,6 +7,8 @@ type innerCmd struct {
 	s3    string
 	rsp   chan *rspRPC
 	i1    uint64
+	b1    []byte
+	b2    []byte
 }
 
 type rspRPC struct {
@@ -28,6 +30,8 @@ const (
 	innerCmdVMStreamConnFault = 112
 	innerCmdVMStreamSendFault = 113
 	innerCmdVMShouldExit      = 114
+	innerCmdConnSessionUp     = 121
+	innerCmdConnExit          = 129
 )
 
 func (ic *innerCmd) getID() uint8 {
@@ -75,5 +79,18 @@ func newVMMCmd(cmdID uint8, s1, s2, s3 string, i1 uint64) *innerCmd {
 		s2:    s2,
 		s3:    s3,
 		i1:    i1,
+	}
+}
+
+// Conn methods
+func (ic *innerCmd) getConnCmd() ([]byte, []byte) {
+	return ic.b1, ic.b2
+}
+
+func newConnCmd(cmdID uint8, b1, b2 []byte) *innerCmd {
+	return &innerCmd{
+		cmdID: cmdID,
+		b1: b1,
+		b2: b2,
 	}
 }

@@ -73,9 +73,9 @@ func start(c *ghostConfig, selfID int64) bool {
 	}
 
 	// create the channels for communication between gconnd and vm(s)
-	connChannel := make(chan string, 10)
-	rpcChannel := make(chan *innerCmd, 3000)
-	vmmChannel := make(chan *innerCmd, 3000)
+	connChannel := make(chan *innerCmd, 3000)
+	rpcChannel := make(chan *innerCmd, 1000)
+	vmmChannel := make(chan *innerCmd, 1000)
 
 	// start the acceptor and client
 	//  rpcAddr is the rpc address we should bind and provide service
@@ -101,7 +101,8 @@ func start(c *ghostConfig, selfID int64) bool {
 	for {
 		exit := false
 		select {
-		//case _ := <-connChannel:
+		case cmd := <-connChannel:
+			exit = dispatchConn(vmmgr, cmd)
 		case cmd := <-rpcChannel:
 			exit = dispatchRPC(vmmgr, cmd)
 		case cmd := <-vmmChannel:
@@ -131,7 +132,7 @@ func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
 	log.Info("RPC service exit")
 }
 
-func startConn(csk net.Conn, connChannel chan<- string) {
+func startConn(csk net.Conn, connChannel chan *innerCmd) {
 	defer csk.Close()
 
 	// try to request master
@@ -141,9 +142,16 @@ func startConn(csk net.Conn, connChannel chan<- string) {
 	err := conn.HandleStream(csk, func(_ net.Conn, hdr, body []byte) {
 		h := conn.ParseHeader(hdr)
 		if isMaster {
-			// common packet deal
-			// push to connChannel
-
+			// common packet deal, push to connChannel
+			dupHdr := make([]byte, len(hdr))
+			dupBody := make([]byte, len(body))
+			copy(dupHdr, hdr)
+			copy(dupBody, body)
+			select {
+			case connChannel <- newConnCmd(innerCmdConnSessionUp, dupHdr, dupBody):
+			default:
+				// just discard the packet
+			}
 		} else {
 			// wait the CmdMasterYou or CmdMasterNot
 			switch h.CmdID {
@@ -156,6 +164,10 @@ func startConn(csk net.Conn, connChannel chan<- string) {
 		}
 	})
 
-	log.Info("client for gconnd exit")
-	connChannel <- err.Error()
+	if err != nil {
+		log.Error("client for gconnd exit, reason: %s", err.Error())
+	} else {
+		log.Info("client for gconnd exit")
+	}
+	connChannel <- newConnCmd(innerCmdConnExit, nil, nil)
 }

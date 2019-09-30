@@ -6,6 +6,7 @@ core/build/app.gconnd.*
 core/build/ghost
 core/build/ghost.xml
 core/build/vmcli
+core/build/vmcli.xml
 core/build/start_vmcli.sh
 core/build/app.ghost.*
 core/sample/vmcli/vmcli.exe

@@ -7,7 +7,7 @@ type timerCmd struct {
 }
 
 const (
-	timerCmdVMMOnTick = 101
+	timerCmdVMMOnTick           = 101
 	timerCmdSessionWaitVerCheck = 201
 	timerCmdSessionWaitBindUser = 202
 )

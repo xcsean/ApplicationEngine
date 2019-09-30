@@ -55,6 +55,10 @@ func dispatchConn(vmm *vmMgr, cmd *innerCmd) bool {
 			var rb conn.ReservedBody
 			json.Unmarshal(innerBody, &rb)
 			log.Debug("session=%d addr='%s' enter", sessionIDs[0], rb.StrParam)
+			// create and monitor the session
+			tmmAddDelayTask(10*time.Second, func(c chan *timerCmd) {
+				c <- &timerCmd{Type: timerCmdSessionWaitVerCheck, Userdata1: sessionIDs[0]}
+			})
 		} else if header.CmdID == conn.CmdSessionLeave {
 			_, sessionIDs, _ := conn.ParseSessionBody(body)
 			log.Debug("session=%d leave", sessionIDs[0])
@@ -64,8 +68,8 @@ func dispatchConn(vmm *vmMgr, cmd *innerCmd) bool {
 			err := json.Unmarshal(innerBody, &rb)
 			if err == nil {
 				log.Debug("session=%d version=%s", sessionIDs[0], rb.StrParam)
-				tmmAddDelayTask(3*time.Second, func(c chan *timerCmd) {
-					c <- &timerCmd{Type: timerCmdSessionWaitBindUser, Userdata1: sessionIDs[0], }
+				tmmAddDelayTask(10*time.Second, func(c chan *timerCmd) {
+					c <- &timerCmd{Type: timerCmdSessionWaitBindUser, Userdata1: sessionIDs[0]}
 				})
 			} else {
 				log.Error("session=%d version check failed: %s", sessionIDs[0], err.Error())
@@ -83,6 +87,8 @@ func dispatchTMM(vmm *vmMgr, cmd *timerCmd) bool {
 	switch cmdType {
 	case timerCmdVMMOnTick:
 		vmm.onTick()
+	case timerCmdSessionWaitVerCheck:
+		log.Debug("wait ver check expired: userdata1=%d, userdata2=%d", cmd.Userdata1, cmd.Userdata2)
 	case timerCmdSessionWaitBindUser:
 		log.Debug("wait bind user expired: userdata1=%d, userdata2=%d", cmd.Userdata1, cmd.Userdata2)
 	default:

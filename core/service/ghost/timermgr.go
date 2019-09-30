@@ -7,7 +7,7 @@ import (
 )
 
 type timerMgr struct {
-	C chan *timerCmd
+	C      chan *timerCmd
 	global map[string]bool
 }
 
@@ -17,7 +17,7 @@ var (
 
 func init() {
 	tmm = &timerMgr{
-		C: make(chan *timerCmd, 1000),
+		C:      make(chan *timerCmd, 1000),
 		global: make(map[string]bool),
 	}
 }

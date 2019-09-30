@@ -53,7 +53,7 @@ const (
 	CmdPrivateEnd   = 65500
 	CmdPing         = 65501 // client <-> backend
 	CmdPong         = 65502 // client <-> backend
-	CmdVersionCheck = 65535 // client <-> backend
+	CmdVerCheck     = 65535 // client <-> backend
 )
 
 // ReservedBody reserved command body format

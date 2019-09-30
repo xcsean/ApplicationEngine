@@ -110,7 +110,7 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 				var rb conn.ReservedBody
 				rb.StrParam = array[1]
 				body, _ := json.Marshal(rb)
-				pkt := conn.MakeCommonPkt(conn.CmdVersionCheck, 0, 0, body)
+				pkt := conn.MakeCommonPkt(conn.CmdVerCheck, 0, 0, body)
 				cliConn.Write(pkt)
 				cliLog(fmt.Sprintf("[C] version=%s", array[1]))
 			} else {

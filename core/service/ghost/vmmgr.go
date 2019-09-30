@@ -23,8 +23,8 @@ type vmEntity struct {
 }
 
 type vmEntityStatus struct {
-	curLoad uint64
-	maxLoad uint64
+	curLoad int64
+	maxLoad int64
 }
 
 type vmStatus map[string]vmEntityStatus
@@ -124,6 +124,27 @@ func (vmm *vmMgr) onTick() {
 			vm.checkTime = now + interval
 		}
 	}
+}
+
+func (vmm *vmMgr) pick(ver string) (string, int32) {
+	status, ok := vmm.vers[ver]
+	if !ok {
+		return "", errno.HOSTVMUNAVAILABLEBYVER
+	}
+
+	minLoad := int64(99999999)
+	division := ""
+	for dv, es := range status {
+		if es.curLoad < minLoad {
+			minLoad = es.curLoad
+			division = dv
+		}
+	}
+
+	if division == "" {
+		return "", errno.HOSTVMUNAVAILABLEBYVER
+	}
+	return division, errno.OK
 }
 
 func (vmm *vmMgr) dump() string {

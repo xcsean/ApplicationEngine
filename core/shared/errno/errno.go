@@ -28,6 +28,9 @@ const (
 	// HOSTVMADDRALREADYEXIST means the vm's address identified by division already exist
 	HOSTVMADDRALREADYEXIST = -32
 
+	// HOSTVMUNAVAILABLEBYVER means vm's unavailable by version provided
+	HOSTVMUNAVAILABLEBYVER = -33
+
 	// HOSTVMNOTEXIST means the vm identified by division is not exist in host
-	HOSTVMNOTEXIST = -33
+	HOSTVMNOTEXIST = -39
 )

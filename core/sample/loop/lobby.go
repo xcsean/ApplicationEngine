@@ -60,23 +60,23 @@ func lobbyLoop(srvAddr string, g *ui.Gui) {
 				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
 				sessionID := sessionIDs[0]
 				// get the client address
-				var pb conn.PrivateBody
-				err = json.Unmarshal(innerBody, &pb)
+				var rb conn.ReservedBody
+				err = json.Unmarshal(innerBody, &rb)
 				if err != nil {
 					lobbyLog(fmt.Sprintf("[P] client session=%d enter... %s", sessionID, err.Error()))
 				} else {
-					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s enter...", sessionID, pb.StrParam))
+					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s enter...", sessionID, rb.StrParam))
 				}
 			} else if h.CmdID == conn.CmdSessionLeave {
 				_, sessionIDs, innerBody := conn.ParseSessionBody(b)
 				sessionID := sessionIDs[0]
 				// get the client address
-				var pb conn.PrivateBody
-				err = json.Unmarshal(innerBody, &pb)
+				var rb conn.ReservedBody
+				err = json.Unmarshal(innerBody, &rb)
 				if err != nil {
 					lobbyLog(fmt.Sprintf("[P] client session=%d leave... %s", sessionID, err.Error()))
 				} else {
-					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s leave...", sessionID, pb.StrParam))
+					lobbyLog(fmt.Sprintf("[P] client session=%d addr=%s leave...", sessionID, rb.StrParam))
 				}
 			} else if h.CmdID == cmdSAY {
 				_, sessionIDs, innerBody := conn.ParseSessionBody(b)

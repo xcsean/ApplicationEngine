@@ -169,8 +169,8 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				sessionIDs := make([]uint64, 1)
 				sessionIDs[0] = sessionID
 
-				pb := conn.PrivateBody{StrParam: cliAddr}
-				body, _ := json.Marshal(pb)
+				rb := conn.ReservedBody{StrParam: cliAddr}
+				body, _ := json.Marshal(rb)
 
 				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, body)
 				_, err := srvConn.Write(pkt)
@@ -195,8 +195,8 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 			sessionIDs := make([]uint64, 1)
 			sessionIDs[0] = sessionID
 
-			pb := conn.PrivateBody{StrParam: cliAddr}
-			body, _ := json.Marshal(pb)
+			rb := conn.ReservedBody{StrParam: cliAddr}
+			body, _ := json.Marshal(rb)
 
 			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, body)
 			_, err := srvConn.Write(pkt)
@@ -439,15 +439,15 @@ func setRouteForClients(hdr, body []byte) {
 	if header.CmdID == conn.CmdSessionRoute {
 		sessionNum, sessionIDs, innerBody := conn.ParseSessionBody(body)
 
-		var pb conn.PrivateBody
-		err := json.Unmarshal(innerBody, &pb)
+		var rb conn.ReservedBody
+		err := json.Unmarshal(innerBody, &rb)
 		if err != nil {
 			log.Error("set route unmarshal failed: %s", err.Error())
 			return
 		}
-		log.Debug("private body=%v", pb)
+		log.Debug("reserved body=%v", rb)
 
-		newForwardTo := pb.StrParam
+		newForwardTo := rb.StrParam
 		_, ok := srvMap[newForwardTo]
 		if ok {
 			for i := 0; i < int(sessionNum); i++ {

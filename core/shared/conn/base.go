@@ -35,7 +35,7 @@ const (
 	LengthOfMaxPacket = LengthOfHeader + LengthOfMaxBody
 )
 
-// private command
+// reserved command
 const (
 	CmdPrivateBegin = 60000
 	CmdSessionEnter = 60001 // conn --> backend
@@ -50,12 +50,13 @@ const (
 	CmdBroadcastAll = 60021 // conn <-- backend
 	CmdKickAll      = 60031 // conn <-- backend
 	CmdNotifyClient = 65001 // client <-- conn
-	CmdPing         = 65011 // client <-> conn <-> backend
-	CmdPong         = 65012 // client <-> conn <-> backend
-	CmdPrivateEnd   = 65535
+	CmdPrivateEnd   = 65500
+	CmdPing         = 65501 // client <-> backend
+	CmdPong         = 65502 // client <-> backend
+	CmdVersionCheck = 65535 // client <-> backend
 )
 
-// PrivateBody private command body format
-type PrivateBody struct {
+// ReservedBody reserved command body format
+type ReservedBody struct {
 	StrParam string
 }

@@ -6,12 +6,12 @@ import (
 
 // IsPublicCmd tell whether it's a public command or not
 func IsPublicCmd(cmdID uint16) bool {
-	return cmdID < CmdPrivateBegin
+	return cmdID < CmdPrivateBegin || cmdID > CmdPrivateEnd
 }
 
 // IsPrivateCmd tell whether it's a private command or not
 func IsPrivateCmd(cmdID uint16) bool {
-	return cmdID >= CmdPrivateBegin
+	return cmdID >= CmdPrivateBegin && cmdID <= CmdPrivateEnd
 }
 
 // ParseHeader parse the header

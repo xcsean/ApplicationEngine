@@ -26,9 +26,8 @@ var (
 	kbdVMChannel chan string
 	rpcVMChannel chan string
 	hostAddr     string
-	vmsvcAddr    string
-	vmUUID       uint64
 	division     string
+	vmUUID       uint64
 )
 
 func getVMView() string {
@@ -57,7 +56,6 @@ func sendRPCVMText(text string) {
 
 func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	hostAddr = addr
-	vmsvcAddr = vmAddr
 	division = config.Division
 	kbdVMChannel = make(chan string, 100)
 	rpcVMChannel = make(chan string, 100)
@@ -69,10 +67,10 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 		})
 	}
 
-	// bind the service to vmsvcAddr
-	ls, err := net.Listen("tcp", vmsvcAddr)
+	// bind the service to vmAddr
+	ls, err := net.Listen("tcp", vmAddr)
 	if err != nil {
-		vmLog(fmt.Sprintf("[VM] can't bind %s", vmsvcAddr))
+		vmLog(fmt.Sprintf("[VM] can't bind %s", vmAddr))
 		time.Sleep(1 * time.Second)
 		os.Exit(-1)
 	}

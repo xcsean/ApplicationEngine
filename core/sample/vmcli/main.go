@@ -118,7 +118,7 @@ func layout(g *ui.Gui) error {
 		v.Title = getClientEditTitle()
 		v.Editable = true
 		v.Wrap = true
-		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, input)
+		g.SetKeybinding(name, ui.KeyEnter, ui.ModNone, inputForCli)
 	}
 	name = getVMEdit()
 	if v, err := g.SetView(name, maxX/2, maxY-3, maxX-1, maxY-1); err != nil {
@@ -149,7 +149,7 @@ func tab(g *ui.Gui, v *ui.View) error {
 	return nil
 }
 
-func input(g *ui.Gui, v *ui.View) error {
+func inputForCli(g *ui.Gui, v *ui.View) error {
 	text := v.Buffer()
 
 	// clear the input

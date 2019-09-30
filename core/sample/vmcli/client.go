@@ -66,14 +66,14 @@ func clientLoop(addr string, g *ui.Gui) {
 	for {
 		select {
 		case cmd := <-kbdChannel:
-			dealKeyboard(cmd, cliLog)
+			dealCliKeyboard(cmd, cliLog)
 		case cmd := <-netChannel:
 			cliLog(fmt.Sprintf("[CLIENT] net cmd=%d\n", cmd.cmdID))
 		}
 	}
 }
 
-func dealKeyboard(text string, cliLog func(s string)) {
+func dealCliKeyboard(text string, cliLog func(s string)) {
 	text = strings.Replace(text, "\n", "", -1)
 	text = strings.Replace(text, "\t", " ", -1)
 	array := strings.Fields(text)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -134,7 +135,11 @@ func (vmm *vmMgr) dump(division string, uuid uint64) string {
 		return ""
 	}
 
-	return "dump"
+	s := ""
+	for _, vm := range vmm.vms {
+		s = s + fmt.Sprintf("%s ", vm.division)
+	}
+	return s
 }
 
 func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {

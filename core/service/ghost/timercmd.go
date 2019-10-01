@@ -9,5 +9,8 @@ type timerCmd struct {
 const (
 	timerCmdVMMOnTick           = 101
 	timerCmdSessionWaitVerCheck = 201
-	timerCmdSessionWaitBindUser = 202
+	timerCmdSessionWaitBind     = 202
+	timerCmdSessionWorking      = 203
+	timerCmdSessionWaitUnbind   = 204
+	timerCmdSessionWaitDelete   = 205
 )

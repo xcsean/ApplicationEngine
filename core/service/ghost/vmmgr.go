@@ -37,14 +37,26 @@ type vmMgr struct {
 	addrs map[string]bool     // fast-index
 }
 
+var (
+	vmmgr *vmMgr
+)
+
 func newVMMgr(sf *id.Snowflake, outChannel chan *innerCmd) *vmMgr {
-	return &vmMgr{
+	vmmgr = &vmMgr{
 		sf:    sf,
 		out:   outChannel,
 		vms:   make(map[string]*vmEntity),
 		vers:  make(map[string]vmStatus),
 		addrs: make(map[string]bool),
 	}
+	tmmAddGlobalPeriodicTask("vmm", 1*time.Second, func(c chan *timerCmd) {
+		c <- &timerCmd{Type: timerCmdVMMOnTick}
+	})
+	return vmmgr
+}
+
+func getVMMgr() *vmMgr {
+	return vmmgr
 }
 
 func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {

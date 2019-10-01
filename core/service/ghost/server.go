@@ -15,10 +15,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var (
-	vmmgr *vmMgr
-)
-
 func start(c *ghostConfig, selfID int64) bool {
 	// save cfg
 	config = c
@@ -69,6 +65,7 @@ func start(c *ghostConfig, selfID int64) bool {
 	connChannel := make(chan *innerCmd, 3000)
 	rpcChannel := make(chan *innerCmd, 1000)
 	vmmChannel := make(chan *innerCmd, 1000)
+	tmmChannel := tmmGetChannel()
 
 	// start the acceptor and client
 	//  rpcAddr is the rpc address we should bind and provide service
@@ -93,22 +90,21 @@ func start(c *ghostConfig, selfID int64) bool {
 		MachineID:      func() (uint16, error) { return uint16(selfID), nil },
 		CheckMachineID: func(uint16) bool { return true },
 	}
-	vmmgr = newVMMgr(id.NewSnowflake(settings), vmmChannel)
-	tmmAddGlobalPeriodicTask("vmm", 1*time.Second, func(c chan *timerCmd) {
-		c <- &timerCmd{Type: timerCmdVMMOnTick}
-	})
-	tmmChannel := tmmGetChannel()
+	newVMMgr(id.NewSnowflake(settings), vmmChannel)
 	for {
 		exit := false
 		select {
 		case cmd := <-connChannel:
-			exit = dispatchConn(vmmgr, cmd)
+			connExit := dispatchConn(cmd)
+			if connExit {
+				// TODO change the vmm and sm state
+			}
 		case cmd := <-rpcChannel:
-			exit = dispatchRPC(vmmgr, cmd)
+			exit = dispatchRPC(cmd)
 		case cmd := <-vmmChannel:
-			exit = dispatchVMM(vmmgr, cmd)
+			exit = dispatchVMM(cmd)
 		case cmd := <-tmmChannel:
-			exit = dispatchTMM(vmmgr, cmd)
+			exit = dispatchTMM(cmd)
 		}
 		if exit {
 			break
@@ -157,7 +153,9 @@ func startConn(csk net.Conn, connChannel chan *innerCmd) {
 			switch h.CmdID {
 			case conn.CmdMasterYou:
 				log.Info("I'm master, that's ok")
+				// init the conn-manager
 				isMaster = true
+				initConnMgr(csk)
 			case conn.CmdMasterNot:
 				log.Fatal("I can't be master, so exit")
 			}

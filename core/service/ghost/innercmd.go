@@ -31,6 +31,7 @@ const (
 	innerCmdVMStreamSendFault = 113
 	innerCmdVMShouldExit      = 114
 	innerCmdConnSessionUp     = 121
+	innerCmdConnSessionDn     = 122
 	innerCmdConnExit          = 129
 )
 
@@ -90,7 +91,7 @@ func (ic *innerCmd) getConnCmd() ([]byte, []byte) {
 func newConnCmd(cmdID uint8, b1, b2 []byte) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		b1: b1,
-		b2: b2,
+		b1:    b1,
+		b2:    b2,
 	}
 }

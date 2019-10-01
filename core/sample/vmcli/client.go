@@ -68,7 +68,7 @@ func clientLoop(addr string, g *ui.Gui) {
 		case cmd := <-kbdChannel:
 			dealCliKeyboard(cmd, cliLog)
 		case cmd := <-netChannel:
-			cliLog(fmt.Sprintf("[CLIENT] net cmd=%d", cmd.cmdID))
+			dealNetCmd(cmd, cliLog)
 		}
 	}
 }
@@ -90,6 +90,7 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 			} else {
 				cliConn = c
 				cliLog(fmt.Sprintf("[C] connect %s ok", connAddr))
+				go netLoop(c, netChannel)
 			}
 		} else {
 			cliLog("[C] alreay connected!")
@@ -138,4 +139,22 @@ func netLoop(c net.Conn, netChannel chan<- *netCmd) {
 		netChannel <- &netCmd{cmdID: 1, hdr: hdr, body: body}
 	})
 	netChannel <- &netCmd{cmdID: 0}
+}
+
+func dealNetCmd(cmd *netCmd, cliLog func(s string)) {
+	if cmd.cmdID == 1 {
+		header := conn.ParseHeader(cmd.hdr)
+		switch header.CmdID {
+		case conn.CmdVerCheck:
+			var rb conn.ReservedBody
+			err := json.Unmarshal(cmd.body, &rb)
+			if err == nil {
+				cliLog(fmt.Sprintf("[S] ver-check: %s", rb.StrParam))
+			} else {
+				cliLog(fmt.Sprintf("[S] ver-check parse body failed: %s", err.Error()))
+			}
+		default:
+			cliLog(fmt.Sprintf("[S] unknown cmd=%d", cmd.cmdID))
+		}
+	}
 }

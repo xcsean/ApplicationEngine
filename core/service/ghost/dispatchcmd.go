@@ -78,8 +78,9 @@ func dispatchTMM(cmd *timerCmd) bool {
 	case timerCmdSessionWaitVerCheck, timerCmdSessionWaitBind:
 		sessionID := cmd.Userdata1
 		if sm.isSessionState(sessionID, cmdType) {
-			// TODO kick the session because of timer expired
 			log.Debug("should kick session=%d by timer type=%d", sessionID, cmdType)
+			pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdSessionKick, 0, 0, nil)
+			connSend(pkt)
 		} else {
 			log.Debug("discard timer type=%d, userdata1=%d, userdata2=%d", cmdType, sessionID, cmd.Userdata2)
 		}

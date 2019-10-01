@@ -70,9 +70,7 @@ func CopySessionPkt(sessionIDs []uint64, hdr, body []byte) ([]byte, uint16) {
 
 // MakeOneSessionPkt make a session packet by using sessionID
 func MakeOneSessionPkt(sessionID uint64, cmdID uint16, userData, timestamp uint32, body []byte) ([]byte, error) {
-	sessionIDs := make([]uint64, 1)
-	sessionIDs[0] = sessionID
-	return MakeSessionPkt(sessionIDs, cmdID, userData, timestamp, body)
+	return MakeSessionPkt([]uint64{sessionID}, cmdID, userData, timestamp, body)
 }
 
 // ParseSessionBody parse the session packet body

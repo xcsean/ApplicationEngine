@@ -9,6 +9,11 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
+const (
+	timeoutWaitVerCheck = time.Duration(30) * time.Second
+	timeoutWaitBind     = time.Duration(30) * time.Second
+)
+
 // all dispatchXXX functions run in the main routine context!!!
 
 func dispatchSessionEnter(hdr, body []byte) {
@@ -22,7 +27,7 @@ func dispatchSessionEnter(hdr, body []byte) {
 
 	// create a new session and monitor it
 	getSessionMgr().addSession(sessionID, rb.StrParam, timerCmdSessionWaitVerCheck)
-	tmmAddDelayTask(10*time.Second, func(c chan *timerCmd) {
+	tmmAddDelayTask(timeoutWaitVerCheck, func(c chan *timerCmd) {
 		c <- &timerCmd{Type: timerCmdSessionWaitVerCheck, Userdata1: sessionID}
 	})
 }
@@ -42,38 +47,60 @@ func dispatchSessionLeave(hdr, body []byte) {
 }
 
 func dispatchSessionVerCheck(hdr, body []byte) {
-	vmm := getVMMgr()
-
+	header := conn.ParseHeader(hdr)
 	_, sessionIDs, innerBody := conn.ParseSessionBody(body)
 	sessionID := sessionIDs[0]
 
-	// TODO check the session exist and its state
+	// check the session exist and its state
+	sm := getSessionMgr()
+	if !sm.isSessionState(sessionID, timerCmdSessionWaitVerCheck) {
+		log.Debug("session=%d shouldn't send ver-check when not in ver-check state, or session not found", sessionID)
+		return
+	}
 
-	// get the client version
+	// get the client version & try to pick a division
+	shouldKick := false
 	var rb conn.ReservedBody
 	err := json.Unmarshal(innerBody, &rb)
 	if err == nil {
 		ver := rb.StrParam
 		log.Debug("session=%d version=%s", sessionID, ver)
 		// pick a division to serve this client
+		vmm := getVMMgr()
 		division, result := vmm.pick(ver)
 		if result == errno.OK {
 			log.Debug("session=%d pick division=%s", sessionID, division)
-			getSessionMgr().setSessionRouting(sessionID, ver, division, timerCmdSessionWaitBind)
-			tmmAddDelayTask(10*time.Second, func(c chan *timerCmd) {
+			sm.setSessionRouting(sessionID, ver, division, timerCmdSessionWaitBind)
+			tmmAddDelayTask(timeoutWaitBind, func(c chan *timerCmd) {
 				c <- &timerCmd{Type: timerCmdSessionWaitBind, Userdata1: sessionID}
 			})
 			// send a ver-check ack to client
 			var ack conn.ReservedBody
 			ack.StrParam = "ver-check ok"
 			body, _ := json.Marshal(ack)
-			pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdVerCheck, 0, 0, body)
+			pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdVerCheck, header.UserData, header.Timestamp, body)
 			connSend(pkt)
 		} else {
-			// TODO kick the session after send a pkt
+			var ack conn.ReservedBody
+			ack.StrParam = "no available division can serve you"
+			body, _ := json.Marshal(ack)
+			pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdVerCheck, header.UserData, header.Timestamp, body)
+			connSend(pkt)
+			shouldKick = true
 		}
 	} else {
 		log.Error("session=%d version check failed: %s", sessionID, err.Error())
-		// TODO kick the session after send a pkt
+		var ack conn.ReservedBody
+		ack.StrParam = err.Error()
+		body, _ := json.Marshal(ack)
+		pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdVerCheck, header.UserData, header.Timestamp, body)
+		connSend(pkt)
+		shouldKick = true
+	}
+
+	if shouldKick {
+		log.Debug("kick the session=%d by ver-check failed", sessionID)
+		pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdSessionKick, header.UserData, header.Timestamp, nil)
+		connSend(pkt)
 	}
 }

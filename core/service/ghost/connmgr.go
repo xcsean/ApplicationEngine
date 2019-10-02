@@ -10,6 +10,23 @@ import (
 type connCmd struct {
 	cmdID uint8
 	b1    []byte
+	b2    []byte
+}
+
+func (cc *connCmd) getID() uint8 {
+	return cc.cmdID
+}
+
+func (cc *connCmd) getConnCmd() ([]byte, []byte) {
+	return cc.b1, cc.b2
+}
+
+func newConnCmd(cmdID uint8, b1, b2 []byte) *connCmd {
+	return &connCmd{
+		cmdID: cmdID,
+		b1:    b1,
+		b2:    b2,
+	}
 }
 
 type connMgr struct {

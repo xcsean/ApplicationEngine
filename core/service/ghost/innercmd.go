@@ -1,24 +1,5 @@
 package main
 
-type innerCmd struct {
-	cmdID uint8
-	s1    string
-	s2    string
-	s3    string
-	rsp   chan *rspRPC
-	i1    uint64
-	b1    []byte
-	b2    []byte
-}
-
-type rspRPC struct {
-	cmdID  uint8
-	result int32
-	i1     uint64
-	s1     string
-	data   []byte
-}
-
 const (
 	innerCmdRegisterVM        = 101
 	innerCmdUnregisterVM      = 102
@@ -34,6 +15,22 @@ const (
 	innerCmdConnSessionDn     = 122
 	innerCmdConnExit          = 129
 )
+
+type innerCmd struct {
+	cmdID uint8
+	s1    string
+	s2    string
+	s3    string
+	i1    uint64
+	rsp   chan *rspRPC
+}
+
+type rspRPC struct {
+	cmdID  uint8
+	result int32
+	i1     uint64
+	s1     string
+}
 
 func (ic *innerCmd) getID() uint8 {
 	return ic.cmdID
@@ -80,18 +77,5 @@ func newVMMCmd(cmdID uint8, s1, s2, s3 string, i1 uint64) *innerCmd {
 		s2:    s2,
 		s3:    s3,
 		i1:    i1,
-	}
-}
-
-// Conn methods
-func (ic *innerCmd) getConnCmd() ([]byte, []byte) {
-	return ic.b1, ic.b2
-}
-
-func newConnCmd(cmdID uint8, b1, b2 []byte) *innerCmd {
-	return &innerCmd{
-		cmdID: cmdID,
-		b1:    b1,
-		b2:    b2,
 	}
 }

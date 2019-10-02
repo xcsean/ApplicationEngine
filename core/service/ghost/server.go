@@ -62,7 +62,7 @@ func start(c *ghostConfig, selfID int64) bool {
 	}
 
 	// create the channels for communication between gconnd and vm(s)
-	connChannel := make(chan *innerCmd, 3000)
+	connChannel := make(chan *connCmd, 3000)
 	rpcChannel := make(chan *innerCmd, 1000)
 	vmmChannel := make(chan *innerCmd, 1000)
 	tmmChannel := tmmGetChannel()
@@ -128,7 +128,7 @@ func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
 	log.Info("RPC service exit")
 }
 
-func startConn(csk net.Conn, connChannel chan *innerCmd) {
+func startConn(csk net.Conn, connChannel chan *connCmd) {
 	defer csk.Close()
 
 	// try to request master

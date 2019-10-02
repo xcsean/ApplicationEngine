@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
@@ -43,7 +44,7 @@ func dispatchVMM(cmd *innerCmd) bool {
 	return false
 }
 
-func dispatchConn(cmd *innerCmd) bool {
+func dispatchConn(cmd *connCmd) bool {
 	defer dbg.Stacktrace()
 
 	exit := false
@@ -62,7 +63,7 @@ func dispatchConn(cmd *innerCmd) bool {
 		} else if header.CmdID == conn.CmdVerCheck {
 			dispatchSessionVerCheck(hdr, body)
 		} else {
-			log.Debug("session=%d cmd=%d", header.CmdID)
+			dispatchSessionForward(hdr, body)
 		}
 	}
 	return exit
@@ -83,6 +84,28 @@ func dispatchTMM(cmd *timerCmd) bool {
 			connSend(pkt)
 		} else {
 			log.Debug("discard timer type=%d, userdata1=%d, userdata2=%d", cmdType, sessionID, cmd.Userdata2)
+		}
+	case timerCmdSessionWaitUnbind:
+		sessionID := cmd.Userdata1
+		uuid := cmd.Userdata2
+		if sm.isSessionState(sessionID, cmdType) {
+			log.Debug("unbind session=%d uuid=%d by timer type=%d", sessionID, uuid, cmdType)
+			sm.unbindSession(sessionID, uuid)
+			// set the session wait delete state
+			getSessionMgr().setSessionState(sessionID, timerCmdSessionWaitDelete)
+			timeoutWaitDelete := 3 * time.Second
+			tmmAddDelayTask(timeoutWaitDelete, func(c chan *timerCmd) {
+				c <- &timerCmd{Type: timerCmdSessionWaitDelete, Userdata1: sessionID, Userdata2: uuid}
+			})
+		} else {
+			log.Debug("discard timer type=%d, userdata1=%d, userdata2=%d", cmdType, sessionID, cmd.Userdata2)
+		}
+	case timerCmdSessionWaitDelete:
+		sessionID := cmd.Userdata1
+		if sm.isSessionState(sessionID, cmdType) {
+			log.Debug("session=%d delete now", sessionID)
+			sm.setSessionState(sessionID, timerCmdSessionDeleted)
+			sm.delSession(sessionID)
 		}
 	default:
 		log.Debug("type=%d u1=%d u2=%d", cmdType, cmd.Userdata1, cmd.Userdata2)

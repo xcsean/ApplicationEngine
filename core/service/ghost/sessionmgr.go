@@ -48,9 +48,9 @@ func (sm *sessionMgr) isUserExist(uuid uint64) bool {
 	return ok
 }
 
-func (sm *sessionMgr) addSession(sessionID uint64, addr string, state uint8) {
+func (sm *sessionMgr) addSession(sessionID uint64, addr string) {
 	e := &sessionEntity{
-		state:    state,
+		state:    0,
 		ver:      []byte{0, 0, 0, 0},
 		uuid:     uuidDefaultValue,
 		division: "",
@@ -71,13 +71,34 @@ func (sm *sessionMgr) isSessionState(sessionID uint64, state uint8) bool {
 	return e.state == state
 }
 
-func (sm *sessionMgr) setSessionRouting(sessionID uint64, ver, division string, state uint8) {
+func (sm *sessionMgr) isSessionStateOf(sessionID uint64, states []uint8) (string, bool) {
+	e, ok := sm.s2e[sessionID]
+	if !ok {
+		return "", false
+	}
+
+	for i := 0; i < len(states); i++ {
+		if e.state == states[i] {
+			return e.division, true
+		}
+	}
+	return "", false
+}
+
+func (sm *sessionMgr) setSessionState(sessionID uint64, state uint8) {
+	e, ok := sm.s2e[sessionID]
+	if ok && e.state != state {
+		log.Debug("session=%d change state from %d to %d", sessionID, e.state, state)
+		e.state = state
+	}
+}
+
+func (sm *sessionMgr) setSessionRouting(sessionID uint64, ver, division string) {
 	e, ok := sm.s2e[sessionID]
 	if !ok {
 		return
 	}
 
-	e.state = state
 	e.ver = []byte{1, 1, 1, 1}
 	e.division = division
 }
@@ -99,15 +120,14 @@ func (sm *sessionMgr) bindSession(sessionID, uuid uint64) bool {
 }
 
 func (sm *sessionMgr) unbindSession(sessionID, uuid uint64) {
-	delete(sm.u2s, uuid)
-
-	e, ok := sm.s2e[sessionID]
-	if !ok {
-		return
+	s, ok := sm.u2s[uuid]
+	if ok && s == sessionID {
+		delete(sm.u2s, uuid)
 	}
-
-	// unbind the session
-	e.uuid = uuidDefaultValue
+	e, ok := sm.s2e[sessionID]
+	if ok && e.uuid != uuidDefaultValue {
+		e.uuid = uuidDefaultValue
+	}
 }
 
 func (sm *sessionMgr) getBindSession(uuid uint64) (uint64, bool) {

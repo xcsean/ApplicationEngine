@@ -13,4 +13,5 @@ const (
 	timerCmdSessionWorking      = 203
 	timerCmdSessionWaitUnbind   = 204
 	timerCmdSessionWaitDelete   = 205
+	timerCmdSessionDeleted      = 209
 )

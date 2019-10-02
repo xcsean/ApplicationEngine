@@ -12,6 +12,7 @@ import (
 const (
 	timeoutWaitVerCheck = time.Duration(30) * time.Second
 	timeoutWaitBind     = time.Duration(30) * time.Second
+	timeoutWaitUnbind   = time.Duration(30) * time.Second
 )
 
 // all dispatchXXX functions run in the main routine context!!!
@@ -26,7 +27,9 @@ func dispatchSessionEnter(hdr, body []byte) {
 	log.Debug("session=%d addr='%s' enter", sessionID, rb.StrParam)
 
 	// create a new session and monitor it
-	getSessionMgr().addSession(sessionID, rb.StrParam, timerCmdSessionWaitVerCheck)
+	sm := getSessionMgr()
+	sm.addSession(sessionID, rb.StrParam)
+	sm.setSessionState(sessionID, timerCmdSessionWaitVerCheck)
 	tmmAddDelayTask(timeoutWaitVerCheck, func(c chan *timerCmd) {
 		c <- &timerCmd{Type: timerCmdSessionWaitVerCheck, Userdata1: sessionID}
 	})
@@ -40,10 +43,20 @@ func dispatchSessionLeave(hdr, body []byte) {
 	sm := getSessionMgr()
 	uuid, bind := sm.getBindUUID(sessionID)
 	if bind {
-		sm.unbindSession(sessionID, uuid)
 		// TODO send a packet to the division which the uuid is in
+		//  and wait the unbind call
+		getSessionMgr().setSessionState(sessionID, timerCmdSessionWaitUnbind)
+		tmmAddDelayTask(timeoutWaitUnbind, func(c chan *timerCmd) {
+			c <- &timerCmd{Type: timerCmdSessionWaitUnbind, Userdata1: sessionID, Userdata2: uuid}
+		})
+	} else {
+		// set the session wait delete state
+		getSessionMgr().setSessionState(sessionID, timerCmdSessionWaitDelete)
+		timeoutWaitDelete := 3 * time.Second
+		tmmAddDelayTask(timeoutWaitDelete, func(c chan *timerCmd) {
+			c <- &timerCmd{Type: timerCmdSessionWaitDelete, Userdata1: sessionID, Userdata2: uuid}
+		})
 	}
-	sm.delSession(sessionID)
 }
 
 func dispatchSessionVerCheck(hdr, body []byte) {
@@ -70,7 +83,8 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 		division, result := vmm.pick(ver)
 		if result == errno.OK {
 			log.Debug("session=%d pick division=%s", sessionID, division)
-			sm.setSessionRouting(sessionID, ver, division, timerCmdSessionWaitBind)
+			sm.setSessionRouting(sessionID, ver, division)
+			sm.setSessionState(sessionID, timerCmdSessionWaitBind)
 			tmmAddDelayTask(timeoutWaitBind, func(c chan *timerCmd) {
 				c <- &timerCmd{Type: timerCmdSessionWaitBind, Userdata1: sessionID}
 			})
@@ -102,5 +116,19 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 		log.Debug("kick the session=%d by ver-check failed", sessionID)
 		pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdSessionKick, header.UserData, header.Timestamp, nil)
 		connSend(pkt)
+	}
+}
+
+func dispatchSessionForward(hdr, body []byte) {
+	header := conn.ParseHeader(hdr)
+	_, sessionIDs, _ := conn.ParseSessionBody(body)
+	sessionID := sessionIDs[0]
+	sm := getSessionMgr()
+
+	division, ok := sm.isSessionStateOf(sessionID, []uint8{timerCmdSessionWaitBind, timerCmdSessionWorking})
+	if ok {
+		log.Debug("session=%d cmd=%d forward to %s", sessionID, header.CmdID, division)
+	} else {
+		log.Warn("session=%d discard cmd=%d by state", sessionID, header.CmdID)
 	}
 }

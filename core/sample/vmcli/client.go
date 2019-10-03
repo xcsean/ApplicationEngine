@@ -126,7 +126,10 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 			if len(array) >= 2 {
 				_, err := strconv.ParseInt(array[1], 10, 64)
 				if err == nil {
-					var innerBody cmdBody
+					innerBody := &cmdBody{
+						StrParam: "",
+						Kv: make(map[string]string),
+					}
 					innerBody.Kv["uuid"] = array[1]
 					innerBody.Kv["token"] = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 					body, _ := json.Marshal(innerBody)

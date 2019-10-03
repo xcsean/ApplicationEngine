@@ -85,14 +85,16 @@ func (sm *sessionMgr) isSessionStateOf(sessionID uint64, states []uint8) (string
 	return "", false
 }
 
-func (sm *sessionMgr) setSessionState(sessionID uint64, state uint8) {
+func (sm *sessionMgr) setSessionState(sessionID uint64, state uint8) bool {
 	e, ok := sm.s2e[sessionID]
 	if ok && e.state != state {
 		oldState := getTimerDesc(e.state)
 		newState := getTimerDesc(state)
 		log.Debug("session=%d change state from '%s' to '%s'", sessionID, oldState, newState)
 		e.state = state
+		return true
 	}
+	return false
 }
 
 func (sm *sessionMgr) setSessionRouting(sessionID uint64, ver, division string) {

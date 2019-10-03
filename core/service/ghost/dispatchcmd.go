@@ -38,33 +38,40 @@ func dispatchRPC(cmd *innerCmd) bool {
 			rspChannel <- newRPCRsp(innerCmdBindSession, result, 0, "")
 			return false
 		}
-		uuid, _ := strconv.ParseInt(sUUID, 10, 64)
-		sessionID, _ := strconv.ParseInt(sSessionID, 10, 64)
+		uID, _ := strconv.ParseInt(sUUID, 10, 64)
+		sID, _ := strconv.ParseInt(sSessionID, 10, 64)
+		uuid := uint64(uID)
+		sessionID := uint64(sID)
 		// check the uuid bind or not?
-		bindSessionID, bind := sm.getBindSession(uint64(uuid))
+		bindSessionID, bind := sm.getBindSession(uuid)
 		if bind {
-			if bindSessionID == uint64(sessionID) {
+			if bindSessionID == sessionID {
 				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
 			} else {
 				// notify caller to retry later
 				// TODO add the caller into bind pending list of session manager
 				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMBINDNEEDRETRY, 0, "")
 				// notify the vm to unbind the session with the uuid
-				notifyVMUnbind(bindSessionID, uint64(uuid))
+				notifyVMUnbind(bindSessionID, uuid)
 			}
 		} else {
 			// check the session bind or not?
-			bindUUID, bind := sm.getBindUUID(uint64(sessionID))
+			bindUUID, bind := sm.getBindUUID(sessionID)
 			if bind {
-				if bindUUID == uint64(uuid) {
+				if bindUUID == uuid {
 					rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
 				} else {
 					rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONALREADYBIND, 0, "")
 				}
 			} else {
-				sm.bindSession(uint64(sessionID), uint64(uuid))
-				sm.setSessionState(uint64(sessionID), timerCmdSessionWorking)
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+				_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitBind)
+				if ok {
+					sm.bindSession(sessionID, uuid)
+					sm.setSessionState(sessionID, timerCmdSessionWorking)
+					rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+				} else {
+					rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONNOTWAITBIND, 0, "")
+				}
 			}
 		}
 	case innerCmdUnbindSession:
@@ -74,14 +81,16 @@ func dispatchRPC(cmd *innerCmd) bool {
 			rspChannel <- newRPCRsp(innerCmdUnbindSession, result, 0, "")
 			return false
 		}
-		uuid, _ := strconv.ParseInt(sUUID, 10, 64)
-		sessionID, _ := strconv.ParseInt(sSessioinID, 10, 64)
-		bindSessionID, bind := sm.getBindSession(uint64(uuid))
-		if bind && bindSessionID == uint64(sessionID) {
-			_, ok := sm.isSessionState(uint64(sessionID), timerCmdSessionWaitUnbind)
+		uID, _ := strconv.ParseInt(sUUID, 10, 64)
+		sID, _ := strconv.ParseInt(sSessioinID, 10, 64)
+		uuid := uint64(uID)
+		sessionID := uint64(sID)
+		bindSessionID, bind := sm.getBindSession(uuid)
+		if bind && bindSessionID == sessionID {
+			_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitUnbind)
 			if ok {
-				sm.unbindSession(uint64(sessionID), uint64(uuid))
-				setSessionWaitDelete(uint64(sessionID))
+				sm.unbindSession(sessionID, uuid)
+				setSessionWaitDelete(sessionID)
 			}
 			rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
 		} else {

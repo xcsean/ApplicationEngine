@@ -40,6 +40,9 @@ const (
 	// HOSTVMSESSIONALREADYBIND means the session already was binded
 	HOSTVMSESSIONALREADYBIND = -36
 
+	// HOSTVMSESSIONNOTWAITBIND means the session isn't WaitBind state
+	HOSTVMSESSIONNOTWAITBIND = -37
+
 	// HOSTVMNOTEXIST means the vm identified by division is not exist in host
 	HOSTVMNOTEXIST = -39
 )

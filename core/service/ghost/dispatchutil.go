@@ -34,26 +34,28 @@ func notifyVMUnbind(sessionID, uuid uint64) {
 		if result != errno.OK {
 			log.Debug("session=%d cmd=%d forward to %s failed: %d", sessionID, header.CmdID, division, result)
 		}
-		sm.setSessionState(sessionID, timerCmdSessionWaitUnbind)
-		tmmAddDelayTask(timeoutWaitUnbind, func(c chan *timerCmd) {
-			c <- &timerCmd{Type: timerCmdSessionWaitUnbind, Userdata1: sessionID, Userdata2: uint64(uuid)}
-		})
+		if sm.setSessionState(sessionID, timerCmdSessionWaitUnbind) {
+			tmmAddDelayTask(timeoutWaitUnbind, func(c chan *timerCmd) {
+				c <- &timerCmd{Type: timerCmdSessionWaitUnbind, Userdata1: sessionID, Userdata2: uint64(uuid)}
+			})
+		}
 	}
 }
 
 func notifyClientVerCheck(sessionID uint64, s string) {
-	var ack conn.ReservedBody
-	ack.StrParam = s
-	body, _ := json.Marshal(ack)
+	var rb conn.ReservedBody
+	rb.StrParam = s
+	body, _ := json.Marshal(rb)
 	pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdVerCheck, 0, 0, body)
 	connSend(pkt)
 }
 
 func setSessionWaitDelete(sessionID uint64) {
 	sm := getSessionMgr()
-	sm.setSessionState(uint64(sessionID), timerCmdSessionWaitDelete)
-	timeoutWaitDelete := 3 * time.Second
-	tmmAddDelayTask(timeoutWaitDelete, func(c chan *timerCmd) {
-		c <- &timerCmd{Type: timerCmdSessionWaitDelete, Userdata1: uint64(sessionID)}
-	})
+	if sm.setSessionState(uint64(sessionID), timerCmdSessionWaitDelete) {
+		timeoutWaitDelete := 3 * time.Second
+		tmmAddDelayTask(timeoutWaitDelete, func(c chan *timerCmd) {
+			c <- &timerCmd{Type: timerCmdSessionWaitDelete, Userdata1: uint64(sessionID)}
+		})
+	}
 }

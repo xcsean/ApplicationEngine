@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
@@ -14,7 +13,7 @@ import (
 type myService struct{}
 
 func (s *myService) OnNotifyStatus(ctx context.Context, req *ghost.NotifyStatusReq) (*ghost.NotifyStatusRsp, error) {
-	sendRPCVMText(fmt.Sprintf("[CB] notify status = %d", req.Status))
+	sendRPCVMCmd(&hostCmd{Type: hostCmdNotifyStatus})
 	rsp := &ghost.NotifyStatusRsp{Result: errno.OK, Desc: ""}
 	return rsp, nil
 }
@@ -22,9 +21,10 @@ func (s *myService) OnNotifyStatus(ctx context.Context, req *ghost.NotifyStatusR
 func (s *myService) OnNotifyPacket(srv ghost.VMService_OnNotifyPacketServer) error {
 	for {
 		if pkt, err := srv.Recv(); err == nil {
-			sendRPCVMText(fmt.Sprintf("[CB] notify packet cmd=%d body=%s", pkt.CmdId, pkt.Body))
+			cmd := &hostCmd{Type: hostCmdNotifyPacket, Pkt: pkt}
+			sendRPCVMCmd(cmd)
 		} else {
-			sendRPCVMText(fmt.Sprintf("[CB] notify packet failed: %s", err.Error()))
+			sendRPCVMCmd(&hostCmd{Type: hostCmdRemoteClosed})
 			break
 		}
 	}

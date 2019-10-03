@@ -15,3 +15,27 @@ const (
 	timerCmdSessionWaitDelete   = 205
 	timerCmdSessionDeleted      = 209
 )
+
+var (
+	timerDesc map[uint8]string
+)
+
+func init() {
+	timerDesc = make(map[uint8]string)
+	timerDesc[0] = "startUp"
+	timerDesc[timerCmdSessionWaitVerCheck] = "waitVerCheck"
+	timerDesc[timerCmdSessionWaitBind] = "waitBind"
+	timerDesc[timerCmdSessionWorking] = "working"
+	timerDesc[timerCmdSessionWaitUnbind] = "waitUnbind"
+	timerDesc[timerCmdSessionWaitDelete] = "waitDelete"
+	timerDesc[timerCmdSessionDeleted] = "deleted"
+
+}
+
+func getTimerDesc(t uint8) string {
+	s, ok := timerDesc[t]
+	if ok {
+		return s
+	}
+	return "unknown"
+}

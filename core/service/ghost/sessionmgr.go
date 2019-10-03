@@ -63,12 +63,12 @@ func (sm *sessionMgr) delSession(sessionID uint64) {
 	delete(sm.s2e, sessionID)
 }
 
-func (sm *sessionMgr) isSessionState(sessionID uint64, state uint8) bool {
+func (sm *sessionMgr) isSessionState(sessionID uint64, state uint8) (string, bool) {
 	e, ok := sm.s2e[sessionID]
 	if !ok {
-		return false
+		return "", false
 	}
-	return e.state == state
+	return e.division, e.state == state
 }
 
 func (sm *sessionMgr) isSessionStateOf(sessionID uint64, states []uint8) (string, bool) {
@@ -88,7 +88,9 @@ func (sm *sessionMgr) isSessionStateOf(sessionID uint64, states []uint8) (string
 func (sm *sessionMgr) setSessionState(sessionID uint64, state uint8) {
 	e, ok := sm.s2e[sessionID]
 	if ok && e.state != state {
-		log.Debug("session=%d change state from %d to %d", sessionID, e.state, state)
+		oldState := getTimerDesc(e.state)
+		newState := getTimerDesc(state)
+		log.Debug("session=%d change state from '%s' to '%s'", sessionID, oldState, newState)
 		e.state = state
 	}
 }

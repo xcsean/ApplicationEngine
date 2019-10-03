@@ -7,6 +7,8 @@ const (
 	innerCmdSaveUserAsset     = 104
 	innerCmdSendPacket        = 105
 	innerCmdDebug             = 106
+	innerCmdBindSession       = 107
+	innerCmdUnbindSession     = 108
 	innerCmdVMStart           = 111
 	innerCmdVMStreamConnFault = 112
 	innerCmdVMStreamSendFault = 113

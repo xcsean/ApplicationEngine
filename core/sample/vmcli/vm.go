@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	ui "github.com/jroimartin/gocui"
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"google.golang.org/grpc"
 )
@@ -24,7 +27,7 @@ const (
 
 var (
 	kbdVMChannel chan string
-	rpcVMChannel chan string
+	rpcVMChannel chan *hostCmd
 	hostAddr     string
 	division     string
 	vmID         uint64
@@ -50,15 +53,15 @@ func sendVMKeyboard(text string) {
 	kbdVMChannel <- text
 }
 
-func sendRPCVMText(text string) {
-	rpcVMChannel <- text
+func sendRPCVMCmd(cmd *hostCmd) {
+	rpcVMChannel <- cmd
 }
 
 func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	hostAddr = addr
 	division = config.Division
 	kbdVMChannel = make(chan string, 100)
-	rpcVMChannel = make(chan string, 100)
+	rpcVMChannel = make(chan *hostCmd, 100)
 	vmLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(vmView)
@@ -82,7 +85,7 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 		case cmd := <-kbdVMChannel:
 			dealVMKeyboard(cmd, vmLog)
 		case cmd := <-rpcVMChannel:
-			vmLog(cmd)
+			dealHostRPC(cmd, vmLog)
 		}
 	}
 }
@@ -116,6 +119,54 @@ func dealVMKeyboard(text string, vmLog func(s string)) {
 		}
 	}
 
+}
+
+func dealHostRPC(cmd *hostCmd, vmLog func(s string)) {
+	switch cmd.Type {
+	case hostCmdRemoteClosed:
+		vmLog("[CB] stream closed")
+	case hostCmdNotifyStatus:
+		vmLog("[CB] notify status")
+	case hostCmdNotifyPacket:
+		dealHostPkt(cmd, vmLog)
+	}
+}
+
+func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
+	switch cmd.Pkt.CmdId {
+	case cmdLogin:
+		var rb conn.ReservedBody
+		err := json.Unmarshal([]byte(cmd.Pkt.Body), &rb)
+		if err != nil {
+			return
+		}
+		sUUID, ok := rb.Kv["uuid"]
+		if !ok {
+			return
+		}
+		uuid, err := strconv.ParseInt(sUUID, 10, 64)
+		if err != nil {
+			return
+		}
+		go callBindSession(cmd.Pkt.Sessions[0], uint64(uuid), vmLog)
+	case conn.CmdNotifyVMUnbind:
+		var rb conn.ReservedBody
+		err := json.Unmarshal([]byte(cmd.Pkt.Body), &rb)
+		if err != nil {
+			return
+		}
+		sUUID, ok := rb.Kv["uuid"]
+		if !ok {
+			return
+		}
+		uuid, err := strconv.ParseInt(sUUID, 10, 64)
+		if err != nil {
+			return
+		}
+		go callUnbindSession(cmd.Pkt.Sessions[0], uint64(uuid), vmLog)
+	default:
+		vmLog(fmt.Sprintf("[CB] notify packet cmd=%d body=%s", cmd.Pkt.CmdId, cmd.Pkt.Body))
+	}
 }
 
 func callRegisterVM(division, version string, vmLog func(s string)) {
@@ -153,6 +204,49 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 		if rsp.Result == errno.OK {
 			vmID = 0
 		}
+		return nil
+	}, 3)
+}
+
+func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
+	vmLog(fmt.Sprintf("[VM] bind sesssion=%d uuid=%d", sessionID, uuid))
+	result := int32(0)
+	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
+		req := &ghost.BindSessionReq{
+			Division:  division,
+			Sessionid: sessionID,
+			Uuid:      uuid,
+		}
+		rsp, err := c.BindSession(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		vmLog(fmt.Sprintf("[VM] bind session result=%d", rsp.Result))
+		result = rsp.Result
+		return nil
+	}, 3)
+
+	if result == int32(errno.HOSTVMBINDNEEDRETRY) {
+		time.Sleep(1 * time.Second)
+		go callBindSession(sessionID, uuid, vmLog)
+	}
+}
+
+func callUnbindSession(sessionID, uuid uint64, vmLog func(s string)) {
+	vmLog(fmt.Sprintf("[VM] unbind session=%d uuid=%d", sessionID, uuid))
+	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
+		req := &ghost.UnbindSessionReq{
+			Division:  division,
+			Sessionid: sessionID,
+			Uuid:      uuid,
+		}
+		rsp, err := c.UnbindSession(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		vmLog(fmt.Sprintf("[VM] unbind session result=%d", rsp.Result))
 		return nil
 	}, 3)
 }

@@ -72,14 +72,42 @@ func (s *myService) SendPacket(ctx context.Context, req *ghost.SendPacketReq) (*
 func (s *myService) BindSession(ctx context.Context, req *ghost.BindSessionReq) (*ghost.BindSessionRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.BindSessionRsp{Result: errno.OK}
+	rsp := &ghost.BindSessionRsp{Result: errno.OK, Division: req.Division, Sessionid: req.Sessionid, Uuid: req.Uuid}
+	_, result := validateRemote(ctx, req.Division)
+	if result != errno.OK {
+		rsp.Result = result
+		return rsp, nil
+	}
+
+	rspChannel := make(chan *rspRPC, 1)
+	reqChannel <- newRPCReq(innerCmdBindSession, req.Division, fmt.Sprintf("%d", req.Sessionid), fmt.Sprintf("%d", req.Uuid), 0, rspChannel)
+
+	cmd := <-rspChannel
+	result, _, _ = cmd.getRPCRsp()
+	log.Debug("bind session=%d uuid=%d, result=%d", req.Sessionid, req.Uuid, result)
+
+	rsp.Result = result
 	return rsp, nil
 }
 
 func (s *myService) UnbindSession(ctx context.Context, req *ghost.UnbindSessionReq) (*ghost.UnbindSessionRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.UnbindSessionRsp{Result: errno.OK}
+	rsp := &ghost.UnbindSessionRsp{Result: errno.OK, Division: req.Division, Sessionid: req.Sessionid, Uuid: req.Uuid}
+	_, result := validateRemote(ctx, req.Division)
+	if result != errno.OK {
+		rsp.Result = result
+		return rsp, nil
+	}
+
+	rspChannel := make(chan *rspRPC, 1)
+	reqChannel <- newRPCReq(innerCmdUnbindSession, req.Division, fmt.Sprintf("%d", req.Sessionid), fmt.Sprintf("%d", req.Uuid), 0, rspChannel)
+
+	cmd := <-rspChannel
+	result, _, _ = cmd.getRPCRsp()
+	log.Debug("unbind session=%d uuid=%d, result=%d", req.Sessionid, req.Uuid, result)
+
+	rsp.Result = result
 	return rsp, nil
 }
 

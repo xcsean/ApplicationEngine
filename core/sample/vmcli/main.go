@@ -18,7 +18,7 @@ func main() {
 		return
 	}
 
-	if os.Args[1] != "start" {
+	if os.Args[1] != "start" && os.Args[1] != "client" {
 		printHelp()
 		return
 	}
@@ -79,7 +79,9 @@ func main() {
 	// run vm routine
 	hostAddr := fmt.Sprintf("%s:%d", hostIP, hostPort)
 	selfAddr := fmt.Sprintf("%s:%d", selfIP, selfPort)
-	go vmLoop(hostAddr, selfAddr, g)
+	if os.Args[1] == "start" {
+		go vmLoop(hostAddr, selfAddr, g)
+	}
 
 	// run client routine
 	connAddr := fmt.Sprintf("%s:%d", connIP, connPort)

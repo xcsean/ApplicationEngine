@@ -119,6 +119,14 @@ func (vmm *vmMgr) delVM(division string, vmID uint64) int32 {
 	return errno.OK
 }
 
+func (vmm *vmMgr) exist(division string) int32 {
+	_, ok := vmm.vms[division]
+	if !ok {
+		return errno.HOSTVMNOTEXIST
+	}
+	return errno.OK
+}
+
 func (vmm *vmMgr) onTick() {
 	now := time.Now().Unix()
 
@@ -212,7 +220,7 @@ func (vmm *vmMgr) forward(division string, sessionID uint64, header *conn.Header
 		UserData:  header.UserData,
 		Timestamp: header.Timestamp,
 		Sessions:  []uint64{sessionID},
-		Body:      string(body)}
+		Body:      string(body[:])}
 	select {
 	case vm.pkt <- pkt:
 		return errno.OK

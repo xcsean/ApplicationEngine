@@ -34,6 +34,12 @@ const (
 	// HOSTVMSENDCHANNELFULL means vm's send channel is full
 	HOSTVMSENDCHANNELFULL = -34
 
+	// HOSTVMBINDNEEDRETRY means host will notify the vm to bind session again
+	HOSTVMBINDNEEDRETRY = -35
+
+	// HOSTVMSESSIONALREADYBIND means the session already was binded
+	HOSTVMSESSIONALREADYBIND = -36
+
 	// HOSTVMNOTEXIST means the vm identified by division is not exist in host
 	HOSTVMNOTEXIST = -39
 )

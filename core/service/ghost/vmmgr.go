@@ -13,7 +13,7 @@ import (
 )
 
 type vmEntity struct {
-	uuid      uint64
+	vmID      uint64
 	division  string
 	version   string
 	addr      string
@@ -69,12 +69,12 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 		return 0, errno.HOSTVMALREADYEXIST
 	}
 
-	uuid, _ := vmm.sf.NextID()
+	vmID, _ := vmm.sf.NextID()
 	pkt := make(chan *ghost.GhostPacket, 1000)
 	in := make(chan *innerCmd, 10)
 	checkTime := time.Now().Unix() + etc.GetInt64WithDefault("global", "keepAlive", 10)
 	vm := &vmEntity{
-		uuid:      uuid,
+		vmID:      vmID,
 		division:  division,
 		version:   version,
 		addr:      addr,
@@ -95,15 +95,15 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 	}
 	status[division] = vmEntityStatus{curLoad: 0, maxLoad: 5000}
 
-	in <- newVMMCmd(innerCmdVMStart, division, version, addr, uuid)
+	in <- newVMMCmd(innerCmdVMStart, division, version, addr, vmID)
 	go vmEntityLoop(pkt, in, vmm.out)
-	return uuid, errno.OK
+	return vmID, errno.OK
 }
 
-func (vmm *vmMgr) delVM(division string, uuid uint64) int32 {
+func (vmm *vmMgr) delVM(division string, vmID uint64) int32 {
 	vm, ok := vmm.vms[division]
-	if ok && vm.uuid == uuid {
-		vm.in <- newVMMCmd(innerCmdVMShouldExit, division, vm.version, vm.addr, uuid)
+	if ok && vm.vmID == vmID {
+		vm.in <- newVMMCmd(innerCmdVMShouldExit, division, vm.version, vm.addr, vmID)
 		close(vm.in)
 		close(vm.pkt)
 		status, ok := vmm.vers[vm.version]

@@ -27,7 +27,7 @@ var (
 	rpcVMChannel chan string
 	hostAddr     string
 	division     string
-	vmUUID       uint64
+	vmID         uint64
 )
 
 func getVMView() string {
@@ -108,7 +108,7 @@ func dealVMKeyboard(text string, vmLog func(s string)) {
 				cmdParam = array[2]
 			}
 			if cmdOp == "dump" {
-				cmdParam = fmt.Sprintf("%d", vmUUID)
+				cmdParam = fmt.Sprintf("%d", vmID)
 			}
 			callDebug(division, cmdOp, cmdParam, vmLog)
 		} else {
@@ -129,9 +129,9 @@ func callRegisterVM(division, version string, vmLog func(s string)) {
 			return err
 		}
 
-		vmLog(fmt.Sprintf("[VM] register result=%d, uuid=%d", rsp.Result, rsp.Uuid))
+		vmLog(fmt.Sprintf("[VM] register result=%d, uuid=%d", rsp.Result, rsp.Vmid))
 		if rsp.Result == errno.OK {
-			vmUUID = rsp.Uuid
+			vmID = rsp.Vmid
 		}
 		return nil
 	}, 3)
@@ -142,7 +142,7 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 		req := &ghost.UnregisterVmReq{
 			Division: division,
 			Version:  version,
-			Uuid:     vmUUID,
+			Vmid:     vmID,
 		}
 		rsp, err := c.UnregisterVM(ctx, req)
 		if err != nil {
@@ -151,7 +151,7 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 
 		vmLog(fmt.Sprintf("[VM] unregister result=%d", rsp.Result))
 		if rsp.Result == errno.OK {
-			vmUUID = 0
+			vmID = 0
 		}
 		return nil
 	}, 3)

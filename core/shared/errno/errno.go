@@ -31,6 +31,9 @@ const (
 	// HOSTVMUNAVAILABLEBYVER means vm's unavailable by version provided
 	HOSTVMUNAVAILABLEBYVER = -33
 
+	// HOSTVMSENDCHANNELFULL means vm's send channel is full
+	HOSTVMSENDCHANNELFULL = -34
+
 	// HOSTVMNOTEXIST means the vm identified by division is not exist in host
 	HOSTVMNOTEXIST = -39
 )

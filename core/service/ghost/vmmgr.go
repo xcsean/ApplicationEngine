@@ -200,3 +200,23 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 	}
 	return s, errno.OK
 }
+
+func (vmm *vmMgr) forward(division string, sessionID uint64, header *conn.Header, body []byte) int32 {
+	vm, ok := vmm.vms[division]
+	if !ok {
+		return errno.HOSTVMNOTEXIST
+	}
+
+	pkt := &ghost.GhostPacket{
+		CmdId:     uint32(header.CmdID),
+		UserData:  header.UserData,
+		Timestamp: header.Timestamp,
+		Sessions:  []uint64{sessionID},
+		Body:      string(body)}
+	select {
+	case vm.pkt <- pkt:
+		return errno.OK
+	default:
+		return errno.HOSTVMSENDCHANNELFULL
+	}
+}

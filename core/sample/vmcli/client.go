@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	ui "github.com/jroimartin/gocui"
@@ -118,12 +119,33 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 				cliLog("[C] help: version 1.1.1.1")
 			}
 		}
+	} else if cmd == "login" {
+		if cliConn == nil {
+			cliLog("[C] please type 'conn' first!")
+		} else {
+			if len(array) >= 2 {
+				_, err := strconv.ParseInt(array[1], 10, 64)
+				if err == nil {
+					var innerBody cmdBody
+					innerBody.Kv["uuid"] = array[1]
+					innerBody.Kv["token"] = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					body, _ := json.Marshal(innerBody)
+					pkt := conn.MakeCommonPkt(cmdLogin, 0, 0, body)
+					cliConn.Write(pkt)
+					cliLog(fmt.Sprintf("[C] login with uuid='%s'", array[1]))
+				} else {
+					cliLog(fmt.Sprintf("[C] uuid error: %s", err.Error()))
+				}
+			} else {
+				cliLog("[C] help: login 10001")
+			}
+		}
 	} else if cmd == "say" {
 		if cliConn == nil {
 			cliLog("[C] please type 'conn' first!")
 		} else {
 			if len(array) >= 2 {
-				var innerBody sayBody
+				var innerBody cmdBody
 				innerBody.StrParam = array[1]
 				body, _ := json.Marshal(innerBody)
 				pkt := conn.MakeCommonPkt(cmdSAY, 0, 0, body)

@@ -121,13 +121,16 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 
 func dispatchSessionForward(hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
-	_, sessionIDs, _ := conn.ParseSessionBody(body)
+	_, sessionIDs, innerBody := conn.ParseSessionBody(body)
 	sessionID := sessionIDs[0]
 	sm := getSessionMgr()
 
 	division, ok := sm.isSessionStateOf(sessionID, []uint8{timerCmdSessionWaitBind, timerCmdSessionWorking})
 	if ok {
-		log.Debug("session=%d cmd=%d forward to %s", sessionID, header.CmdID, division)
+		result := getVMMgr().forward(division, sessionID, header, innerBody)
+		if result != errno.OK {
+			log.Debug("session=%d cmd=%d forward to %s failed: %d", sessionID, header.CmdID, division, result)
+		}
 	} else {
 		log.Warn("session=%d discard cmd=%d by state", sessionID, header.CmdID)
 	}

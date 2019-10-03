@@ -1,9 +1,11 @@
 package main
 
 const (
-	cmdSAY   = 1
+	cmdLogin = 1
+	cmdSAY   = 3
 )
 
-type sayBody struct {
+type cmdBody struct {
 	StrParam string
+	Kv       map[string]string
 }

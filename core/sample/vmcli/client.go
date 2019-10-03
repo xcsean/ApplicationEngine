@@ -181,5 +181,11 @@ func dealNetCmd(cmd *netCmd, cliLog func(s string)) {
 		default:
 			cliLog(fmt.Sprintf("[S] unknown cmd=%d", cmd.cmdID))
 		}
+	} else if cmd.cmdID == 0 {
+		cliLog(fmt.Sprintf("[S] connection closed by remote"))
+		if cliConn != nil {
+			cliConn.Close()
+			cliConn = nil
+		}
 	}
 }

@@ -37,26 +37,29 @@ const (
 
 // reserved command
 const (
-	CmdPrivateBegin = 60000
-	CmdSessionEnter = 60001 // conn --> backend
-	CmdSessionLeave = 60002 // conn --> backend
-	CmdSessionRoute = 60003 // conn <-- backend
-	CmdSessionKick  = 60004 // conn <-- backend
-	CmdSessionPing  = 60005 // conn <-- backend
-	CmdSessionPong  = 60006 // conn --> backend
-	CmdMasterSet    = 60011 // conn <-- backend
-	CmdMasterYou    = 60012 // conn --> backend
-	CmdMasterNot    = 60013 // conn --> backend
-	CmdBroadcastAll = 60021 // conn <-- backend
-	CmdKickAll      = 60031 // conn <-- backend
-	CmdNotifyClient = 65001 // client <-- conn
-	CmdPrivateEnd   = 65500
-	CmdPing         = 65501 // client <-> backend
-	CmdPong         = 65502 // client <-> backend
-	CmdVerCheck     = 65535 // client <-> backend
+	CmdPrivateBegin   = 60000
+	CmdSessionEnter   = 60001 // conn --> host
+	CmdSessionLeave   = 60002 // conn --> host
+	CmdSessionRoute   = 60003 // conn <-- host
+	CmdSessionKick    = 60004 // conn <-- host
+	CmdSessionPing    = 60005 // conn <-- host
+	CmdSessionPong    = 60006 // conn --> host
+	CmdMasterSet      = 60011 // conn <-- host
+	CmdMasterYou      = 60012 // conn --> host
+	CmdMasterNot      = 60013 // conn --> host
+	CmdBroadcastAll   = 60021 // conn <-- host
+	CmdKickAll        = 60031 // conn <-- host
+	CmdNotifyClient   = 65001 // client <-- conn
+	CmdNotifyVMBind   = 65011 // host --> vm
+	CmdNotifyVMUnbind = 65012 // host --> vm
+	CmdPrivateEnd     = 65500
+	CmdPing           = 65501 // client <-> host
+	CmdPong           = 65502 // client <-> host
+	CmdVerCheck       = 65535 // client <-> host
 )
 
 // ReservedBody reserved command body format
 type ReservedBody struct {
 	StrParam string
+	Kv       map[string]string
 }

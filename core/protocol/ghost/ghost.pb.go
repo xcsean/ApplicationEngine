@@ -200,7 +200,8 @@ func (m *RegisterVmReq) GetVersion() string {
 type RegisterVmRsp struct {
 	Result               int32    `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
 	Vmid                 uint64   `protobuf:"varint,2,opt,name=vmid,proto3" json:"vmid,omitempty"`
-	Desc                 string   `protobuf:"bytes,3,opt,name=desc,proto3" json:"desc,omitempty"`
+	Hostid               uint64   `protobuf:"varint,3,opt,name=hostid,proto3" json:"hostid,omitempty"`
+	Desc                 string   `protobuf:"bytes,4,opt,name=desc,proto3" json:"desc,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -245,6 +246,13 @@ func (m *RegisterVmRsp) GetVmid() uint64 {
 	return 0
 }
 
+func (m *RegisterVmRsp) GetHostid() uint64 {
+	if m != nil {
+		return m.Hostid
+	}
+	return 0
+}
+
 func (m *RegisterVmRsp) GetDesc() string {
 	if m != nil {
 		return m.Desc
@@ -256,7 +264,8 @@ type UnregisterVmReq struct {
 	Division             string   `protobuf:"bytes,1,opt,name=division,proto3" json:"division,omitempty"`
 	Version              string   `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	Vmid                 uint64   `protobuf:"varint,3,opt,name=vmid,proto3" json:"vmid,omitempty"`
-	Desc                 string   `protobuf:"bytes,4,opt,name=desc,proto3" json:"desc,omitempty"`
+	Hostid               uint64   `protobuf:"varint,4,opt,name=hostid,proto3" json:"hostid,omitempty"`
+	Desc                 string   `protobuf:"bytes,5,opt,name=desc,proto3" json:"desc,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -304,6 +313,13 @@ func (m *UnregisterVmReq) GetVersion() string {
 func (m *UnregisterVmReq) GetVmid() uint64 {
 	if m != nil {
 		return m.Vmid
+	}
+	return 0
+}
+
+func (m *UnregisterVmReq) GetHostid() uint64 {
+	if m != nil {
+		return m.Hostid
 	}
 	return 0
 }
@@ -448,184 +464,460 @@ func (m *SendPacketRsp) GetDesc() string {
 	return ""
 }
 
-type LoadUserassetReq struct {
-	Uuids                []uint64 `protobuf:"varint,1,rep,packed,name=uuids,proto3" json:"uuids,omitempty"`
+type BindSessionReq struct {
+	Division             string   `protobuf:"bytes,1,opt,name=division,proto3" json:"division,omitempty"`
+	Sessionid            uint64   `protobuf:"varint,2,opt,name=sessionid,proto3" json:"sessionid,omitempty"`
+	Uuid                 uint64   `protobuf:"varint,3,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *LoadUserassetReq) Reset()         { *m = LoadUserassetReq{} }
-func (m *LoadUserassetReq) String() string { return proto.CompactTextString(m) }
-func (*LoadUserassetReq) ProtoMessage()    {}
-func (*LoadUserassetReq) Descriptor() ([]byte, []int) {
+func (m *BindSessionReq) Reset()         { *m = BindSessionReq{} }
+func (m *BindSessionReq) String() string { return proto.CompactTextString(m) }
+func (*BindSessionReq) ProtoMessage()    {}
+func (*BindSessionReq) Descriptor() ([]byte, []int) {
 	return fileDescriptor_77edc9f77fb63d46, []int{8}
 }
 
-func (m *LoadUserassetReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LoadUserassetReq.Unmarshal(m, b)
+func (m *BindSessionReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BindSessionReq.Unmarshal(m, b)
 }
-func (m *LoadUserassetReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LoadUserassetReq.Marshal(b, m, deterministic)
+func (m *BindSessionReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BindSessionReq.Marshal(b, m, deterministic)
 }
-func (m *LoadUserassetReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LoadUserassetReq.Merge(m, src)
+func (m *BindSessionReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BindSessionReq.Merge(m, src)
 }
-func (m *LoadUserassetReq) XXX_Size() int {
-	return xxx_messageInfo_LoadUserassetReq.Size(m)
+func (m *BindSessionReq) XXX_Size() int {
+	return xxx_messageInfo_BindSessionReq.Size(m)
 }
-func (m *LoadUserassetReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_LoadUserassetReq.DiscardUnknown(m)
+func (m *BindSessionReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_BindSessionReq.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LoadUserassetReq proto.InternalMessageInfo
+var xxx_messageInfo_BindSessionReq proto.InternalMessageInfo
 
-func (m *LoadUserassetReq) GetUuids() []uint64 {
+func (m *BindSessionReq) GetDivision() string {
 	if m != nil {
-		return m.Uuids
+		return m.Division
 	}
-	return nil
+	return ""
 }
 
-type LoadUserassetRsp struct {
-	Result               int32             `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
-	Userassets           []*GhostUserasset `protobuf:"bytes,2,rep,name=userassets,proto3" json:"userassets,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+func (m *BindSessionReq) GetSessionid() uint64 {
+	if m != nil {
+		return m.Sessionid
+	}
+	return 0
 }
 
-func (m *LoadUserassetRsp) Reset()         { *m = LoadUserassetRsp{} }
-func (m *LoadUserassetRsp) String() string { return proto.CompactTextString(m) }
-func (*LoadUserassetRsp) ProtoMessage()    {}
-func (*LoadUserassetRsp) Descriptor() ([]byte, []int) {
+func (m *BindSessionReq) GetUuid() uint64 {
+	if m != nil {
+		return m.Uuid
+	}
+	return 0
+}
+
+type BindSessionRsp struct {
+	Result               int32    `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+	Division             string   `protobuf:"bytes,2,opt,name=division,proto3" json:"division,omitempty"`
+	Sessionid            uint64   `protobuf:"varint,3,opt,name=sessionid,proto3" json:"sessionid,omitempty"`
+	Uuid                 uint64   `protobuf:"varint,4,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *BindSessionRsp) Reset()         { *m = BindSessionRsp{} }
+func (m *BindSessionRsp) String() string { return proto.CompactTextString(m) }
+func (*BindSessionRsp) ProtoMessage()    {}
+func (*BindSessionRsp) Descriptor() ([]byte, []int) {
 	return fileDescriptor_77edc9f77fb63d46, []int{9}
 }
 
-func (m *LoadUserassetRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LoadUserassetRsp.Unmarshal(m, b)
+func (m *BindSessionRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BindSessionRsp.Unmarshal(m, b)
 }
-func (m *LoadUserassetRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LoadUserassetRsp.Marshal(b, m, deterministic)
+func (m *BindSessionRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BindSessionRsp.Marshal(b, m, deterministic)
 }
-func (m *LoadUserassetRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LoadUserassetRsp.Merge(m, src)
+func (m *BindSessionRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BindSessionRsp.Merge(m, src)
 }
-func (m *LoadUserassetRsp) XXX_Size() int {
-	return xxx_messageInfo_LoadUserassetRsp.Size(m)
+func (m *BindSessionRsp) XXX_Size() int {
+	return xxx_messageInfo_BindSessionRsp.Size(m)
 }
-func (m *LoadUserassetRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_LoadUserassetRsp.DiscardUnknown(m)
+func (m *BindSessionRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_BindSessionRsp.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LoadUserassetRsp proto.InternalMessageInfo
+var xxx_messageInfo_BindSessionRsp proto.InternalMessageInfo
 
-func (m *LoadUserassetRsp) GetResult() int32 {
+func (m *BindSessionRsp) GetResult() int32 {
 	if m != nil {
 		return m.Result
 	}
 	return 0
 }
 
-func (m *LoadUserassetRsp) GetUserassets() []*GhostUserasset {
+func (m *BindSessionRsp) GetDivision() string {
 	if m != nil {
-		return m.Userassets
+		return m.Division
 	}
-	return nil
+	return ""
 }
 
-type SaveUserassetReq struct {
-	Userassets           []*GhostUserasset `protobuf:"bytes,1,rep,name=userassets,proto3" json:"userassets,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
-}
-
-func (m *SaveUserassetReq) Reset()         { *m = SaveUserassetReq{} }
-func (m *SaveUserassetReq) String() string { return proto.CompactTextString(m) }
-func (*SaveUserassetReq) ProtoMessage()    {}
-func (*SaveUserassetReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_77edc9f77fb63d46, []int{10}
-}
-
-func (m *SaveUserassetReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SaveUserassetReq.Unmarshal(m, b)
-}
-func (m *SaveUserassetReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SaveUserassetReq.Marshal(b, m, deterministic)
-}
-func (m *SaveUserassetReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SaveUserassetReq.Merge(m, src)
-}
-func (m *SaveUserassetReq) XXX_Size() int {
-	return xxx_messageInfo_SaveUserassetReq.Size(m)
-}
-func (m *SaveUserassetReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_SaveUserassetReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SaveUserassetReq proto.InternalMessageInfo
-
-func (m *SaveUserassetReq) GetUserassets() []*GhostUserasset {
+func (m *BindSessionRsp) GetSessionid() uint64 {
 	if m != nil {
-		return m.Userassets
+		return m.Sessionid
 	}
-	return nil
+	return 0
 }
 
-type SaveUserassetRsp struct {
-	Ok                   []uint64 `protobuf:"varint,1,rep,packed,name=ok,proto3" json:"ok,omitempty"`
-	Fail                 []uint64 `protobuf:"varint,2,rep,packed,name=fail,proto3" json:"fail,omitempty"`
-	FailErrno            []int32  `protobuf:"varint,3,rep,packed,name=fail_errno,json=failErrno,proto3" json:"fail_errno,omitempty"`
+func (m *BindSessionRsp) GetUuid() uint64 {
+	if m != nil {
+		return m.Uuid
+	}
+	return 0
+}
+
+type UnbindSessionReq struct {
+	Division             string   `protobuf:"bytes,1,opt,name=division,proto3" json:"division,omitempty"`
+	Sessionid            uint64   `protobuf:"varint,2,opt,name=sessionid,proto3" json:"sessionid,omitempty"`
+	Uuid                 uint64   `protobuf:"varint,3,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SaveUserassetRsp) Reset()         { *m = SaveUserassetRsp{} }
-func (m *SaveUserassetRsp) String() string { return proto.CompactTextString(m) }
-func (*SaveUserassetRsp) ProtoMessage()    {}
-func (*SaveUserassetRsp) Descriptor() ([]byte, []int) {
+func (m *UnbindSessionReq) Reset()         { *m = UnbindSessionReq{} }
+func (m *UnbindSessionReq) String() string { return proto.CompactTextString(m) }
+func (*UnbindSessionReq) ProtoMessage()    {}
+func (*UnbindSessionReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77edc9f77fb63d46, []int{10}
+}
+
+func (m *UnbindSessionReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnbindSessionReq.Unmarshal(m, b)
+}
+func (m *UnbindSessionReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnbindSessionReq.Marshal(b, m, deterministic)
+}
+func (m *UnbindSessionReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnbindSessionReq.Merge(m, src)
+}
+func (m *UnbindSessionReq) XXX_Size() int {
+	return xxx_messageInfo_UnbindSessionReq.Size(m)
+}
+func (m *UnbindSessionReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnbindSessionReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnbindSessionReq proto.InternalMessageInfo
+
+func (m *UnbindSessionReq) GetDivision() string {
+	if m != nil {
+		return m.Division
+	}
+	return ""
+}
+
+func (m *UnbindSessionReq) GetSessionid() uint64 {
+	if m != nil {
+		return m.Sessionid
+	}
+	return 0
+}
+
+func (m *UnbindSessionReq) GetUuid() uint64 {
+	if m != nil {
+		return m.Uuid
+	}
+	return 0
+}
+
+type UnbindSessionRsp struct {
+	Result               int32    `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+	Division             string   `protobuf:"bytes,2,opt,name=division,proto3" json:"division,omitempty"`
+	Sessionid            uint64   `protobuf:"varint,3,opt,name=sessionid,proto3" json:"sessionid,omitempty"`
+	Uuid                 uint64   `protobuf:"varint,4,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UnbindSessionRsp) Reset()         { *m = UnbindSessionRsp{} }
+func (m *UnbindSessionRsp) String() string { return proto.CompactTextString(m) }
+func (*UnbindSessionRsp) ProtoMessage()    {}
+func (*UnbindSessionRsp) Descriptor() ([]byte, []int) {
 	return fileDescriptor_77edc9f77fb63d46, []int{11}
 }
 
-func (m *SaveUserassetRsp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SaveUserassetRsp.Unmarshal(m, b)
+func (m *UnbindSessionRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnbindSessionRsp.Unmarshal(m, b)
 }
-func (m *SaveUserassetRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SaveUserassetRsp.Marshal(b, m, deterministic)
+func (m *UnbindSessionRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnbindSessionRsp.Marshal(b, m, deterministic)
 }
-func (m *SaveUserassetRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SaveUserassetRsp.Merge(m, src)
+func (m *UnbindSessionRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnbindSessionRsp.Merge(m, src)
 }
-func (m *SaveUserassetRsp) XXX_Size() int {
-	return xxx_messageInfo_SaveUserassetRsp.Size(m)
+func (m *UnbindSessionRsp) XXX_Size() int {
+	return xxx_messageInfo_UnbindSessionRsp.Size(m)
 }
-func (m *SaveUserassetRsp) XXX_DiscardUnknown() {
-	xxx_messageInfo_SaveUserassetRsp.DiscardUnknown(m)
+func (m *UnbindSessionRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnbindSessionRsp.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SaveUserassetRsp proto.InternalMessageInfo
+var xxx_messageInfo_UnbindSessionRsp proto.InternalMessageInfo
 
-func (m *SaveUserassetRsp) GetOk() []uint64 {
+func (m *UnbindSessionRsp) GetResult() int32 {
 	if m != nil {
-		return m.Ok
+		return m.Result
+	}
+	return 0
+}
+
+func (m *UnbindSessionRsp) GetDivision() string {
+	if m != nil {
+		return m.Division
+	}
+	return ""
+}
+
+func (m *UnbindSessionRsp) GetSessionid() uint64 {
+	if m != nil {
+		return m.Sessionid
+	}
+	return 0
+}
+
+func (m *UnbindSessionRsp) GetUuid() uint64 {
+	if m != nil {
+		return m.Uuid
+	}
+	return 0
+}
+
+type LockUserassetReq struct {
+	Division             string          `protobuf:"bytes,1,opt,name=division,proto3" json:"division,omitempty"`
+	Sessionid            uint64          `protobuf:"varint,2,opt,name=sessionid,proto3" json:"sessionid,omitempty"`
+	Uuid                 uint64          `protobuf:"varint,3,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Duration             int64           `protobuf:"varint,4,opt,name=duration,proto3" json:"duration,omitempty"`
+	Userasset            *GhostUserasset `protobuf:"bytes,5,opt,name=userasset,proto3" json:"userasset,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *LockUserassetReq) Reset()         { *m = LockUserassetReq{} }
+func (m *LockUserassetReq) String() string { return proto.CompactTextString(m) }
+func (*LockUserassetReq) ProtoMessage()    {}
+func (*LockUserassetReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77edc9f77fb63d46, []int{12}
+}
+
+func (m *LockUserassetReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LockUserassetReq.Unmarshal(m, b)
+}
+func (m *LockUserassetReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LockUserassetReq.Marshal(b, m, deterministic)
+}
+func (m *LockUserassetReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LockUserassetReq.Merge(m, src)
+}
+func (m *LockUserassetReq) XXX_Size() int {
+	return xxx_messageInfo_LockUserassetReq.Size(m)
+}
+func (m *LockUserassetReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_LockUserassetReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LockUserassetReq proto.InternalMessageInfo
+
+func (m *LockUserassetReq) GetDivision() string {
+	if m != nil {
+		return m.Division
+	}
+	return ""
+}
+
+func (m *LockUserassetReq) GetSessionid() uint64 {
+	if m != nil {
+		return m.Sessionid
+	}
+	return 0
+}
+
+func (m *LockUserassetReq) GetUuid() uint64 {
+	if m != nil {
+		return m.Uuid
+	}
+	return 0
+}
+
+func (m *LockUserassetReq) GetDuration() int64 {
+	if m != nil {
+		return m.Duration
+	}
+	return 0
+}
+
+func (m *LockUserassetReq) GetUserasset() *GhostUserasset {
+	if m != nil {
+		return m.Userasset
 	}
 	return nil
 }
 
-func (m *SaveUserassetRsp) GetFail() []uint64 {
+type LockUserassetRsp struct {
+	Result               int32           `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+	Expired              int64           `protobuf:"varint,2,opt,name=expired,proto3" json:"expired,omitempty"`
+	Userasset            *GhostUserasset `protobuf:"bytes,3,opt,name=userasset,proto3" json:"userasset,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *LockUserassetRsp) Reset()         { *m = LockUserassetRsp{} }
+func (m *LockUserassetRsp) String() string { return proto.CompactTextString(m) }
+func (*LockUserassetRsp) ProtoMessage()    {}
+func (*LockUserassetRsp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77edc9f77fb63d46, []int{13}
+}
+
+func (m *LockUserassetRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LockUserassetRsp.Unmarshal(m, b)
+}
+func (m *LockUserassetRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LockUserassetRsp.Marshal(b, m, deterministic)
+}
+func (m *LockUserassetRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LockUserassetRsp.Merge(m, src)
+}
+func (m *LockUserassetRsp) XXX_Size() int {
+	return xxx_messageInfo_LockUserassetRsp.Size(m)
+}
+func (m *LockUserassetRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_LockUserassetRsp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LockUserassetRsp proto.InternalMessageInfo
+
+func (m *LockUserassetRsp) GetResult() int32 {
 	if m != nil {
-		return m.Fail
+		return m.Result
+	}
+	return 0
+}
+
+func (m *LockUserassetRsp) GetExpired() int64 {
+	if m != nil {
+		return m.Expired
+	}
+	return 0
+}
+
+func (m *LockUserassetRsp) GetUserasset() *GhostUserasset {
+	if m != nil {
+		return m.Userasset
 	}
 	return nil
 }
 
-func (m *SaveUserassetRsp) GetFailErrno() []int32 {
+type UnlockUserassetReq struct {
+	Sessionid            uint64          `protobuf:"varint,1,opt,name=sessionid,proto3" json:"sessionid,omitempty"`
+	Uuid                 uint64          `protobuf:"varint,2,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Userasset            *GhostUserasset `protobuf:"bytes,3,opt,name=userasset,proto3" json:"userasset,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *UnlockUserassetReq) Reset()         { *m = UnlockUserassetReq{} }
+func (m *UnlockUserassetReq) String() string { return proto.CompactTextString(m) }
+func (*UnlockUserassetReq) ProtoMessage()    {}
+func (*UnlockUserassetReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77edc9f77fb63d46, []int{14}
+}
+
+func (m *UnlockUserassetReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnlockUserassetReq.Unmarshal(m, b)
+}
+func (m *UnlockUserassetReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnlockUserassetReq.Marshal(b, m, deterministic)
+}
+func (m *UnlockUserassetReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnlockUserassetReq.Merge(m, src)
+}
+func (m *UnlockUserassetReq) XXX_Size() int {
+	return xxx_messageInfo_UnlockUserassetReq.Size(m)
+}
+func (m *UnlockUserassetReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnlockUserassetReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnlockUserassetReq proto.InternalMessageInfo
+
+func (m *UnlockUserassetReq) GetSessionid() uint64 {
 	if m != nil {
-		return m.FailErrno
+		return m.Sessionid
+	}
+	return 0
+}
+
+func (m *UnlockUserassetReq) GetUuid() uint64 {
+	if m != nil {
+		return m.Uuid
+	}
+	return 0
+}
+
+func (m *UnlockUserassetReq) GetUserasset() *GhostUserasset {
+	if m != nil {
+		return m.Userasset
 	}
 	return nil
+}
+
+type UnlockUserassetRsp struct {
+	Result               int32    `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UnlockUserassetRsp) Reset()         { *m = UnlockUserassetRsp{} }
+func (m *UnlockUserassetRsp) String() string { return proto.CompactTextString(m) }
+func (*UnlockUserassetRsp) ProtoMessage()    {}
+func (*UnlockUserassetRsp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77edc9f77fb63d46, []int{15}
+}
+
+func (m *UnlockUserassetRsp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnlockUserassetRsp.Unmarshal(m, b)
+}
+func (m *UnlockUserassetRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnlockUserassetRsp.Marshal(b, m, deterministic)
+}
+func (m *UnlockUserassetRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnlockUserassetRsp.Merge(m, src)
+}
+func (m *UnlockUserassetRsp) XXX_Size() int {
+	return xxx_messageInfo_UnlockUserassetRsp.Size(m)
+}
+func (m *UnlockUserassetRsp) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnlockUserassetRsp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnlockUserassetRsp proto.InternalMessageInfo
+
+func (m *UnlockUserassetRsp) GetResult() int32 {
+	if m != nil {
+		return m.Result
+	}
+	return 0
 }
 
 type DebugReq struct {
@@ -641,7 +933,7 @@ func (m *DebugReq) Reset()         { *m = DebugReq{} }
 func (m *DebugReq) String() string { return proto.CompactTextString(m) }
 func (*DebugReq) ProtoMessage()    {}
 func (*DebugReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_77edc9f77fb63d46, []int{12}
+	return fileDescriptor_77edc9f77fb63d46, []int{16}
 }
 
 func (m *DebugReq) XXX_Unmarshal(b []byte) error {
@@ -695,7 +987,7 @@ func (m *DebugRsp) Reset()         { *m = DebugRsp{} }
 func (m *DebugRsp) String() string { return proto.CompactTextString(m) }
 func (*DebugRsp) ProtoMessage()    {}
 func (*DebugRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_77edc9f77fb63d46, []int{13}
+	return fileDescriptor_77edc9f77fb63d46, []int{17}
 }
 
 func (m *DebugRsp) XXX_Unmarshal(b []byte) error {
@@ -741,7 +1033,7 @@ func (m *NotifyStatusReq) Reset()         { *m = NotifyStatusReq{} }
 func (m *NotifyStatusReq) String() string { return proto.CompactTextString(m) }
 func (*NotifyStatusReq) ProtoMessage()    {}
 func (*NotifyStatusReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_77edc9f77fb63d46, []int{14}
+	return fileDescriptor_77edc9f77fb63d46, []int{18}
 }
 
 func (m *NotifyStatusReq) XXX_Unmarshal(b []byte) error {
@@ -781,7 +1073,7 @@ func (m *NotifyStatusRsp) Reset()         { *m = NotifyStatusRsp{} }
 func (m *NotifyStatusRsp) String() string { return proto.CompactTextString(m) }
 func (*NotifyStatusRsp) ProtoMessage()    {}
 func (*NotifyStatusRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_77edc9f77fb63d46, []int{15}
+	return fileDescriptor_77edc9f77fb63d46, []int{19}
 }
 
 func (m *NotifyStatusRsp) XXX_Unmarshal(b []byte) error {
@@ -827,7 +1119,7 @@ func (m *NotifyPacketRsp) Reset()         { *m = NotifyPacketRsp{} }
 func (m *NotifyPacketRsp) String() string { return proto.CompactTextString(m) }
 func (*NotifyPacketRsp) ProtoMessage()    {}
 func (*NotifyPacketRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_77edc9f77fb63d46, []int{16}
+	return fileDescriptor_77edc9f77fb63d46, []int{20}
 }
 
 func (m *NotifyPacketRsp) XXX_Unmarshal(b []byte) error {
@@ -864,10 +1156,14 @@ func init() {
 	proto.RegisterType((*UnregisterVmRsp)(nil), "ghost.unregister_vm_rsp")
 	proto.RegisterType((*SendPacketReq)(nil), "ghost.send_packet_req")
 	proto.RegisterType((*SendPacketRsp)(nil), "ghost.send_packet_rsp")
-	proto.RegisterType((*LoadUserassetReq)(nil), "ghost.load_userasset_req")
-	proto.RegisterType((*LoadUserassetRsp)(nil), "ghost.load_userasset_rsp")
-	proto.RegisterType((*SaveUserassetReq)(nil), "ghost.save_userasset_req")
-	proto.RegisterType((*SaveUserassetRsp)(nil), "ghost.save_userasset_rsp")
+	proto.RegisterType((*BindSessionReq)(nil), "ghost.bind_session_req")
+	proto.RegisterType((*BindSessionRsp)(nil), "ghost.bind_session_rsp")
+	proto.RegisterType((*UnbindSessionReq)(nil), "ghost.unbind_session_req")
+	proto.RegisterType((*UnbindSessionRsp)(nil), "ghost.unbind_session_rsp")
+	proto.RegisterType((*LockUserassetReq)(nil), "ghost.lock_userasset_req")
+	proto.RegisterType((*LockUserassetRsp)(nil), "ghost.lock_userasset_rsp")
+	proto.RegisterType((*UnlockUserassetReq)(nil), "ghost.unlock_userasset_req")
+	proto.RegisterType((*UnlockUserassetRsp)(nil), "ghost.unlock_userasset_rsp")
 	proto.RegisterType((*DebugReq)(nil), "ghost.debug_req")
 	proto.RegisterType((*DebugRsp)(nil), "ghost.debug_rsp")
 	proto.RegisterType((*NotifyStatusReq)(nil), "ghost.notify_status_req")
@@ -878,50 +1174,57 @@ func init() {
 func init() { proto.RegisterFile("ghost.proto", fileDescriptor_77edc9f77fb63d46) }
 
 var fileDescriptor_77edc9f77fb63d46 = []byte{
-	// 679 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x5d, 0x4f, 0xdc, 0x3a,
-	0x10, 0xbd, 0xd9, 0x24, 0x0b, 0x19, 0xbe, 0x2e, 0xbe, 0x5c, 0x94, 0x9b, 0xdb, 0x4a, 0xab, 0x3c,
-	0xad, 0x5a, 0xc1, 0x03, 0x95, 0xda, 0xa7, 0xd2, 0x56, 0xa5, 0x45, 0x95, 0xa0, 0x1f, 0x5e, 0x41,
-	0xd5, 0xa7, 0xc8, 0xac, 0x0d, 0x8d, 0x20, 0x1f, 0xc4, 0x4e, 0x24, 0xfe, 0x45, 0x5f, 0x2a, 0xf5,
-	0xe7, 0x56, 0x9e, 0x78, 0xc3, 0x92, 0xec, 0x42, 0xa9, 0xfa, 0xb4, 0x3e, 0x33, 0x93, 0x33, 0x67,
-	0xec, 0x63, 0x2f, 0x2c, 0x9d, 0x7d, 0xcd, 0xa4, 0xda, 0xce, 0x8b, 0x4c, 0x65, 0xc4, 0x45, 0x10,
-	0x7e, 0xb3, 0x60, 0x19, 0x57, 0x51, 0xce, 0xc6, 0xe7, 0x42, 0x91, 0x7f, 0xa1, 0x3f, 0x4e, 0x78,
-	0x14, 0x73, 0xdf, 0x1a, 0x58, 0xc3, 0x15, 0xea, 0x8e, 0x13, 0xfe, 0x8e, 0x93, 0xff, 0xc1, 0x2b,
-	0xa5, 0x28, 0x22, 0xce, 0x14, 0xf3, 0x7b, 0x98, 0x59, 0xd4, 0x81, 0x3d, 0xa6, 0x18, 0x79, 0x00,
-	0x9e, 0x8a, 0x13, 0x21, 0x15, 0x4b, 0x72, 0xdf, 0xc6, 0xe4, 0x75, 0x80, 0x04, 0xb0, 0x28, 0x85,
-	0x94, 0x71, 0x96, 0x4a, 0xdf, 0x19, 0xd8, 0x43, 0x87, 0x36, 0x98, 0x10, 0x70, 0x4e, 0x32, 0x7e,
-	0xe5, 0xbb, 0x03, 0x6b, 0xe8, 0x51, 0x5c, 0x87, 0x47, 0xb0, 0x56, 0x2b, 0xd2, 0xfc, 0x4c, 0x4a,
-	0xa1, 0x74, 0x59, 0x59, 0x1a, 0x49, 0x0e, 0xc5, 0x35, 0xf1, 0x61, 0xa1, 0x12, 0x85, 0xa6, 0x41,
-	0x3d, 0x0e, 0x9d, 0x40, 0xb2, 0x01, 0x2e, 0x7e, 0x86, 0x52, 0x3c, 0x5a, 0x83, 0x70, 0x1f, 0xd6,
-	0x0a, 0x71, 0x16, 0x4b, 0x25, 0x8a, 0xa8, 0x4a, 0xa2, 0x42, 0x5c, 0x6a, 0x65, 0x3c, 0xae, 0x62,
-	0xe4, 0xb0, 0xb0, 0xb6, 0xc1, 0x6d, 0x7a, 0xaf, 0xa1, 0x0f, 0x3f, 0xb5, 0x88, 0x64, 0x4e, 0x36,
-	0xa1, 0x5f, 0x08, 0x59, 0x5e, 0x28, 0xa4, 0x71, 0xa9, 0x41, 0x5a, 0x77, 0x95, 0xc4, 0xdc, 0x08,
-	0xc4, 0xb5, 0x8e, 0x71, 0x21, 0xc7, 0x46, 0x1c, 0xae, 0xc3, 0x4b, 0x58, 0x2f, 0xd3, 0x3f, 0xa2,
-	0xae, 0x69, 0x69, 0xcf, 0x68, 0xe9, 0x4c, 0xb5, 0x7c, 0xd1, 0x69, 0x79, 0xfb, 0x1c, 0x48, 0xd0,
-	0x9b, 0x22, 0x78, 0x09, 0x6b, 0x52, 0xa4, 0xdc, 0xf8, 0x06, 0x15, 0x6f, 0xc1, 0x42, 0x8d, 0xa4,
-	0x6f, 0x0d, 0xec, 0xe1, 0xd2, 0xce, 0x3f, 0xdb, 0xb5, 0xe5, 0xa6, 0x1d, 0x46, 0x27, 0x35, 0xe1,
-	0xf3, 0x16, 0xc3, 0x3d, 0x05, 0x3c, 0x02, 0x72, 0x91, 0x31, 0x7e, 0x6d, 0x13, 0xd4, 0xb0, 0x01,
-	0xae, 0xb6, 0x47, 0xad, 0xc0, 0xa1, 0x35, 0x08, 0x79, 0xb7, 0xf6, 0x96, 0x6e, 0x4f, 0x01, 0x9a,
-	0x42, 0xe9, 0xf7, 0x70, 0x94, 0xcd, 0x1b, 0xa3, 0x34, 0x69, 0x3a, 0x55, 0x19, 0x1e, 0x00, 0x91,
-	0xac, 0x12, 0x2d, 0x45, 0x37, 0xd9, 0xac, 0x5f, 0x66, 0xfb, 0xdc, 0x65, 0x93, 0x39, 0x59, 0x85,
-	0x5e, 0x76, 0x6e, 0x86, 0xeb, 0x65, 0xe7, 0x7a, 0x67, 0x4e, 0x59, 0x7c, 0x81, 0x2a, 0x1d, 0x8a,
-	0x6b, 0xf2, 0x10, 0x40, 0xff, 0x46, 0xa2, 0x28, 0xd2, 0xcc, 0xb7, 0x07, 0xf6, 0xd0, 0xa5, 0x9e,
-	0x8e, 0xbc, 0xd1, 0x81, 0xf0, 0x0b, 0x78, 0x5c, 0x9c, 0x94, 0x67, 0x77, 0xba, 0x6c, 0x03, 0xf4,
-	0xed, 0xcf, 0x72, 0xb3, 0xed, 0x35, 0xd0, 0x5f, 0x8c, 0x13, 0x9e, 0xb3, 0x82, 0x25, 0xc6, 0xc4,
-	0x0d, 0x0e, 0x9f, 0x35, 0xd4, 0xf7, 0x3c, 0xcc, 0xc7, 0xb0, 0x9e, 0x66, 0x2a, 0x3e, 0xbd, 0x8a,
-	0xa4, 0x62, 0xaa, 0x94, 0xa8, 0x6d, 0x13, 0xfa, 0x35, 0x32, 0x6f, 0x91, 0x41, 0xda, 0xbb, 0xad,
-	0xe2, 0xdf, 0xee, 0x76, 0xb7, 0xf7, 0x76, 0xbe, 0xdb, 0xb0, 0xbc, 0xaf, 0xcf, 0x69, 0x24, 0x8a,
-	0x2a, 0x1e, 0x0b, 0xb2, 0x0b, 0x40, 0xcd, 0xc5, 0x39, 0x3e, 0x24, 0x93, 0xa3, 0x6c, 0x5d, 0xdf,
-	0x60, 0x66, 0x5c, 0xe6, 0xe1, 0x5f, 0x64, 0x0f, 0x96, 0x8f, 0x9a, 0xab, 0x77, 0x7c, 0x48, 0x7c,
-	0x53, 0xd9, 0x79, 0x02, 0x82, 0x39, 0x19, 0x64, 0xd9, 0x87, 0x95, 0x83, 0x8c, 0xf1, 0x23, 0x29,
-	0x8a, 0x57, 0xf8, 0x48, 0xfe, 0x67, 0x8a, 0xbb, 0x97, 0x22, 0x98, 0x97, 0x9a, 0x10, 0x8d, 0x58,
-	0x25, 0xba, 0x44, 0x5d, 0x2f, 0x07, 0xf3, 0x52, 0x48, 0xb4, 0x0b, 0x30, 0x12, 0x29, 0xff, 0x58,
-	0xff, 0x91, 0x4c, 0xe6, 0x6f, 0x3d, 0x12, 0xc1, 0xcc, 0x38, 0x7e, 0xbf, 0x05, 0xee, 0x9e, 0x36,
-	0x0f, 0xf9, 0xdb, 0x94, 0x34, 0x2e, 0x0d, 0x5a, 0x11, 0x5d, 0xbe, 0xf3, 0xc3, 0x02, 0xef, 0xf8,
-	0x70, 0x72, 0x28, 0x6f, 0x61, 0xf5, 0x43, 0xfa, 0x1e, 0x0f, 0x75, 0x84, 0xa6, 0x68, 0xb6, 0xb5,
-	0xe3, 0xab, 0x60, 0x4e, 0x06, 0x45, 0xbc, 0xbe, 0xe6, 0x31, 0x83, 0xcc, 0x7a, 0xc4, 0xda, 0x14,
-	0xd3, 0x73, 0x0c, 0xad, 0x93, 0x3e, 0xfe, 0xc7, 0x3e, 0xf9, 0x19, 0x00, 0x00, 0xff, 0xff, 0x71,
-	0xe9, 0xb9, 0x5c, 0x72, 0x07, 0x00, 0x00,
+	// 789 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x4f, 0x6f, 0xd3, 0x4a,
+	0x10, 0x7f, 0x8e, 0x9d, 0xb4, 0x9e, 0xb4, 0x2f, 0xed, 0xbe, 0xbe, 0x3e, 0x3f, 0xb7, 0x87, 0xc8,
+	0xa7, 0x48, 0x4f, 0xed, 0x21, 0x0f, 0x89, 0x13, 0x85, 0x42, 0x45, 0x85, 0x44, 0x00, 0x39, 0x4a,
+	0x25, 0x4e, 0xc1, 0xf1, 0x2e, 0xc5, 0x6a, 0xfd, 0x07, 0xaf, 0x1d, 0xb5, 0x08, 0x71, 0xe7, 0xc6,
+	0x91, 0x6f, 0xc0, 0x17, 0xe0, 0x03, 0xa2, 0x1d, 0xaf, 0x9d, 0xd4, 0xb1, 0x53, 0x5a, 0x15, 0x6e,
+	0x3b, 0x3b, 0xe3, 0xdf, 0xfc, 0x66, 0xf6, 0xb7, 0xb3, 0x86, 0xf6, 0xe9, 0xbb, 0x90, 0x27, 0xfb,
+	0x51, 0x1c, 0x26, 0x21, 0x69, 0xa2, 0x61, 0x7d, 0x51, 0x60, 0x0d, 0x57, 0xe3, 0xc8, 0x71, 0xcf,
+	0x58, 0x42, 0xfe, 0x86, 0x96, 0xeb, 0xd3, 0xb1, 0x47, 0x0d, 0xa5, 0xab, 0xf4, 0xd6, 0xed, 0xa6,
+	0xeb, 0xd3, 0x67, 0x94, 0xec, 0x80, 0x9e, 0x72, 0x16, 0x8f, 0xa9, 0x93, 0x38, 0x46, 0x03, 0x3d,
+	0xab, 0x62, 0xe3, 0xc8, 0x49, 0x1c, 0xb2, 0x0b, 0x7a, 0xe2, 0xf9, 0x8c, 0x27, 0x8e, 0x1f, 0x19,
+	0x2a, 0x3a, 0x67, 0x1b, 0xc4, 0x84, 0x55, 0xce, 0x38, 0xf7, 0xc2, 0x80, 0x1b, 0x5a, 0x57, 0xed,
+	0x69, 0x76, 0x61, 0x13, 0x02, 0xda, 0x24, 0xa4, 0x97, 0x46, 0xb3, 0xab, 0xf4, 0x74, 0x1b, 0xd7,
+	0xd6, 0x08, 0x3a, 0x19, 0x23, 0x81, 0xef, 0x70, 0xce, 0x12, 0x11, 0x96, 0xa6, 0x92, 0x92, 0x66,
+	0xe3, 0x9a, 0x18, 0xb0, 0x32, 0x65, 0xb1, 0x80, 0x41, 0x3e, 0x9a, 0x9d, 0x9b, 0x64, 0x0b, 0x9a,
+	0xf8, 0x19, 0x52, 0xd1, 0xed, 0xcc, 0xb0, 0x8e, 0xa1, 0x13, 0xb3, 0x53, 0x8f, 0x27, 0x2c, 0x1e,
+	0x4f, 0xfd, 0x71, 0xcc, 0xde, 0x0b, 0x66, 0xd4, 0x9b, 0x7a, 0x88, 0xa1, 0x60, 0x6c, 0x61, 0x97,
+	0xe1, 0xf5, 0x02, 0xde, 0xf2, 0x4a, 0x40, 0x3c, 0x22, 0xdb, 0xd0, 0x8a, 0x19, 0x4f, 0xcf, 0x13,
+	0x84, 0x69, 0xda, 0xd2, 0x12, 0xbc, 0xa7, 0xbe, 0x47, 0x25, 0x41, 0x5c, 0x8b, 0x58, 0x51, 0x9d,
+	0x47, 0x91, 0x9e, 0x66, 0x4b, 0x4b, 0xc4, 0x52, 0xc6, 0x5d, 0x43, 0xcb, 0x5a, 0x21, 0xd6, 0xd6,
+	0x67, 0x05, 0x36, 0xd3, 0xe0, 0x4e, 0x68, 0x17, 0x5c, 0xd4, 0x4a, 0x2e, 0x5a, 0x25, 0x97, 0xe6,
+	0x1c, 0x97, 0x87, 0x0b, 0x54, 0x96, 0x17, 0x8e, 0x00, 0x8d, 0x39, 0x80, 0x47, 0xd0, 0xe1, 0x2c,
+	0xa0, 0x52, 0x68, 0x58, 0xc9, 0x1e, 0xac, 0x64, 0x16, 0x37, 0x94, 0xae, 0xda, 0x6b, 0xf7, 0xff,
+	0xda, 0xcf, 0x34, 0x3a, 0x2f, 0x49, 0x3b, 0x8f, 0xb1, 0x1e, 0x94, 0x10, 0x6e, 0x48, 0xe0, 0x0d,
+	0x6c, 0x4c, 0xbc, 0x80, 0x8e, 0xa5, 0xfa, 0xae, 0xed, 0xe5, 0x2e, 0xe8, 0x32, 0xb4, 0x38, 0xc2,
+	0xd9, 0x46, 0xa1, 0x49, 0x75, 0xa6, 0x49, 0xeb, 0xa2, 0x9c, 0x61, 0x09, 0xc3, 0xf9, 0xcc, 0x8d,
+	0x65, 0x99, 0xd5, 0xba, 0xcc, 0xda, 0x5c, 0xe6, 0x09, 0x90, 0x34, 0xf8, 0xc5, 0xd5, 0x7d, 0x58,
+	0xcc, 0xf1, 0xdb, 0xea, 0xfb, 0xae, 0x00, 0x39, 0x0f, 0xdd, 0xb3, 0xd9, 0x50, 0xb8, 0xfb, 0x02,
+	0x11, 0x2d, 0x8d, 0x9d, 0x44, 0xa0, 0x89, 0xe4, 0xaa, 0x5d, 0xd8, 0xe4, 0x5e, 0x36, 0x00, 0xb3,
+	0xc1, 0x22, 0xee, 0x45, 0xbb, 0xbf, 0x7d, 0x45, 0xac, 0x85, 0xd7, 0x9e, 0x05, 0x5a, 0x1f, 0x17,
+	0x59, 0x2f, 0x69, 0x99, 0x01, 0x2b, 0xec, 0x22, 0xf2, 0x62, 0x96, 0xf1, 0x55, 0xed, 0xdc, 0xbc,
+	0x9a, 0x5d, 0xfd, 0xd9, 0xec, 0x9f, 0x60, 0x2b, 0x0d, 0x2a, 0xba, 0x76, 0xa5, 0x33, 0x4a, 0x5d,
+	0x67, 0x1a, 0x73, 0x9d, 0xb9, 0x5d, 0xfe, 0xfd, 0xaa, 0xfc, 0xf5, 0xf5, 0x5b, 0xaf, 0x41, 0xa7,
+	0x6c, 0x92, 0x9e, 0x5e, 0x7b, 0xb4, 0x5b, 0x20, 0x9e, 0xa5, 0x30, 0x92, 0xc2, 0xca, 0x0c, 0xf1,
+	0x85, 0xeb, 0xd3, 0xc8, 0x89, 0x1d, 0x5f, 0x8e, 0xfe, 0xc2, 0xb6, 0xee, 0x17, 0xd0, 0x37, 0x1c,
+	0x1a, 0xff, 0xc1, 0x66, 0x10, 0x26, 0xde, 0xdb, 0xcb, 0x31, 0x4f, 0x9c, 0x24, 0xe5, 0xc8, 0x6d,
+	0x1b, 0x5a, 0x99, 0x25, 0x1f, 0x49, 0x69, 0x89, 0x19, 0x59, 0x0a, 0xbe, 0x75, 0xb6, 0xeb, 0x67,
+	0x5c, 0xff, 0x9b, 0x06, 0x6b, 0xc7, 0xa2, 0xfb, 0x43, 0x16, 0x4f, 0x3d, 0x97, 0x91, 0x03, 0x00,
+	0x5b, 0x0e, 0xe8, 0x93, 0x01, 0xc9, 0x0f, 0xa8, 0xf4, 0x7c, 0x98, 0x95, 0xfb, 0x3c, 0xb2, 0xfe,
+	0x20, 0x47, 0xb0, 0x36, 0x2a, 0x46, 0xfc, 0xc9, 0x80, 0x18, 0x32, 0x72, 0xe1, 0x09, 0x32, 0x6b,
+	0x3c, 0x88, 0x72, 0x00, 0x30, 0x64, 0x01, 0x7d, 0x95, 0xfd, 0x4f, 0xe4, 0xd9, 0x4a, 0xa3, 0xdf,
+	0xac, 0xdc, 0xc7, 0xef, 0x0f, 0xa1, 0xfd, 0xd8, 0x0b, 0xe8, 0x30, 0x13, 0x24, 0xf9, 0x47, 0x06,
+	0x96, 0x87, 0x9b, 0x59, 0xed, 0x40, 0x88, 0x63, 0x58, 0x1f, 0xe1, 0xa4, 0xca, 0x41, 0xfe, 0x2d,
+	0xf8, 0x2e, 0xc0, 0xd4, 0xb9, 0x72, 0xa0, 0xe7, 0xa1, 0x7b, 0x36, 0xe2, 0x2c, 0x3e, 0xc4, 0x3f,
+	0x91, 0x3c, 0x7a, 0xf1, 0x56, 0x99, 0x75, 0x2e, 0x04, 0x1a, 0x40, 0x67, 0x84, 0x57, 0x61, 0x06,
+	0xb5, 0x53, 0x24, 0xae, 0x00, 0xab, 0x77, 0x22, 0xdc, 0x1e, 0x34, 0x8f, 0x84, 0x9c, 0xc9, 0x86,
+	0x8c, 0x2b, 0xee, 0x8d, 0x59, 0xda, 0x11, 0xe1, 0xfd, 0xaf, 0x0a, 0xe8, 0x27, 0x83, 0x5c, 0x26,
+	0x4f, 0xe1, 0xcf, 0x97, 0xc1, 0x0b, 0x94, 0xd9, 0x10, 0x65, 0x5a, 0x1c, 0xf4, 0x82, 0xd2, 0xcd,
+	0x1a, 0x0f, 0x92, 0x78, 0x32, 0xc3, 0x91, 0x87, 0x5d, 0xf5, 0x7c, 0x97, 0x21, 0xe6, 0xcf, 0xba,
+	0xa7, 0x4c, 0x5a, 0xf8, 0x3b, 0xfa, 0xff, 0x8f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xb0, 0x3c, 0xfd,
+	0xc3, 0x9d, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -939,11 +1242,14 @@ type GhostServiceClient interface {
 	// vm management
 	RegisterVM(ctx context.Context, in *RegisterVmReq, opts ...grpc.CallOption) (*RegisterVmRsp, error)
 	UnregisterVM(ctx context.Context, in *UnregisterVmReq, opts ...grpc.CallOption) (*UnregisterVmRsp, error)
-	// user asset load & save
-	LoadUserAsset(ctx context.Context, in *LoadUserassetReq, opts ...grpc.CallOption) (*LoadUserassetRsp, error)
-	SaveUserAsset(ctx context.Context, in *SaveUserassetReq, opts ...grpc.CallOption) (*SaveUserassetRsp, error)
 	// send packet to client(s)
 	SendPacket(ctx context.Context, in *SendPacketReq, opts ...grpc.CallOption) (*SendPacketRsp, error)
+	// session bind & unbind with uuid(user unique id)
+	BindSession(ctx context.Context, in *BindSessionReq, opts ...grpc.CallOption) (*BindSessionRsp, error)
+	UnbindSession(ctx context.Context, in *UnbindSessionReq, opts ...grpc.CallOption) (*UnbindSessionRsp, error)
+	// user asset lock & unlock
+	LockUserAsset(ctx context.Context, in *LockUserassetReq, opts ...grpc.CallOption) (*LockUserassetRsp, error)
+	UnlockUserAsset(ctx context.Context, in *UnlockUserassetReq, opts ...grpc.CallOption) (*UnlockUserassetRsp, error)
 	// debug
 	Debug(ctx context.Context, in *DebugReq, opts ...grpc.CallOption) (*DebugRsp, error)
 }
@@ -974,27 +1280,45 @@ func (c *ghostServiceClient) UnregisterVM(ctx context.Context, in *UnregisterVmR
 	return out, nil
 }
 
-func (c *ghostServiceClient) LoadUserAsset(ctx context.Context, in *LoadUserassetReq, opts ...grpc.CallOption) (*LoadUserassetRsp, error) {
-	out := new(LoadUserassetRsp)
-	err := c.cc.Invoke(ctx, "/ghost.GhostService/LoadUserAsset", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *ghostServiceClient) SaveUserAsset(ctx context.Context, in *SaveUserassetReq, opts ...grpc.CallOption) (*SaveUserassetRsp, error) {
-	out := new(SaveUserassetRsp)
-	err := c.cc.Invoke(ctx, "/ghost.GhostService/SaveUserAsset", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *ghostServiceClient) SendPacket(ctx context.Context, in *SendPacketReq, opts ...grpc.CallOption) (*SendPacketRsp, error) {
 	out := new(SendPacketRsp)
 	err := c.cc.Invoke(ctx, "/ghost.GhostService/SendPacket", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ghostServiceClient) BindSession(ctx context.Context, in *BindSessionReq, opts ...grpc.CallOption) (*BindSessionRsp, error) {
+	out := new(BindSessionRsp)
+	err := c.cc.Invoke(ctx, "/ghost.GhostService/BindSession", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ghostServiceClient) UnbindSession(ctx context.Context, in *UnbindSessionReq, opts ...grpc.CallOption) (*UnbindSessionRsp, error) {
+	out := new(UnbindSessionRsp)
+	err := c.cc.Invoke(ctx, "/ghost.GhostService/UnbindSession", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ghostServiceClient) LockUserAsset(ctx context.Context, in *LockUserassetReq, opts ...grpc.CallOption) (*LockUserassetRsp, error) {
+	out := new(LockUserassetRsp)
+	err := c.cc.Invoke(ctx, "/ghost.GhostService/LockUserAsset", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ghostServiceClient) UnlockUserAsset(ctx context.Context, in *UnlockUserassetReq, opts ...grpc.CallOption) (*UnlockUserassetRsp, error) {
+	out := new(UnlockUserassetRsp)
+	err := c.cc.Invoke(ctx, "/ghost.GhostService/UnlockUserAsset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1015,11 +1339,14 @@ type GhostServiceServer interface {
 	// vm management
 	RegisterVM(context.Context, *RegisterVmReq) (*RegisterVmRsp, error)
 	UnregisterVM(context.Context, *UnregisterVmReq) (*UnregisterVmRsp, error)
-	// user asset load & save
-	LoadUserAsset(context.Context, *LoadUserassetReq) (*LoadUserassetRsp, error)
-	SaveUserAsset(context.Context, *SaveUserassetReq) (*SaveUserassetRsp, error)
 	// send packet to client(s)
 	SendPacket(context.Context, *SendPacketReq) (*SendPacketRsp, error)
+	// session bind & unbind with uuid(user unique id)
+	BindSession(context.Context, *BindSessionReq) (*BindSessionRsp, error)
+	UnbindSession(context.Context, *UnbindSessionReq) (*UnbindSessionRsp, error)
+	// user asset lock & unlock
+	LockUserAsset(context.Context, *LockUserassetReq) (*LockUserassetRsp, error)
+	UnlockUserAsset(context.Context, *UnlockUserassetReq) (*UnlockUserassetRsp, error)
 	// debug
 	Debug(context.Context, *DebugReq) (*DebugRsp, error)
 }
@@ -1034,14 +1361,20 @@ func (*UnimplementedGhostServiceServer) RegisterVM(ctx context.Context, req *Reg
 func (*UnimplementedGhostServiceServer) UnregisterVM(ctx context.Context, req *UnregisterVmReq) (*UnregisterVmRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnregisterVM not implemented")
 }
-func (*UnimplementedGhostServiceServer) LoadUserAsset(ctx context.Context, req *LoadUserassetReq) (*LoadUserassetRsp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LoadUserAsset not implemented")
-}
-func (*UnimplementedGhostServiceServer) SaveUserAsset(ctx context.Context, req *SaveUserassetReq) (*SaveUserassetRsp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SaveUserAsset not implemented")
-}
 func (*UnimplementedGhostServiceServer) SendPacket(ctx context.Context, req *SendPacketReq) (*SendPacketRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendPacket not implemented")
+}
+func (*UnimplementedGhostServiceServer) BindSession(ctx context.Context, req *BindSessionReq) (*BindSessionRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BindSession not implemented")
+}
+func (*UnimplementedGhostServiceServer) UnbindSession(ctx context.Context, req *UnbindSessionReq) (*UnbindSessionRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnbindSession not implemented")
+}
+func (*UnimplementedGhostServiceServer) LockUserAsset(ctx context.Context, req *LockUserassetReq) (*LockUserassetRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LockUserAsset not implemented")
+}
+func (*UnimplementedGhostServiceServer) UnlockUserAsset(ctx context.Context, req *UnlockUserassetReq) (*UnlockUserassetRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnlockUserAsset not implemented")
 }
 func (*UnimplementedGhostServiceServer) Debug(ctx context.Context, req *DebugReq) (*DebugRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Debug not implemented")
@@ -1087,42 +1420,6 @@ func _GhostService_UnregisterVM_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GhostService_LoadUserAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoadUserassetReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GhostServiceServer).LoadUserAsset(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ghost.GhostService/LoadUserAsset",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GhostServiceServer).LoadUserAsset(ctx, req.(*LoadUserassetReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GhostService_SaveUserAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SaveUserassetReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GhostServiceServer).SaveUserAsset(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ghost.GhostService/SaveUserAsset",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GhostServiceServer).SaveUserAsset(ctx, req.(*SaveUserassetReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _GhostService_SendPacket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendPacketReq)
 	if err := dec(in); err != nil {
@@ -1137,6 +1434,78 @@ func _GhostService_SendPacket_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GhostServiceServer).SendPacket(ctx, req.(*SendPacketReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GhostService_BindSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BindSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GhostServiceServer).BindSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ghost.GhostService/BindSession",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GhostServiceServer).BindSession(ctx, req.(*BindSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GhostService_UnbindSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnbindSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GhostServiceServer).UnbindSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ghost.GhostService/UnbindSession",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GhostServiceServer).UnbindSession(ctx, req.(*UnbindSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GhostService_LockUserAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LockUserassetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GhostServiceServer).LockUserAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ghost.GhostService/LockUserAsset",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GhostServiceServer).LockUserAsset(ctx, req.(*LockUserassetReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GhostService_UnlockUserAsset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnlockUserassetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GhostServiceServer).UnlockUserAsset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ghost.GhostService/UnlockUserAsset",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GhostServiceServer).UnlockUserAsset(ctx, req.(*UnlockUserassetReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1172,16 +1541,24 @@ var _GhostService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _GhostService_UnregisterVM_Handler,
 		},
 		{
-			MethodName: "LoadUserAsset",
-			Handler:    _GhostService_LoadUserAsset_Handler,
-		},
-		{
-			MethodName: "SaveUserAsset",
-			Handler:    _GhostService_SaveUserAsset_Handler,
-		},
-		{
 			MethodName: "SendPacket",
 			Handler:    _GhostService_SendPacket_Handler,
+		},
+		{
+			MethodName: "BindSession",
+			Handler:    _GhostService_BindSession_Handler,
+		},
+		{
+			MethodName: "UnbindSession",
+			Handler:    _GhostService_UnbindSession_Handler,
+		},
+		{
+			MethodName: "LockUserAsset",
+			Handler:    _GhostService_LockUserAsset_Handler,
+		},
+		{
+			MethodName: "UnlockUserAsset",
+			Handler:    _GhostService_UnlockUserAsset_Handler,
 		},
 		{
 			MethodName: "Debug",

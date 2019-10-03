@@ -27,14 +27,16 @@ message register_vm_req {
 message register_vm_rsp {
     int32 result = 1;
     uint64 vmid = 2;
-    string desc = 3;
+    uint64 hostid = 3;
+    string desc = 4;
 }
 
 message unregister_vm_req {
     string division = 1;
     string version = 2;
     uint64 vmid = 3;
-    string desc = 4;
+    uint64 hostid = 4;
+    string desc = 5;
 }
 
 message unregister_vm_rsp {
@@ -51,23 +53,54 @@ message send_packet_rsp {
     string desc = 2;
 }
 
-message load_userasset_req {
-    repeated uint64 uuids = 1;
+message bind_session_req {
+    string division = 1;
+    uint64 sessionid = 2;
+    uint64 uuid = 3;
 }
 
-message load_userasset_rsp {
+message bind_session_rsp {
     int32 result = 1;
-    repeated ghost_userasset userassets = 2;
+    string division = 2;
+    uint64 sessionid = 3;
+    uint64 uuid = 4;
 }
 
-message save_userasset_req {
-    repeated ghost_userasset userassets = 1;
+message unbind_session_req {
+    string division = 1;
+    uint64 sessionid = 2;
+    uint64 uuid = 3;
 }
 
-message save_userasset_rsp {
-    repeated uint64 ok = 1;
-    repeated uint64 fail = 2;
-    repeated int32 fail_errno = 3;
+message unbind_session_rsp {
+    int32 result = 1;
+    string division = 2;
+    uint64 sessionid = 3;
+    uint64 uuid = 4;
+}
+
+message lock_userasset_req {
+    string division = 1;
+    uint64 sessionid = 2;
+    uint64 uuid = 3;
+    int64 duration = 4;
+    ghost_userasset userasset = 5;
+}
+
+message lock_userasset_rsp {
+    int32 result = 1;
+    int64 expired = 2;
+    ghost_userasset userasset = 3;
+}
+
+message unlock_userasset_req {
+    uint64 sessionid = 1;
+    uint64 uuid = 2;
+    ghost_userasset userasset = 3;
+}
+
+message unlock_userasset_rsp {
+    int32 result = 1;
 }
 
 message debug_req {
@@ -86,12 +119,16 @@ service GhostService {
     rpc RegisterVM(register_vm_req) returns(register_vm_rsp) {}
     rpc UnregisterVM(unregister_vm_req) returns(unregister_vm_rsp) {}
 
-    // user asset load & save
-    rpc LoadUserAsset(load_userasset_req) returns(load_userasset_rsp) {}
-    rpc SaveUserAsset(save_userasset_req) returns(save_userasset_rsp) {}
-
     // send packet to client(s)
     rpc SendPacket(send_packet_req) returns(send_packet_rsp) {}
+
+    // session bind & unbind with uuid(user unique id)
+    rpc BindSession(bind_session_req) returns(bind_session_rsp) {}
+    rpc UnbindSession(unbind_session_req) returns(unbind_session_rsp) {}
+
+    // user asset lock & unlock
+    rpc LockUserAsset(lock_userasset_req) returns(lock_userasset_rsp) {}
+    rpc UnlockUserAsset(unlock_userasset_req) returns(unlock_userasset_rsp) {}
 
     // debug
     rpc Debug(debug_req) returns(debug_rsp) {}

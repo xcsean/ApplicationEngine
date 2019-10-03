@@ -62,24 +62,38 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 	return rsp, nil
 }
 
-func (s *myService) LoadUserAsset(ctx context.Context, req *ghost.LoadUserassetReq) (*ghost.LoadUserassetRsp, error) {
-	defer dbg.Stacktrace()
-
-	rsp := &ghost.LoadUserassetRsp{Result: errno.OK}
-	return rsp, nil
-}
-
-func (s *myService) SaveUserAsset(ctx context.Context, req *ghost.SaveUserassetReq) (*ghost.SaveUserassetRsp, error) {
-	defer dbg.Stacktrace()
-
-	rsp := &ghost.SaveUserassetRsp{}
-	return rsp, nil
-}
-
 func (s *myService) SendPacket(ctx context.Context, req *ghost.SendPacketReq) (*ghost.SendPacketRsp, error) {
 	defer dbg.Stacktrace()
 
 	rsp := &ghost.SendPacketRsp{Result: errno.OK}
+	return rsp, nil
+}
+
+func (s *myService) BindSession(ctx context.Context, req *ghost.BindSessionReq) (*ghost.BindSessionRsp, error) {
+	defer dbg.Stacktrace()
+
+	rsp := &ghost.BindSessionRsp{Result: errno.OK}
+	return rsp, nil
+}
+
+func (s *myService) UnbindSession(ctx context.Context, req *ghost.UnbindSessionReq) (*ghost.UnbindSessionRsp, error) {
+	defer dbg.Stacktrace()
+
+	rsp := &ghost.UnbindSessionRsp{Result: errno.OK}
+	return rsp, nil
+}
+
+func (s *myService) LockUserAsset(ctx context.Context, req *ghost.LockUserassetReq) (*ghost.LockUserassetRsp, error) {
+	defer dbg.Stacktrace()
+
+	rsp := &ghost.LockUserassetRsp{Result: errno.OK}
+	return rsp, nil
+}
+
+func (s *myService) UnlockUserAsset(ctx context.Context, req *ghost.UnlockUserassetReq) (*ghost.UnlockUserassetRsp, error) {
+	defer dbg.Stacktrace()
+
+	rsp := &ghost.UnlockUserassetRsp{Result: errno.OK}
 	return rsp, nil
 }
 

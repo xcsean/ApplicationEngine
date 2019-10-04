@@ -29,3 +29,6 @@
 * asset data save to database and load interface exported to vm(s)
 * protocol frequency limitation and protection for vm(s)
 * overload protection
+
+### ghost session state
+![session state transform](ghost/sessionstate.png)

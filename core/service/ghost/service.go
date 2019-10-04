@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
@@ -10,7 +11,9 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -174,4 +177,17 @@ func validateRemote(ctx context.Context, division string) (string, int32) {
 	}
 
 	return fmt.Sprintf("%s:%d", requiredIP, rpcPort), errno.OK
+}
+
+func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
+	defer ls.Close()
+
+	reqChannel = rpcChannel
+
+	srv := grpc.NewServer()
+	ghost.RegisterGhostServiceServer(srv, &myService{})
+	reflection.Register(srv)
+	srv.Serve(ls)
+
+	log.Info("RPC service exit")
 }

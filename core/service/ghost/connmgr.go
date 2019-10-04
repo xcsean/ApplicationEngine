@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 
+	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
@@ -88,4 +89,47 @@ func connSend(pkt []byte) {
 	default:
 		// just discard the packet
 	}
+}
+
+func startConn(csk net.Conn, connChannel chan *connCmd) {
+	defer csk.Close()
+
+	// try to request master
+	conn.SendMasterSet(csk)
+
+	isMaster := false
+	// the recv loop
+	err := conn.HandleStream(csk, func(_ net.Conn, hdr, body []byte) {
+		h := conn.ParseHeader(hdr)
+		if isMaster {
+			// common packet deal, push to connChannel
+			dupHdr := make([]byte, len(hdr))
+			dupBody := make([]byte, len(body))
+			copy(dupHdr, hdr)
+			copy(dupBody, body)
+			select {
+			case connChannel <- newConnCmd(innerCmdConnSessionUp, dupHdr, dupBody):
+			default:
+				// just discard the packet
+			}
+		} else {
+			// wait the CmdMasterYou or CmdMasterNot
+			switch h.CmdID {
+			case conn.CmdMasterYou:
+				log.Info("I'm master, that's ok")
+				// init the conn-manager
+				isMaster = true
+				initConnMgr(csk)
+			case conn.CmdMasterNot:
+				log.Fatal("I can't be master, so exit")
+			}
+		}
+	})
+
+	if err != nil {
+		log.Error("client for gconnd exit, reason: %s", err.Error())
+	} else {
+		log.Info("client for gconnd exit")
+	}
+	connChannel <- newConnCmd(innerCmdConnExit, nil, nil)
 }

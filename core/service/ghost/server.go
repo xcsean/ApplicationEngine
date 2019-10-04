@@ -6,13 +6,9 @@ import (
 	"path"
 	"time"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
-	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/id"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 func start(c *ghostConfig, selfID int64) bool {
@@ -113,59 +109,4 @@ func start(c *ghostConfig, selfID int64) bool {
 
 	// server exit
 	return true
-}
-
-func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
-	defer ls.Close()
-
-	reqChannel = rpcChannel
-
-	srv := grpc.NewServer()
-	ghost.RegisterGhostServiceServer(srv, &myService{})
-	reflection.Register(srv)
-	srv.Serve(ls)
-
-	log.Info("RPC service exit")
-}
-
-func startConn(csk net.Conn, connChannel chan *connCmd) {
-	defer csk.Close()
-
-	// try to request master
-	conn.SendMasterSet(csk)
-
-	isMaster := false
-	err := conn.HandleStream(csk, func(_ net.Conn, hdr, body []byte) {
-		h := conn.ParseHeader(hdr)
-		if isMaster {
-			// common packet deal, push to connChannel
-			dupHdr := make([]byte, len(hdr))
-			dupBody := make([]byte, len(body))
-			copy(dupHdr, hdr)
-			copy(dupBody, body)
-			select {
-			case connChannel <- newConnCmd(innerCmdConnSessionUp, dupHdr, dupBody):
-			default:
-				// just discard the packet
-			}
-		} else {
-			// wait the CmdMasterYou or CmdMasterNot
-			switch h.CmdID {
-			case conn.CmdMasterYou:
-				log.Info("I'm master, that's ok")
-				// init the conn-manager
-				isMaster = true
-				initConnMgr(csk)
-			case conn.CmdMasterNot:
-				log.Fatal("I can't be master, so exit")
-			}
-		}
-	})
-
-	if err != nil {
-		log.Error("client for gconnd exit, reason: %s", err.Error())
-	} else {
-		log.Info("client for gconnd exit")
-	}
-	connChannel <- newConnCmd(innerCmdConnExit, nil, nil)
 }

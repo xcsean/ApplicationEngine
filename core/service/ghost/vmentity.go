@@ -8,6 +8,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+type vmEntityContext struct {
+	division string
+	version  string
+	addr     string
+	vmID     string
+}
 type vmEntityStreamContext struct {
 	conn   *grpc.ClientConn
 	stream ghost.VMService_OnNotifyPacketClient
@@ -26,36 +32,34 @@ func vmEntityInitStream(vmAddr string) (*vmEntityStreamContext, error) {
 	return &vmEntityStreamContext{conn: conn, stream: stream}, nil
 }
 
-func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan *innerCmd) {
+func vmEntityLoop(ent *vmEntityContext, pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan *innerCmd) {
 	var err error
 	var ctx *vmEntityStreamContext
-	division, version, addr, uuid := "", "", "", uint64(0)
 	for {
 		exit := false
 		select {
 		case cmd := <-inChannel:
 			cmdID := cmd.getID()
 			if cmdID == innerCmdVMStart {
-				division, version, addr, uuid = cmd.getVMMCmd()
-				log.Info("vm %s %s %s %d start", division, version, addr, uuid)
-				ctx, err = vmEntityInitStream(addr)
+				log.Info("vm %s %s %s %s start", ent.division, ent.version, ent.addr, ent.vmID)
+				ctx, err = vmEntityInitStream(ent.addr)
 				if err != nil {
-					log.Error("vm %s %s %s %d stream conn failed: %s", division, version, addr, uuid, err.Error())
-					outChannel <- newVMMCmd(innerCmdVMStreamConnFault, division, version, addr, uuid)
+					log.Error("vm %s %s %s %s stream conn failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
+					outChannel <- newVMMCmd(innerCmdVMStreamConnFault, ent.division, ent.vmID, "")
 					exit = true
 				} else {
 					defer ctx.conn.Close()
-					log.Info("vm %s %s %s %d stream ready", division, version, addr, uuid)
+					log.Info("vm %s %s %s %s stream ready", ent.division, ent.version, ent.addr, ent.vmID)
 				}
 			} else if cmdID == innerCmdVMShouldExit {
-				log.Info("vm %s %s %s %d recv VMShouldExit command, so exit", division, version, addr, uuid)
+				log.Info("vm %s %s %s %s recv VMShouldExit command, so exit", ent.division, ent.version, ent.addr, ent.vmID)
 				exit = true
 			}
 		case pkt := <-pktChannel:
 			err = ctx.stream.Send(pkt)
 			if err != nil {
-				log.Info("vm %s %s %s %d steam send failed: %s", division, version, addr, uuid, err.Error())
-				outChannel <- newVMMCmd(innerCmdVMStreamSendFault, division, version, addr, uuid)
+				log.Info("vm %s %s %s %s steam send failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
+				outChannel <- newVMMCmd(innerCmdVMStreamSendFault, ent.division, ent.vmID, "")
 				exit = true
 			}
 		}
@@ -65,5 +69,5 @@ func vmEntityLoop(pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan
 		}
 	}
 
-	log.Info("vm %s %s %s %d exit", division, version, addr, uuid)
+	log.Info("vm %s %s %s %s exit", ent.division, ent.version, ent.addr, ent.vmID)
 }

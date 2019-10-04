@@ -93,10 +93,10 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 func dispatchSessionBind(cmd *innerCmd) {
 	vmm := getVMMgr()
 	sm := getSessionMgr()
-	division, sSessionID, sUUID, _, rspChannel := cmd.getRPCReq()
+	division, sSessionID, sUUID, rspChannel := cmd.getRPCReq()
 	result := vmm.exist(division)
 	if result != errno.OK {
-		rspChannel <- newRPCRsp(innerCmdBindSession, result, 0, "")
+		rspChannel <- newRPCRsp(innerCmdBindSession, result, "")
 		return
 	}
 	uuid, _ := parseUint64(sUUID)
@@ -106,10 +106,10 @@ func dispatchSessionBind(cmd *innerCmd) {
 	bindSessionID, bind := sm.getBindSession(uuid)
 	if bind {
 		if bindSessionID == sessionID {
-			rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+			rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, "")
 		} else {
 			// conflict detected, just notify the caller to retry later
-			rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMBINDNEEDRETRY, 0, "")
+			rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMBINDNEEDRETRY, "")
 			_, ok := sm.isSessionState(bindSessionID, timerCmdSessionWorking)
 			if ok {
 				setSessionWaitUnbind(bindSessionID, uuid)
@@ -120,19 +120,19 @@ func dispatchSessionBind(cmd *innerCmd) {
 		bindUUID, bind := sm.getBindUUID(sessionID)
 		if bind {
 			if bindUUID == uuid {
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, "")
 			} else {
 				// conflict detected, just notify the caller don't bind another uuid
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONALREADYBIND, 0, "")
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONALREADYBIND, "")
 			}
 		} else {
 			_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitBind)
 			if ok {
 				sm.bindSession(sessionID, uuid)
 				sm.setSessionState(sessionID, timerCmdSessionWorking)
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, "")
 			} else {
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONNOTWAITBIND, 0, "")
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONNOTWAITBIND, "")
 			}
 		}
 	}
@@ -158,10 +158,10 @@ func dispatchSessionForward(hdr, body []byte) {
 func dispatchSessionUnbind(cmd *innerCmd) {
 	vmm := getVMMgr()
 	sm := getSessionMgr()
-	division, sSessionID, sUUID, _, rspChannel := cmd.getRPCReq()
+	division, sSessionID, sUUID, rspChannel := cmd.getRPCReq()
 	result := vmm.exist(division)
 	if result != errno.OK {
-		rspChannel <- newRPCRsp(innerCmdUnbindSession, result, 0, "")
+		rspChannel <- newRPCRsp(innerCmdUnbindSession, result, "")
 		return
 	}
 	uuid, _ := parseUint64(sUUID)
@@ -173,8 +173,8 @@ func dispatchSessionUnbind(cmd *innerCmd) {
 			sm.unbindSession(sessionID, uuid)
 			setSessionWaitDelete(sessionID)
 		}
-		rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
+		rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, "")
 	} else {
-		rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
+		rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, "")
 	}
 }

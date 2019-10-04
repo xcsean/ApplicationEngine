@@ -15,19 +15,23 @@ func dispatchRPC(cmd *innerCmd) bool {
 	cmdID := cmd.getID()
 	switch cmdID {
 	case innerCmdRegisterVM:
-		division, version, addr, _, rspChannel := cmd.getRPCReq()
+		division, version, addr, rspChannel := cmd.getRPCReq()
 		uuid, result := vmm.addVM(division, version, addr)
-		rspChannel <- newRPCRsp(innerCmdRegisterVM, result, uuid, "")
+		rspChannel <- newRPCRsp(innerCmdRegisterVM, result, fmt.Sprintf("%d", uuid))
 	case innerCmdUnregisterVM:
-		division, _, _, uuid, rspChannel := cmd.getRPCReq()
+		division, _, sUUID, rspChannel := cmd.getRPCReq()
+		uuid, _ := parseUint64(sUUID)
 		result := vmm.delVM(division, uuid)
-		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, 0, "")
+		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, "")
+	case innerCmdSendPacket:
+		s, _, _, _ := cmd.getRPCReq()
+		connSend([]byte(s))
 	case innerCmdDebug:
-		division, cmdOp, cmdParam, _, rspChannel := cmd.getRPCReq()
+		division, cmdOp, cmdParam, rspChannel := cmd.getRPCReq()
 		desc, result := vmm.debug(division, cmdOp, cmdParam)
 		ec, uc := getSessionMgr().getCount()
 		desc = desc + fmt.Sprintf(" session[entity=%d, uuid=%d]", ec, uc)
-		rspChannel <- newRPCRsp(innerCmdDebug, result, 0, desc)
+		rspChannel <- newRPCRsp(innerCmdDebug, result, desc)
 	case innerCmdBindSession:
 		dispatchSessionBind(cmd)
 	case innerCmdUnbindSession:
@@ -41,8 +45,9 @@ func dispatchVMM(cmd *innerCmd) bool {
 	cmdID := cmd.getID()
 	switch cmdID {
 	case innerCmdVMStreamConnFault, innerCmdVMStreamSendFault:
-		division, _, _, uuid := cmd.getVMMCmd()
-		vmm.delVM(division, uuid)
+		division, sVMID, _ := cmd.getVMMCmd()
+		vmID, _ := parseUint64(sVMID)
+		vmm.delVM(division, vmID)
 	}
 	return false
 }

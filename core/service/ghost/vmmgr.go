@@ -95,15 +95,21 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 	}
 	status[division] = vmEntityStatus{curLoad: 0, maxLoad: 5000}
 
-	in <- newVMMCmd(innerCmdVMStart, division, version, addr, vmID)
-	go vmEntityLoop(pkt, in, vmm.out)
+	in <- newVMMCmd(innerCmdVMStart, "", "", "")
+	ctx := &vmEntityContext{
+		division: division,
+		version:  version,
+		addr:     addr,
+		vmID:     fmt.Sprintf("%d", vmID),
+	}
+	go vmEntityLoop(ctx, pkt, in, vmm.out)
 	return vmID, errno.OK
 }
 
 func (vmm *vmMgr) delVM(division string, vmID uint64) int32 {
 	vm, ok := vmm.vms[division]
 	if ok && vm.vmID == vmID {
-		vm.in <- newVMMCmd(innerCmdVMShouldExit, division, vm.version, vm.addr, vmID)
+		vm.in <- newVMMCmd(innerCmdVMShouldExit, "", "", "")
 		close(vm.in)
 		close(vm.pkt)
 		status, ok := vmm.vers[vm.version]

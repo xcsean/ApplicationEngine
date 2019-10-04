@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
@@ -33,10 +34,11 @@ func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdRegisterVM, req.Division, req.Version, addr, 0, rspChannel)
+	reqChannel <- newRPCReq(innerCmdRegisterVM, req.Division, req.Version, addr, rspChannel)
 
 	cmd := <-rspChannel
-	result, vmID, _ := cmd.getRPCRsp()
+	result, sVMID := cmd.getRPCRsp()
+	vmID, _ := parseUint64(sVMID)
 	log.Debug("register vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
@@ -55,21 +57,31 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdUnregisterVM, req.Division, req.Version, "", req.Vmid, rspChannel)
+	reqChannel <- newRPCReq(innerCmdUnregisterVM, req.Division, req.Version, fmt.Sprintf("%d", req.Vmid), rspChannel)
 
 	cmd := <-rspChannel
-	result, _, _ = cmd.getRPCRsp()
+	result, _ = cmd.getRPCRsp()
 	log.Debug("unregister vm %s %s, result=%d", req.Division, req.Version, result)
 
 	rsp.Result = result
 	return rsp, nil
 }
 
-func (s *myService) SendPacket(ctx context.Context, req *ghost.SendPacketReq) (*ghost.SendPacketRsp, error) {
-	defer dbg.Stacktrace()
-
-	rsp := &ghost.SendPacketRsp{Result: errno.OK}
-	return rsp, nil
+func (s *myService) SendPacket(srv ghost.GhostService_SendPacketServer) error {
+	for {
+		if pkt, err := srv.Recv(); err == nil {
+			data, err := conn.MakeSessionPkt(pkt.Sessions, uint16(pkt.CmdId), pkt.UserData, pkt.Timestamp, []byte(pkt.Body))
+			if err == nil {
+				reqChannel <- newRPCReq(innerCmdSendPacket, string(data[:]), "", "", nil)
+			} else {
+				log.Error("MakeSessionPkt failed: %s", err.Error())
+			}
+		} else {
+			log.Error("%s", err.Error())
+			break
+		}
+	}
+	return nil
 }
 
 func (s *myService) BindSession(ctx context.Context, req *ghost.BindSessionReq) (*ghost.BindSessionRsp, error) {
@@ -83,10 +95,10 @@ func (s *myService) BindSession(ctx context.Context, req *ghost.BindSessionReq) 
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdBindSession, req.Division, fmt.Sprintf("%d", req.Sessionid), fmt.Sprintf("%d", req.Uuid), 0, rspChannel)
+	reqChannel <- newRPCReq(innerCmdBindSession, req.Division, fmt.Sprintf("%d", req.Sessionid), fmt.Sprintf("%d", req.Uuid), rspChannel)
 
 	cmd := <-rspChannel
-	result, _, _ = cmd.getRPCRsp()
+	result, _ = cmd.getRPCRsp()
 	log.Debug("bind session=%d uuid=%d, result=%d", req.Sessionid, req.Uuid, result)
 
 	rsp.Result = result
@@ -104,10 +116,10 @@ func (s *myService) UnbindSession(ctx context.Context, req *ghost.UnbindSessionR
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdUnbindSession, req.Division, fmt.Sprintf("%d", req.Sessionid), fmt.Sprintf("%d", req.Uuid), 0, rspChannel)
+	reqChannel <- newRPCReq(innerCmdUnbindSession, req.Division, fmt.Sprintf("%d", req.Sessionid), fmt.Sprintf("%d", req.Uuid), rspChannel)
 
 	cmd := <-rspChannel
-	result, _, _ = cmd.getRPCRsp()
+	result, _ = cmd.getRPCRsp()
 	log.Debug("unbind session=%d uuid=%d, result=%d", req.Sessionid, req.Uuid, result)
 
 	rsp.Result = result
@@ -139,10 +151,10 @@ func (s *myService) Debug(ctx context.Context, req *ghost.DebugReq) (*ghost.Debu
 	}
 
 	rspChannel := make(chan *rspRPC, 1)
-	reqChannel <- newRPCReq(innerCmdDebug, req.Division, req.Cmdop, req.Cmdparam, 0, rspChannel)
+	reqChannel <- newRPCReq(innerCmdDebug, req.Division, req.Cmdop, req.Cmdparam, rspChannel)
 
 	cmd := <-rspChannel
-	result, _, desc := cmd.getRPCRsp()
+	result, desc := cmd.getRPCRsp()
 	log.Debug("debug vm %s op='%s' param='%s', result=%d", req.Division, req.Cmdop, req.Cmdparam, result)
 
 	rsp.Result = result

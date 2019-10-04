@@ -56,25 +56,9 @@ func finiConnMgr() {
 		return
 	}
 
-	close(cnm.out)
-	close(cnm.exitC)
-	cnm.csk = nil
+	exitC := cnm.exitC
 	cnm = nil
-}
-
-func connSendLoop(csk net.Conn, out chan *connCmd, exitC chan struct{}) {
-	// TODO down sampler & clipped
-	for {
-		select {
-		case cmd := <-out:
-			csk.Write(cmd.b1)
-		case <-exitC:
-			goto exit
-		}
-	}
-
-exit:
-	log.Info("conn send loop exit")
+	close(exitC)
 }
 
 func connSend(pkt []byte) {
@@ -91,14 +75,31 @@ func connSend(pkt []byte) {
 	}
 }
 
-func startConn(csk net.Conn, connChannel chan *connCmd) {
-	defer csk.Close()
+// the below connXXXXLoop run themself goroutine, not main goroutine!!!
 
+func connSendLoop(csk net.Conn, out chan *connCmd, exitC chan struct{}) {
+	defer csk.Close()
+	defer close(out)
+
+	// TODO down sampler & clipped
+	for {
+		select {
+		case cmd := <-out:
+			csk.Write(cmd.b1)
+		case <-exitC:
+			goto exit
+		}
+	}
+
+exit:
+	log.Info("conn send loop exit")
+}
+
+func connRecvLoop(csk net.Conn, connChannel chan *connCmd) {
 	// try to request master
 	conn.SendMasterSet(csk)
 
 	isMaster := false
-	// the recv loop
 	err := conn.HandleStream(csk, func(_ net.Conn, hdr, body []byte) {
 		h := conn.ParseHeader(hdr)
 		if isMaster {

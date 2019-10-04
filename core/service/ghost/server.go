@@ -78,7 +78,7 @@ func start(c *ghostConfig, selfID int64) bool {
 	if err != nil {
 		log.Fatal("server can't connect %s", connAddr)
 	}
-	go startConn(csk, connChannel)
+	go connRecvLoop(csk, connChannel)
 
 	// create the vm-manager, and add a global timer for the vmm
 	settings := id.Settings{

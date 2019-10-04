@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
@@ -10,6 +11,10 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
+func parseUint64(s string) (uint64, error) {
+	i, err := strconv.ParseInt(s, 10, 64)
+	return uint64(i), err
+}
 func makeVMUnbind(uuid uint64) (*conn.Header, []byte) {
 	rb := &conn.ReservedBody{
 		Kv: make(map[string]string),

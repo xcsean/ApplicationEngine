@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"strconv"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
@@ -100,21 +99,21 @@ func dispatchSessionBind(cmd *innerCmd) {
 		rspChannel <- newRPCRsp(innerCmdBindSession, result, 0, "")
 		return
 	}
-	uID, _ := strconv.ParseInt(sUUID, 10, 64)
-	sID, _ := strconv.ParseInt(sSessionID, 10, 64)
-	uuid := uint64(uID)
-	sessionID := uint64(sID)
+	uuid, _ := parseUint64(sUUID)
+	sessionID, _ := parseUint64(sSessionID)
+
 	// check the uuid bind or not?
 	bindSessionID, bind := sm.getBindSession(uuid)
 	if bind {
 		if bindSessionID == sessionID {
 			rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
 		} else {
-			// notify caller to retry later
-			// TODO add the caller into bind pending list of session manager
+			// conflict detected, just notify the caller to retry later
 			rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMBINDNEEDRETRY, 0, "")
-			// set session WaitUnbind and notify vm
-			setSessionWaitUnbind(bindSessionID, uuid)
+			_, ok := sm.isSessionState(bindSessionID, timerCmdSessionWorking)
+			if ok {
+				setSessionWaitUnbind(bindSessionID, uuid)
+			}
 		}
 	} else {
 		// check the session bind or not?
@@ -123,6 +122,7 @@ func dispatchSessionBind(cmd *innerCmd) {
 			if bindUUID == uuid {
 				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
 			} else {
+				// conflict detected, just notify the caller don't bind another uuid
 				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONALREADYBIND, 0, "")
 			}
 		} else {
@@ -158,16 +158,14 @@ func dispatchSessionForward(hdr, body []byte) {
 func dispatchSessionUnbind(cmd *innerCmd) {
 	vmm := getVMMgr()
 	sm := getSessionMgr()
-	division, sSessioinID, sUUID, _, rspChannel := cmd.getRPCReq()
+	division, sSessionID, sUUID, _, rspChannel := cmd.getRPCReq()
 	result := vmm.exist(division)
 	if result != errno.OK {
 		rspChannel <- newRPCRsp(innerCmdUnbindSession, result, 0, "")
 		return
 	}
-	uID, _ := strconv.ParseInt(sUUID, 10, 64)
-	sID, _ := strconv.ParseInt(sSessioinID, 10, 64)
-	uuid := uint64(uID)
-	sessionID := uint64(sID)
+	uuid, _ := parseUint64(sUUID)
+	sessionID, _ := parseUint64(sSessionID)
 	bindSessionID, bind := sm.getBindSession(uuid)
 	if bind && bindSessionID == sessionID {
 		_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitUnbind)

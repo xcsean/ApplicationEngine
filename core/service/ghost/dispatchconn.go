@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
@@ -29,10 +30,7 @@ func dispatchSessionEnter(hdr, body []byte) {
 	// create a new session and monitor it
 	sm := getSessionMgr()
 	sm.addSession(sessionID, rb.StrParam)
-	sm.setSessionState(sessionID, timerCmdSessionWaitVerCheck)
-	tmmAddDelayTask(timeoutWaitVerCheck, func(c chan *timerCmd) {
-		c <- &timerCmd{Type: timerCmdSessionWaitVerCheck, Userdata1: sessionID}
-	})
+	setSessionVerCheck(sessionID)
 }
 
 func dispatchSessionLeave(hdr, body []byte) {
@@ -46,7 +44,7 @@ func dispatchSessionLeave(hdr, body []byte) {
 	log.Debug("session=%d leave", sessionID)
 	uuid, bind := sm.getBindUUID(sessionID)
 	if bind {
-		notifyVMUnbind(sessionID, uuid)
+		setSessionWaitUnbind(sessionID, uuid)
 	} else {
 		setSessionWaitDelete(sessionID)
 	}
@@ -77,10 +75,7 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 		if result == errno.OK {
 			log.Debug("session=%d pick division=%s", sessionID, division)
 			sm.setSessionRouting(sessionID, ver, division)
-			sm.setSessionState(sessionID, timerCmdSessionWaitBind)
-			tmmAddDelayTask(timeoutWaitBind, func(c chan *timerCmd) {
-				c <- &timerCmd{Type: timerCmdSessionWaitBind, Userdata1: sessionID}
-			})
+			setSessionWaitBind(sessionID)
 			notifyClientVerCheck(sessionID, "ver-check ok")
 		} else {
 			notifyClientVerCheck(sessionID, "no available division can serve you")
@@ -93,6 +88,53 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 
 	if shouldKick {
 		setSessionWaitDelete(sessionID)
+	}
+}
+
+func dispatchSessionBind(cmd *innerCmd) {
+	vmm := getVMMgr()
+	sm := getSessionMgr()
+	division, sSessionID, sUUID, _, rspChannel := cmd.getRPCReq()
+	result := vmm.exist(division)
+	if result != errno.OK {
+		rspChannel <- newRPCRsp(innerCmdBindSession, result, 0, "")
+		return
+	}
+	uID, _ := strconv.ParseInt(sUUID, 10, 64)
+	sID, _ := strconv.ParseInt(sSessionID, 10, 64)
+	uuid := uint64(uID)
+	sessionID := uint64(sID)
+	// check the uuid bind or not?
+	bindSessionID, bind := sm.getBindSession(uuid)
+	if bind {
+		if bindSessionID == sessionID {
+			rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+		} else {
+			// notify caller to retry later
+			// TODO add the caller into bind pending list of session manager
+			rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMBINDNEEDRETRY, 0, "")
+			// set session WaitUnbind and notify vm
+			setSessionWaitUnbind(bindSessionID, uuid)
+		}
+	} else {
+		// check the session bind or not?
+		bindUUID, bind := sm.getBindUUID(sessionID)
+		if bind {
+			if bindUUID == uuid {
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+			} else {
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONALREADYBIND, 0, "")
+			}
+		} else {
+			_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitBind)
+			if ok {
+				sm.bindSession(sessionID, uuid)
+				sm.setSessionState(sessionID, timerCmdSessionWorking)
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
+			} else {
+				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONNOTWAITBIND, 0, "")
+			}
+		}
 	}
 }
 
@@ -110,5 +152,31 @@ func dispatchSessionForward(hdr, body []byte) {
 		}
 	} else {
 		log.Warn("session=%d discard cmd=%d by state", sessionID, header.CmdID)
+	}
+}
+
+func dispatchSessionUnbind(cmd *innerCmd) {
+	vmm := getVMMgr()
+	sm := getSessionMgr()
+	division, sSessioinID, sUUID, _, rspChannel := cmd.getRPCReq()
+	result := vmm.exist(division)
+	if result != errno.OK {
+		rspChannel <- newRPCRsp(innerCmdUnbindSession, result, 0, "")
+		return
+	}
+	uID, _ := strconv.ParseInt(sUUID, 10, 64)
+	sID, _ := strconv.ParseInt(sSessioinID, 10, 64)
+	uuid := uint64(uID)
+	sessionID := uint64(sID)
+	bindSessionID, bind := sm.getBindSession(uuid)
+	if bind && bindSessionID == sessionID {
+		_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitUnbind)
+		if ok {
+			sm.unbindSession(sessionID, uuid)
+			setSessionWaitDelete(sessionID)
+		}
+		rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
+	} else {
+		rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
 	}
 }

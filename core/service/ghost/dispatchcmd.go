@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
-	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
@@ -14,7 +12,6 @@ import (
 
 func dispatchRPC(cmd *innerCmd) bool {
 	vmm := getVMMgr()
-	sm := getSessionMgr()
 	cmdID := cmd.getID()
 	switch cmdID {
 	case innerCmdRegisterVM:
@@ -32,70 +29,9 @@ func dispatchRPC(cmd *innerCmd) bool {
 		desc = desc + fmt.Sprintf(" session[entity=%d, uuid=%d]", ec, uc)
 		rspChannel <- newRPCRsp(innerCmdDebug, result, 0, desc)
 	case innerCmdBindSession:
-		division, sSessionID, sUUID, _, rspChannel := cmd.getRPCReq()
-		result := vmm.exist(division)
-		if result != errno.OK {
-			rspChannel <- newRPCRsp(innerCmdBindSession, result, 0, "")
-			return false
-		}
-		uID, _ := strconv.ParseInt(sUUID, 10, 64)
-		sID, _ := strconv.ParseInt(sSessionID, 10, 64)
-		uuid := uint64(uID)
-		sessionID := uint64(sID)
-		// check the uuid bind or not?
-		bindSessionID, bind := sm.getBindSession(uuid)
-		if bind {
-			if bindSessionID == sessionID {
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
-			} else {
-				// notify caller to retry later
-				// TODO add the caller into bind pending list of session manager
-				rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMBINDNEEDRETRY, 0, "")
-				// notify the vm to unbind the session with the uuid
-				notifyVMUnbind(bindSessionID, uuid)
-			}
-		} else {
-			// check the session bind or not?
-			bindUUID, bind := sm.getBindUUID(sessionID)
-			if bind {
-				if bindUUID == uuid {
-					rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
-				} else {
-					rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONALREADYBIND, 0, "")
-				}
-			} else {
-				_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitBind)
-				if ok {
-					sm.bindSession(sessionID, uuid)
-					sm.setSessionState(sessionID, timerCmdSessionWorking)
-					rspChannel <- newRPCRsp(innerCmdBindSession, errno.OK, 0, "")
-				} else {
-					rspChannel <- newRPCRsp(innerCmdBindSession, errno.HOSTVMSESSIONNOTWAITBIND, 0, "")
-				}
-			}
-		}
+		dispatchSessionBind(cmd)
 	case innerCmdUnbindSession:
-		division, sSessioinID, sUUID, _, rspChannel := cmd.getRPCReq()
-		result := vmm.exist(division)
-		if result != errno.OK {
-			rspChannel <- newRPCRsp(innerCmdUnbindSession, result, 0, "")
-			return false
-		}
-		uID, _ := strconv.ParseInt(sUUID, 10, 64)
-		sID, _ := strconv.ParseInt(sSessioinID, 10, 64)
-		uuid := uint64(uID)
-		sessionID := uint64(sID)
-		bindSessionID, bind := sm.getBindSession(uuid)
-		if bind && bindSessionID == sessionID {
-			_, ok := sm.isSessionState(sessionID, timerCmdSessionWaitUnbind)
-			if ok {
-				sm.unbindSession(sessionID, uuid)
-				setSessionWaitDelete(sessionID)
-			}
-			rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
-		} else {
-			rspChannel <- newRPCRsp(innerCmdUnbindSession, errno.OK, 0, "")
-		}
+		dispatchSessionUnbind(cmd)
 	}
 	return false
 }

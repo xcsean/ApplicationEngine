@@ -30,5 +30,5 @@
 * protocol frequency limitation and protection for vm(s)
 * overload protection
 
-### ghost session state
-![session state transform](ghost/sessionstate.png)
+### session state transform
+![session state](ghost/sessionstate.png)

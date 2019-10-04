@@ -73,12 +73,11 @@ func dispatchConn(cmd *connCmd) bool {
 }
 
 func dispatchTMM(cmd *timerCmd) bool {
-	vmm := getVMMgr()
 	sm := getSessionMgr()
 	cmdType := cmd.Type
 	switch cmdType {
 	case timerCmdVMMOnTick:
-		vmm.onTick()
+		getVMMgr().onTick()
 	case timerCmdSessionWaitVerCheck, timerCmdSessionWaitBind:
 		sessionID := cmd.Userdata1
 		_, ok := sm.isSessionState(sessionID, cmdType)
@@ -108,9 +107,11 @@ func dispatchTMM(cmd *timerCmd) bool {
 			// kick the session
 			pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdSessionKick, 0, 0, nil)
 			connSend(pkt)
+		} else {
+			log.Debug("discard timer type='%s', userdata1=%d, userdata2=%d", getTimerDesc(cmdType), sessionID, cmd.Userdata2)
 		}
 	default:
-		log.Debug("type=%d u1=%d u2=%d", cmdType, cmd.Userdata1, cmd.Userdata2)
+		log.Debug("unknown timer type=%d u1=%d u2=%d", cmdType, cmd.Userdata1, cmd.Userdata2)
 	}
 	return false
 }

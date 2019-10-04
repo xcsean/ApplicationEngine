@@ -29,6 +29,7 @@
 * asset data save to database and load interface exported to vm(s)
 * protocol frequency limitation and protection for vm(s)
 * overload protection
+* use session manager to manage the client(s) session
 
-### session state transform
-![session state](ghost/sessionstate.png)
+### client session state transform
+![client session state](ghost/sessionstate.png)

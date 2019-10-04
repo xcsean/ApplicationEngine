@@ -28,6 +28,7 @@ const (
 var (
 	kbdVMChannel chan string
 	rpcVMChannel chan *hostCmd
+	sndVMChannel chan *ghost.GhostPacket
 	hostAddr     string
 	division     string
 	vmID         uint64
@@ -62,6 +63,7 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	division = config.Division
 	kbdVMChannel = make(chan string, 100)
 	rpcVMChannel = make(chan *hostCmd, 100)
+	sndVMChannel = make(chan *ghost.GhostPacket, 100)
 	vmLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(vmView)
@@ -78,6 +80,10 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 		os.Exit(-1)
 	}
 	go startRPC(ls)
+
+	// init the send goroutine which send pkts to host
+	exitC := make(chan struct{}, 1)
+	go hostSendLoop(addr, exitC, sndVMChannel, vmLog)
 
 	// wait for message from kbdVMChannel & netVMChannel
 	for {
@@ -227,7 +233,23 @@ func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
 		return nil
 	}, 3)
 
-	if result == int32(errno.HOSTVMBINDNEEDRETRY) {
+	if result == int32(errno.OK) {
+		innerBody := &cmdBody{
+			StrParam: "",
+			Kv:       make(map[string]string),
+		}
+		innerBody.Kv["result"] = fmt.Sprintf("%d", result)
+		innerBody.Kv["uuid"] = fmt.Sprintf("%d", uuid)
+		body, _ := json.Marshal(innerBody)
+		pkt := &ghost.GhostPacket{
+			CmdId:     cmdLogin,
+			UserData:  0,
+			Timestamp: 0,
+			Sessions:  []uint64{sessionID},
+			Body:      string(body[:]),
+		}
+		hostSend(pkt)
+	} else if result == int32(errno.HOSTVMBINDNEEDRETRY) {
 		time.Sleep(1 * time.Second)
 		go callBindSession(sessionID, uuid, vmLog)
 	}
@@ -280,4 +302,52 @@ func callGhost(handler func(c ghost.GhostServiceClient, ctx context.Context) err
 	defer cancel()
 
 	return handler(c, ctx)
+}
+
+func hostSend(pkt *ghost.GhostPacket) {
+	sndVMChannel <- pkt
+}
+
+type hostContext struct {
+	conn   *grpc.ClientConn
+	stream ghost.GhostService_SendPacketClient
+}
+
+func hostInitStream(addr string) (*hostContext, error) {
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	c := ghost.NewGhostServiceClient(conn)
+	stream, err := c.SendPacket(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return &hostContext{conn: conn, stream: stream}, nil
+}
+
+func hostSendLoop(addr string, in chan struct{}, out chan *ghost.GhostPacket, vmLog func(s string)) {
+	ctx, err := hostInitStream(addr)
+	if err != nil {
+		vmLog(fmt.Sprintf("[VM] stream init failed: %s", err.Error()))
+		return
+	}
+
+	vmLog("[VM] host send loop start")
+	for {
+		exit := false
+		select {
+		case <-in:
+			exit = true
+		case pkt := <-out:
+			err = ctx.stream.Send(pkt)
+			if err != nil {
+				vmLog(fmt.Sprintf("[VM] send to host: %s failed: %s", addr, err.Error()))
+			}
+		}
+		if exit {
+			break
+		}
+	}
+	vmLog("[VM] host send loop exit")
 }

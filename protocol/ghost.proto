@@ -44,13 +44,8 @@ message unregister_vm_rsp {
     string desc = 2;
 }
 
-message send_packet_req {
-    repeated ghost_packet packets = 1;
-}
-
 message send_packet_rsp {
     int32 result = 1;
-    string desc = 2;
 }
 
 message bind_session_req {

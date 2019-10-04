@@ -128,7 +128,7 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 				if err == nil {
 					innerBody := &cmdBody{
 						StrParam: "",
-						Kv: make(map[string]string),
+						Kv:       make(map[string]string),
 					}
 					innerBody.Kv["uuid"] = array[1]
 					innerBody.Kv["token"] = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -177,6 +177,12 @@ func dealNetCmd(cmd *netCmd, cliLog func(s string)) {
 				cliLog(fmt.Sprintf("[S] ver-check: %s", rb.StrParam))
 			} else {
 				cliLog(fmt.Sprintf("[S] ver-check parse body failed: %s", err.Error()))
+			}
+		case cmdLogin:
+			var innerBody cmdBody
+			err := json.Unmarshal(cmd.body, &innerBody)
+			if err == nil {
+				cliLog(fmt.Sprintf("[S] result=%s uuid=%s", innerBody.Kv["result"], innerBody.Kv["uuid"]))
 			}
 		default:
 			cliLog(fmt.Sprintf("[S] unknown cmd=%d", cmd.cmdID))

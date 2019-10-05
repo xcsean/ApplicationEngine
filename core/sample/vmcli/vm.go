@@ -154,7 +154,7 @@ func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 			return
 		}
 		go callBindSession(cmd.Pkt.Sessions[0], uint64(uuid), vmLog)
-	case uint32(protocol.Packet_PRIVATE_NOTIFY_VM_UNBIND):
+	case int32(protocol.Packet_PRIVATE_NOTIFY_VM_UNBIND):
 		var rb protocol.PacketReservedBody
 		err := json.Unmarshal([]byte(cmd.Pkt.Common.Body), &rb)
 		if err != nil {

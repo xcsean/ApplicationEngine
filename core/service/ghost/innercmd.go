@@ -1,5 +1,7 @@
 package main
 
+import "github.com/xcsean/ApplicationEngine/core/protocol"
+
 const (
 	innerCmdRegisterVM        = 101
 	innerCmdUnregisterVM      = 102
@@ -24,6 +26,7 @@ type innerCmd struct {
 	s2    string
 	s3    string
 	rsp   chan *rspRPC
+	pkt   *protocol.SessionPacket
 }
 
 type rspRPC struct {

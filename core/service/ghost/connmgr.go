@@ -12,24 +12,12 @@ import (
 
 type connCmd struct {
 	cmdID uint8
-	b1    []byte
-	b2    []byte
+	data  []byte
+	pkt   *protocol.SessionPacket
 }
 
 func (cc *connCmd) getID() uint8 {
 	return cc.cmdID
-}
-
-func (cc *connCmd) getConnCmd() ([]byte, []byte) {
-	return cc.b1, cc.b2
-}
-
-func newConnCmd(cmdID uint8, b1, b2 []byte) *connCmd {
-	return &connCmd{
-		cmdID: cmdID,
-		b1:    b1,
-		b2:    b2,
-	}
 }
 
 type connMgr struct {
@@ -63,7 +51,7 @@ func finiConnMgr() {
 	close(exitC)
 }
 
-func connSend(pkt []byte) {
+func connSend(pkt *protocol.SessionPacket) {
 	if cnm == nil {
 		return
 	}
@@ -71,7 +59,7 @@ func connSend(pkt []byte) {
 	defer dbg.Stacktrace()
 
 	select {
-	case cnm.out <- &connCmd{cmdID: innerCmdConnSessionDn, b1: pkt}:
+	case cnm.out <- &connCmd{cmdID: innerCmdConnSessionDn, pkt: pkt}:
 	default:
 		// just discard the packet
 	}
@@ -87,7 +75,14 @@ func connSendLoop(csk net.Conn, out chan *connCmd, exitC chan struct{}) {
 	for {
 		select {
 		case cmd := <-out:
-			csk.Write(cmd.b1)
+			if cmd.pkt != nil {
+				data, err := packet.TransformRPCToSocket(cmd.pkt)
+				if err == nil {
+					csk.Write(data)
+				}
+			} else if cmd.data != nil {
+				csk.Write(cmd.data)
+			}
 		case <-exitC:
 			goto exit
 		}
@@ -104,20 +99,22 @@ func connRecvLoop(csk net.Conn, connChannel chan *connCmd) {
 
 	isMaster := false
 	err := conn.HandleStream(csk, func(_ net.Conn, hdr, body []byte) {
-		h := conn.ParseHeader(hdr)
 		if isMaster {
 			// common packet deal, push to connChannel
 			dupHdr := make([]byte, len(hdr))
 			dupBody := make([]byte, len(body))
 			copy(dupHdr, hdr)
 			copy(dupBody, body)
+			pkt := packet.TransformSocketToRPC(dupHdr, dupBody)
+			cmd := &connCmd{cmdID: innerCmdConnSessionUp, pkt: pkt}
 			select {
-			case connChannel <- newConnCmd(innerCmdConnSessionUp, dupHdr, dupBody):
+			case connChannel <- cmd:
 			default:
 				// just discard the packet
 			}
 		} else {
 			// wait the CmdMasterYou or CmdMasterNot
+			h := conn.ParseHeader(hdr)
 			cmdID := protocol.PacketType(h.CmdID)
 			switch cmdID {
 			case protocol.Packet_PRIVATE_MASTER_YOU:
@@ -136,5 +133,5 @@ func connRecvLoop(csk net.Conn, connChannel chan *connCmd) {
 	} else {
 		log.Info("client for gconnd exit")
 	}
-	connChannel <- newConnCmd(innerCmdConnExit, nil, nil)
+	connChannel <- &connCmd{cmdID: innerCmdConnExit}
 }

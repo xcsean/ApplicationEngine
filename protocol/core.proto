@@ -2,7 +2,7 @@ syntax = "proto3";
 package protocol;
 
 message packet {
-    uint32 cmd_id = 1;
+    sint32 cmd_id = 1;
     uint32 user_data = 2;
     uint32 timestamp = 3;
     string body = 4;

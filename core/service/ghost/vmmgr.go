@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol"
-	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/id"
@@ -142,7 +141,7 @@ func (vmm *vmMgr) onTick() {
 		if now >= vm.checkTime {
 			vm.pkt <- &protocol.SessionPacket{
 				Common: &protocol.Packet{
-					CmdId:     uint32(protocol.Packet_PUBLIC_PING),
+					CmdId:     int32(protocol.Packet_PUBLIC_PING),
 					UserData:  0,
 					Timestamp: uint32(now),
 					Body:      "KEEP-ALIVE",
@@ -207,7 +206,7 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 		for i := int64(0); i < count; i++ {
 			vm.pkt <- &protocol.SessionPacket{
 				Common: &protocol.Packet{
-					CmdId:     uint32(protocol.Packet_PUBLIC_PING),
+					CmdId:     int32(protocol.Packet_PUBLIC_PING),
 					UserData:  uint32(i),
 					Timestamp: uint32(time.Now().Unix()),
 					Body:      "DEBUG-PING",
@@ -219,20 +218,10 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 	return s, errno.OK
 }
 
-func (vmm *vmMgr) forward(division string, sessionID uint64, header *conn.Header, body []byte) int32 {
+func (vmm *vmMgr) forward(division string, pkt *protocol.SessionPacket) int32 {
 	vm, ok := vmm.vms[division]
 	if !ok {
 		return errno.HOSTVMNOTEXIST
-	}
-
-	pkt := &protocol.SessionPacket{
-		Common: &protocol.Packet{
-			CmdId:     uint32(header.CmdID),
-			UserData:  header.UserData,
-			Timestamp: header.Timestamp,
-			Body:      string(body[:]),
-		},
-		Sessions: []uint64{sessionID},
 	}
 	select {
 	case vm.pkt <- pkt:

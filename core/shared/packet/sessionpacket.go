@@ -2,7 +2,6 @@ package packet
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
@@ -32,21 +31,9 @@ func MakeSessionEnter(sessionIDs []uint64, addr string) ([]byte, error) {
 	return MakeReservedSessionPacket(sessionIDs, protocol.Packet_PRIVATE_SESSION_ENTER, 0, 0, map[string]string{"addr": addr})
 }
 
-// ParseSessionEnterBody parse a SESSION ENTER body
-func ParseSessionEnterBody(body []byte) ([]uint64, string) {
-	sessionIDs, kv, _ := ParseReservedSessionBody(body)
-	return sessionIDs, kv["addr"]
-}
-
 // MakeSessionLeave make a SESSION LEAVE packet
 func MakeSessionLeave(sessionIDs []uint64) ([]byte, error) {
 	return MakeReservedSessionPacket(sessionIDs, protocol.Packet_PRIVATE_SESSION_LEAVE, 0, 0, nil)
-}
-
-// ParseSessionLeaveBody parse a SESSION LEAVE body
-func ParseSessionLeaveBody(body []byte) []uint64 {
-	sessionIDs, _, _ := ParseReservedSessionBody(body)
-	return sessionIDs
 }
 
 // MakeSessionRoute make a SESSION ROUTE packet
@@ -58,24 +45,6 @@ func MakeSessionRoute(sessionIDs []uint64, addr string) ([]byte, error) {
 func ParseSessionRouteBody(body []byte) ([]uint64, string) {
 	sessionIDs, kv, _ := ParseReservedSessionBody(body)
 	return sessionIDs, kv["addr"]
-}
-
-// ParseSessionVerCheckBody parse a VER-CHECK body
-func ParseSessionVerCheckBody(body []byte) ([]uint64, string, error) {
-	sessionIDs, kv, err := ParseReservedSessionBody(body)
-	if err != nil {
-		return nil, "", err
-	}
-	ver, ok := kv["ver"]
-	if !ok {
-		return nil, "", fmt.Errorf("key 'ver' not found")
-	}
-	return sessionIDs, ver, nil
-}
-
-// MakeSessionVerReply make a VER-REPLY packet
-func MakeSessionVerReply(sessionIDs []uint64, result int32) ([]byte, error) {
-	return MakeReservedSessionPacket(sessionIDs, protocol.Packet_PUBLIC_SESSION_VERREPLY, 0, 0, map[string]string{"result": fmt.Sprintf("%d", result)})
 }
 
 // MakeSessionKick make a SESSION KICK packet

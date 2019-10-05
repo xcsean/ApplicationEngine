@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/xcsean/ApplicationEngine/core/shared/conn"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"github.com/xcsean/ApplicationEngine/core/shared/packet"
@@ -17,9 +17,9 @@ const (
 
 // all dispatchXXX functions run in the main routine context!!!
 
-func dispatchSessionEnter(hdr, body []byte) {
-	sessionIDs, addr := packet.ParseSessionEnterBody(body)
-	sessionID := sessionIDs[0]
+func dispatchSessionEnter(pkt *protocol.SessionPacket) {
+	sessionID := pkt.Sessions[0]
+	addr := packet.ParseSessionEnterBody([]byte(pkt.Common.Body))
 	log.Debug("session=%d addr='%s' enter", sessionID, addr)
 
 	// create a new session and monitor it
@@ -28,14 +28,13 @@ func dispatchSessionEnter(hdr, body []byte) {
 	setSessionVerCheck(sessionID)
 }
 
-func dispatchSessionLeave(hdr, body []byte) {
-	sessionIDs := packet.ParseSessionLeaveBody(body)
-	sessionID := sessionIDs[0]
-
+func dispatchSessionLeave(pkt *protocol.SessionPacket) {
+	sessionID := pkt.Sessions[0]
 	sm := getSessionMgr()
 	if !sm.isSessionExist(sessionID) {
 		return
 	}
+
 	log.Debug("session=%d leave", sessionID)
 	uuid, bind := sm.getBindUUID(sessionID)
 	if bind {
@@ -45,13 +44,13 @@ func dispatchSessionLeave(hdr, body []byte) {
 	}
 }
 
-func dispatchSessionVerCheck(hdr, body []byte) {
-	sessionIDs, ver, err := packet.ParseSessionVerCheckBody(body)
+func dispatchSessionVerCheck(pkt *protocol.SessionPacket) {
+	ver, err := packet.ParseSessionVerCheckBody([]byte(pkt.Common.Body))
 	if err != nil {
 		log.Debug("parse ver-check body failed: %s", err.Error())
 		return
 	}
-	sessionID := sessionIDs[0]
+	sessionID := pkt.Sessions[0]
 
 	// check the session exist and its state
 	sm := getSessionMgr()
@@ -69,10 +68,10 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 		log.Debug("session=%d pick division=%s", sessionID, division)
 		sm.setSessionRouting(sessionID, ver, division)
 		setSessionWaitBind(sessionID)
-		sendClientVerReply(sessionIDs, result)
+		sendClientVerReply(sessionID, result)
 	} else {
 		shouldKick = true
-		sendClientVerReply(sessionIDs, result)
+		sendClientVerReply(sessionID, result)
 	}
 
 	if shouldKick {
@@ -128,20 +127,18 @@ func dispatchSessionBind(cmd *innerCmd) {
 	}
 }
 
-func dispatchSessionForward(hdr, body []byte) {
-	header := conn.ParseHeader(hdr)
-	_, sessionIDs, innerBody := conn.ParseSessionBody(body)
-	sessionID := sessionIDs[0]
+func dispatchSessionForward(pkt *protocol.SessionPacket) {
 	sm := getSessionMgr()
+	sessionID := pkt.Sessions[0]
 
 	division, ok := sm.isSessionStateOf(sessionID, []uint8{timerCmdSessionWaitBind, timerCmdSessionWorking})
 	if ok {
-		result := getVMMgr().forward(division, sessionID, header, innerBody)
+		result := getVMMgr().forward(division, pkt)
 		if result != errno.OK {
-			log.Debug("session=%d cmd=%d forward to %s failed: %d", sessionID, header.CmdID, division, result)
+			log.Debug("session=%d cmd=%d forward to %s failed: %d", sessionID, pkt.Common.CmdId, division, result)
 		}
 	} else {
-		log.Warn("session=%d discard cmd=%d by state", sessionID, header.CmdID)
+		log.Warn("session=%d discard cmd=%d by state", sessionID, pkt.Common.CmdId)
 	}
 }
 

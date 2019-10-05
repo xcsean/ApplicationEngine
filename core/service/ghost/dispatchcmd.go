@@ -1,13 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol"
-	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
-	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 // all dispatchXXX functions run in the main routine context!!!
@@ -26,8 +25,7 @@ func dispatchRPC(cmd *innerCmd) bool {
 		result := vmm.delVM(division, uuid)
 		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, "")
 	case innerCmdSendPacket:
-		s, _, _, _ := cmd.getRPCReq()
-		connSend([]byte(s))
+		connSend(cmd.pkt)
 	case innerCmdDebug:
 		division, cmdOp, cmdParam, rspChannel := cmd.getRPCReq()
 		desc, result := vmm.debug(division, cmdOp, cmdParam)
@@ -64,17 +62,15 @@ func dispatchConn(cmd *connCmd) bool {
 		finiConnMgr()
 		exit = true
 	case innerCmdConnSessionUp:
-		hdr, body := cmd.getConnCmd()
-		header := conn.ParseHeader(hdr)
-		c := protocol.PacketType(header.CmdID)
+		c := protocol.PacketType(cmd.pkt.Common.CmdId)
 		if c == protocol.Packet_PRIVATE_SESSION_ENTER {
-			dispatchSessionEnter(hdr, body)
+			dispatchSessionEnter(cmd.pkt)
 		} else if c == protocol.Packet_PRIVATE_SESSION_LEAVE {
-			dispatchSessionLeave(hdr, body)
+			dispatchSessionLeave(cmd.pkt)
 		} else if c == protocol.Packet_PUBLIC_SESSION_VERCHECK {
-			dispatchSessionVerCheck(hdr, body)
+			dispatchSessionVerCheck(cmd.pkt)
 		} else {
-			dispatchSessionForward(hdr, body)
+			dispatchSessionForward(cmd.pkt)
 		}
 	}
 	return exit
@@ -113,7 +109,17 @@ func dispatchTMM(cmd *timerCmd) bool {
 			sm.setSessionState(sessionID, timerCmdSessionDeleted)
 			sm.delSession(sessionID)
 			// kick the session
-			pkt, _ := packet.MakeSessionKick([]uint64{sessionID})
+			rb := protocol.PacketReservedBody{}
+			body, _ := json.Marshal(rb)
+			pkt := &protocol.SessionPacket{
+				Sessions: []uint64{sessionID},
+				Common: &protocol.Packet{
+					CmdId:     int32(protocol.Packet_PRIVATE_SESSION_KICK),
+					UserData:  0,
+					Timestamp: 0,
+					Body:      string(body[:]),
+				},
+			}
 			connSend(pkt)
 		} else {
 			log.Debug("discard timer type='%s', userdata1=%d, userdata2=%d", getTimerDesc(cmdType), sessionID, cmd.Userdata2)

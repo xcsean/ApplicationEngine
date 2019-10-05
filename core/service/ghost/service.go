@@ -70,7 +70,7 @@ func (s *myService) UnregisterVM(ctx context.Context, req *protocol.UnregisterVm
 func (s *myService) SendPacket(srv protocol.GhostService_SendPacketServer) error {
 	for {
 		if pkt, err := srv.Recv(); err == nil {
-			data, err := conn.MakeSessionPkt(pkt.Sessions, uint16(pkt.CmdId), pkt.UserData, pkt.Timestamp, []byte(pkt.Body))
+			data, err := conn.MakeSessionPkt(pkt.Sessions, uint16(pkt.Common.CmdId), pkt.Common.UserData, pkt.Common.Timestamp, []byte(pkt.Common.Body))
 			if err == nil {
 				reqChannel <- newRPCReq(innerCmdSendPacket, string(data[:]), "", "", nil)
 			} else {

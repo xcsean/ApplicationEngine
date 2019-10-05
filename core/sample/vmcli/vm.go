@@ -28,7 +28,7 @@ const (
 var (
 	kbdVMChannel chan string
 	rpcVMChannel chan *hostCmd
-	sndVMChannel chan *protocol.GhostPacket
+	sndVMChannel chan *protocol.SessionPacket
 	hostAddr     string
 	division     string
 	vmID         uint64
@@ -63,7 +63,7 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	division = config.Division
 	kbdVMChannel = make(chan string, 100)
 	rpcVMChannel = make(chan *hostCmd, 100)
-	sndVMChannel = make(chan *protocol.GhostPacket, 100)
+	sndVMChannel = make(chan *protocol.SessionPacket, 100)
 	vmLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(vmView)
@@ -241,12 +241,14 @@ func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
 		innerBody.Kv["result"] = fmt.Sprintf("%d", result)
 		innerBody.Kv["uuid"] = fmt.Sprintf("%d", uuid)
 		body, _ := json.Marshal(innerBody)
-		pkt := &protocol.GhostPacket{
-			CmdId:     cmdLogin,
-			UserData:  0,
-			Timestamp: 0,
-			Sessions:  []uint64{sessionID},
-			Body:      string(body[:]),
+		pkt := &protocol.SessionPacket{
+			Common: &protocol.Packet{
+				CmdId:     cmdLogin,
+				UserData:  0,
+				Timestamp: 0,
+				Body:      string(body[:]),
+			},
+			Sessions: []uint64{sessionID},
 		}
 		hostSend(pkt)
 	} else if result == int32(errno.HOSTVMBINDNEEDRETRY) {
@@ -304,7 +306,7 @@ func callGhost(handler func(c protocol.GhostServiceClient, ctx context.Context) 
 	return handler(c, ctx)
 }
 
-func hostSend(pkt *protocol.GhostPacket) {
+func hostSend(pkt *protocol.SessionPacket) {
 	sndVMChannel <- pkt
 }
 
@@ -326,7 +328,7 @@ func hostInitStream(addr string) (*hostContext, error) {
 	return &hostContext{conn: conn, stream: stream}, nil
 }
 
-func hostSendLoop(addr string, in chan struct{}, out chan *protocol.GhostPacket, vmLog func(s string)) {
+func hostSendLoop(addr string, in chan struct{}, out chan *protocol.SessionPacket, vmLog func(s string)) {
 	ctx, err := hostInitStream(addr)
 	if err != nil {
 		vmLog(fmt.Sprintf("[VM] stream init failed: %s", err.Error()))

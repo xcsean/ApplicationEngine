@@ -139,10 +139,10 @@ func dealHostRPC(cmd *hostCmd, vmLog func(s string)) {
 }
 
 func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
-	switch cmd.Pkt.CmdId {
+	switch cmd.Pkt.Common.CmdId {
 	case cmdLogin:
 		var rb conn.ReservedBody
-		err := json.Unmarshal([]byte(cmd.Pkt.Body), &rb)
+		err := json.Unmarshal([]byte(cmd.Pkt.Common.Body), &rb)
 		if err != nil {
 			return
 		}
@@ -157,7 +157,7 @@ func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 		go callBindSession(cmd.Pkt.Sessions[0], uint64(uuid), vmLog)
 	case conn.CmdNotifyVMUnbind:
 		var rb conn.ReservedBody
-		err := json.Unmarshal([]byte(cmd.Pkt.Body), &rb)
+		err := json.Unmarshal([]byte(cmd.Pkt.Common.Body), &rb)
 		if err != nil {
 			return
 		}
@@ -171,7 +171,7 @@ func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 		}
 		go callUnbindSession(cmd.Pkt.Sessions[0], uint64(uuid), vmLog)
 	default:
-		vmLog(fmt.Sprintf("[CB] notify packet cmd=%d body=%s", cmd.Pkt.CmdId, cmd.Pkt.Body))
+		vmLog(fmt.Sprintf("[CB] notify packet cmd=%d body=%s", cmd.Pkt.Common.CmdId, cmd.Pkt.Common.Body))
 	}
 }
 

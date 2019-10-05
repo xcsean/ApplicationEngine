@@ -32,7 +32,7 @@ func vmEntityInitStream(vmAddr string) (*vmEntityStreamContext, error) {
 	return &vmEntityStreamContext{conn: conn, stream: stream}, nil
 }
 
-func vmEntityLoop(ent *vmEntityContext, pktChannel chan *protocol.GhostPacket, inChannel, outChannel chan *innerCmd) {
+func vmEntityLoop(ent *vmEntityContext, pktChannel chan *protocol.SessionPacket, inChannel, outChannel chan *innerCmd) {
 	var err error
 	var ctx *vmEntityStreamContext
 	for {

@@ -4,7 +4,7 @@ import "github.com/xcsean/ApplicationEngine/core/protocol"
 
 type hostCmd struct {
 	Type uint8
-	Pkt  *protocol.GhostPacket
+	Pkt  *protocol.SessionPacket
 }
 
 const (

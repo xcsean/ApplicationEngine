@@ -2,23 +2,13 @@ syntax = "proto3";
 package protocol;
 import "core.proto";
 
-// ghost
-
-message ghost_packet {
-    uint32 cmd_id = 1;
-    uint32 user_data = 2;
-    uint32 timestamp = 3;
-    repeated uint64 sessions = 4;
-    string body = 5;
-}
+// ghost service
 
 message ghost_userasset {
     uint64 uuid = 1;
     uint64 version = 2;
     string asset = 3;
 }
-
-// ghost service
 
 message register_vm_req {
     string division = 1;
@@ -143,5 +133,5 @@ message notify_packet_rsp {
 
 service VMService {
     rpc OnNotifyStatus(notify_status_req) returns(notify_status_rsp) {}
-    rpc OnNotifyPacket(stream ghost_packet) returns(send_packet_rsp) {}
+    rpc OnNotifyPacket(stream session_packet) returns(send_packet_rsp) {}
 }

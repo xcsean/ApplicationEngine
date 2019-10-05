@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -12,13 +12,13 @@ import (
 
 type myService struct{}
 
-func (s *myService) OnNotifyStatus(ctx context.Context, req *ghost.NotifyStatusReq) (*ghost.NotifyStatusRsp, error) {
+func (s *myService) OnNotifyStatus(ctx context.Context, req *protocol.NotifyStatusReq) (*protocol.NotifyStatusRsp, error) {
 	sendRPCVMCmd(&hostCmd{Type: hostCmdNotifyStatus})
-	rsp := &ghost.NotifyStatusRsp{Result: errno.OK, Desc: ""}
+	rsp := &protocol.NotifyStatusRsp{Result: errno.OK, Desc: ""}
 	return rsp, nil
 }
 
-func (s *myService) OnNotifyPacket(srv ghost.VMService_OnNotifyPacketServer) error {
+func (s *myService) OnNotifyPacket(srv protocol.VMService_OnNotifyPacketServer) error {
 	for {
 		if pkt, err := srv.Recv(); err == nil {
 			cmd := &hostCmd{Type: hostCmdNotifyPacket, Pkt: pkt}
@@ -35,7 +35,7 @@ func startRPC(ls net.Listener) {
 	defer ls.Close()
 
 	srv := grpc.NewServer()
-	ghost.RegisterVMServiceServer(srv, &myService{})
+	protocol.RegisterVMServiceServer(srv, &myService{})
 	reflection.Register(srv)
 	srv.Serve(ls)
 }

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -84,7 +84,7 @@ func startRPC(c *getcdConfig, ch chan<- string) {
 	ch <- "ready"
 
 	srv := grpc.NewServer()
-	getcd.RegisterGetcdServiceServer(srv, &myService{})
+	protocol.RegisterGetcdServiceServer(srv, &myService{})
 	reflection.Register(srv)
 	srv.Serve(ls)
 

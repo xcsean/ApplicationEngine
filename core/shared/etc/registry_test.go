@@ -3,60 +3,60 @@ package etc
 import (
 	"testing"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 )
 
 func testService(t *testing.T) {
 	// fill the response
-	rsp := &getcd.QueryRegistryRsp{
-		Result: 0,
-		Servers: nil,
+	rsp := &protocol.QueryRegistryRsp{
+		Result:   0,
+		Servers:  nil,
 		Services: nil,
 	}
-	srv := &getcd.RegistryServer{
-		App: "app",
-		Server: "globby",
-		Division: "app.globby.1",
-		Node: "192.168.1.22",
-		UseAgent: 0,
-		NodeStatus: 0,
+	srv := &protocol.RegistryServer{
+		App:           "app",
+		Server:        "globby",
+		Division:      "app.globby.1",
+		Node:          "192.168.1.22",
+		UseAgent:      0,
+		NodeStatus:    0,
 		ServiceStatus: 0,
 	}
 	rsp.Servers = append(rsp.Servers, srv)
-	svc := &getcd.RegistryService{
-		App: "app",
-		Server: "globby",
-		Division: "app.globby.1",
-		Node: "192.168.1.22",
-		Service: "app.globby.playersave",
-		ServiceIp: "192.168.1.22",
+	svc := &protocol.RegistryService{
+		App:         "app",
+		Server:      "globby",
+		Division:    "app.globby.1",
+		Node:        "192.168.1.22",
+		Service:     "app.globby.playersave",
+		ServiceIp:   "192.168.1.22",
 		ServicePort: 17001,
-		RpcPort: 17002,
-		AdminPort: 17003,
+		RpcPort:     17002,
+		AdminPort:   17003,
 	}
 	rsp.Services = append(rsp.Services, svc)
 
-	srv = &getcd.RegistryServer{
-		App: "app",
-		Server: "globby",
-		Division: "app.globby.2",
-		Node: "192.168.1.23",
-		UseAgent: 1,
-		NodeStatus: 0,
+	srv = &protocol.RegistryServer{
+		App:           "app",
+		Server:        "globby",
+		Division:      "app.globby.2",
+		Node:          "192.168.1.23",
+		UseAgent:      1,
+		NodeStatus:    0,
 		ServiceStatus: 0,
 	}
 	rsp.Servers = append(rsp.Servers, srv)
-	svc = &getcd.RegistryService{
-		App: "app",
-		Server: "globby",
-		Division: "app.globby.2",
-		Node: "192.168.1.23",
-		Service: "app.globby.playersave",
-		ServiceIp: "192.168.1.23",
+	svc = &protocol.RegistryService{
+		App:         "app",
+		Server:      "globby",
+		Division:    "app.globby.2",
+		Node:        "192.168.1.23",
+		Service:     "app.globby.playersave",
+		ServiceIp:   "192.168.1.23",
 		ServicePort: 17001,
-		RpcPort: 17002,
-		AdminPort: 17003,
+		RpcPort:     17002,
+		AdminPort:   17003,
 	}
 	rsp.Services = append(rsp.Services, svc)
 
@@ -104,16 +104,16 @@ func testService(t *testing.T) {
 }
 
 func testGlobalConfig(t *testing.T) {
-	rsp := &getcd.QueryGlobalConfigRsp{
-		Result: 0,
+	rsp := &protocol.QueryGlobalConfigRsp{
+		Result:  0,
 		Entries: nil,
 	}
 
 	// add permission
 	cat := "permission"
-	entry := &getcd.CategoryEntry{
+	entry := &protocol.CategoryEntry{
 		Category: cat,
-		Kv: make(map[string]string),
+		Kv:       make(map[string]string),
 	}
 	entry.Kv["ipAdminList"] = "127.0.0.1,192.168.1.10"
 	entry.Kv["ipWhiteList"] = "127.0.0.1"
@@ -121,9 +121,9 @@ func testGlobalConfig(t *testing.T) {
 
 	// add global
 	cat = "global"
-	entry = &getcd.CategoryEntry{
+	entry = &protocol.CategoryEntry{
 		Category: cat,
-		Kv: make(map[string]string),
+		Kv:       make(map[string]string),
 	}
 	entry.Kv["wechatLogin"] = "1"
 	entry.Kv["qqLogin"] = "0"
@@ -132,13 +132,13 @@ func testGlobalConfig(t *testing.T) {
 
 	// add permission again
 	cat = "permission"
-	entry = &getcd.CategoryEntry{
+	entry = &protocol.CategoryEntry{
 		Category: cat,
-		Kv: make(map[string]string),
+		Kv:       make(map[string]string),
 	}
 	entry.Kv["ipBlackList"] = "192.168.1.11"
 	rsp.Entries = append(rsp.Entries, entry)
-	
+
 	// save to etc
 	saveGlobalConfig(rsp)
 

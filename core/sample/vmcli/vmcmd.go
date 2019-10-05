@@ -1,10 +1,10 @@
 package main
 
-import "github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+import "github.com/xcsean/ApplicationEngine/core/protocol"
 
 type hostCmd struct {
 	Type uint8
-	Pkt  *ghost.GhostPacket
+	Pkt  *protocol.GhostPacket
 }
 
 const (

@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
-func TestCallGetcd(t * testing.T) {
+func TestCallGetcd(t *testing.T) {
 	getcdAddr := "127.0.0.1:17000"
 	conn, err := grpc.Dial(getcdAddr, grpc.WithInsecure())
 	if err != nil {
@@ -19,12 +19,12 @@ func TestCallGetcd(t * testing.T) {
 	}
 	defer conn.Close()
 
-	c := getcd.NewGetcdServiceClient(conn)
+	c := protocol.NewGetcdServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	categories := []string{"global"}
-	rsp, err := c.QueryGlobalConfig(ctx, &getcd.QueryGlobalConfigReq{Categories: categories})
+	rsp, err := c.QueryGlobalConfig(ctx, &protocol.QueryGlobalConfigReq{Categories: categories})
 	if err != nil {
 		t.Errorf("call c.QueryGlobalConfig failed: %s", err.Error())
 		return

@@ -1,5 +1,6 @@
 syntax = "proto3";
-package ghost;
+package protocol;
+import "core.proto";
 
 // ghost
 
@@ -42,10 +43,6 @@ message unregister_vm_req {
 message unregister_vm_rsp {
     int32 result = 1;
     string desc = 2;
-}
-
-message send_packet_rsp {
-    int32 result = 1;
 }
 
 message bind_session_req {

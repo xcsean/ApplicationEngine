@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"google.golang.org/grpc"
 )
@@ -16,7 +16,7 @@ type vmEntityContext struct {
 }
 type vmEntityStreamContext struct {
 	conn   *grpc.ClientConn
-	stream ghost.VMService_OnNotifyPacketClient
+	stream protocol.VMService_OnNotifyPacketClient
 }
 
 func vmEntityInitStream(vmAddr string) (*vmEntityStreamContext, error) {
@@ -24,7 +24,7 @@ func vmEntityInitStream(vmAddr string) (*vmEntityStreamContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := ghost.NewVMServiceClient(conn)
+	c := protocol.NewVMServiceClient(conn)
 	stream, err := c.OnNotifyPacket(context.Background())
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func vmEntityInitStream(vmAddr string) (*vmEntityStreamContext, error) {
 	return &vmEntityStreamContext{conn: conn, stream: stream}, nil
 }
 
-func vmEntityLoop(ent *vmEntityContext, pktChannel chan *ghost.GhostPacket, inChannel, outChannel chan *innerCmd) {
+func vmEntityLoop(ent *vmEntityContext, pktChannel chan *protocol.GhostPacket, inChannel, outChannel chan *innerCmd) {
 	var err error
 	var ctx *vmEntityStreamContext
 	for {

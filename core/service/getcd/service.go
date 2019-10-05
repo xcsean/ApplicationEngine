@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
@@ -12,10 +12,10 @@ import (
 
 type myService struct{}
 
-func (s *myService) QueryRegistry(ctx context.Context, req *getcd.QueryRegistryReq) (*getcd.QueryRegistryRsp, error) {
+func (s *myService) QueryRegistry(ctx context.Context, req *protocol.QueryRegistryReq) (*protocol.QueryRegistryRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &getcd.QueryRegistryRsp{Result: errno.OK}
+	rsp := &protocol.QueryRegistryRsp{Result: errno.OK}
 
 	server := getServerMap()
 	serverLen := getServerCount(server)
@@ -23,11 +23,11 @@ func (s *myService) QueryRegistry(ctx context.Context, req *getcd.QueryRegistryR
 	service := getServiceMap()
 	serviceLen := getServiceCount(service)
 
-	serverArray := make([]*getcd.RegistryServer, serverLen)
+	serverArray := make([]*protocol.RegistryServer, serverLen)
 	i := 0
 	for _, v := range server {
 		c := v
-		s := &getcd.RegistryServer{
+		s := &protocol.RegistryServer{
 			App:           c.App,
 			Server:        c.Server,
 			Division:      c.Division,
@@ -41,12 +41,12 @@ func (s *myService) QueryRegistry(ctx context.Context, req *getcd.QueryRegistryR
 	}
 	rsp.Servers = serverArray
 
-	serviceArray := make([]*getcd.RegistryService, serviceLen)
+	serviceArray := make([]*protocol.RegistryService, serviceLen)
 	i = 0
 	for _, v := range service {
 		for e := v.Front(); e != nil; e = e.Next() {
 			c := e.Value.(svc.RegistryServiceConfig)
-			s := &getcd.RegistryService{
+			s := &protocol.RegistryService{
 				App:         c.App,
 				Server:      c.Server,
 				Division:    c.Division,
@@ -66,24 +66,24 @@ func (s *myService) QueryRegistry(ctx context.Context, req *getcd.QueryRegistryR
 	return rsp, nil
 }
 
-func (s *myService) QueryGlobalConfig(ctx context.Context, req *getcd.QueryGlobalConfigReq) (*getcd.QueryGlobalConfigRsp, error) {
+func (s *myService) QueryGlobalConfig(ctx context.Context, req *protocol.QueryGlobalConfigReq) (*protocol.QueryGlobalConfigRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &getcd.QueryGlobalConfigRsp{Result: errno.OK}
+	rsp := &protocol.QueryGlobalConfigRsp{Result: errno.OK}
 
 	allConfig := getGlobalConfigMap()
-	var entries []*getcd.CategoryEntry
+	var entries []*protocol.CategoryEntry
 	if len(req.Categories) == 0 {
-		entries = make([]*getcd.CategoryEntry, 0, len(allConfig))
+		entries = make([]*protocol.CategoryEntry, 0, len(allConfig))
 		for category, categoryArray := range allConfig {
 			kv := make(map[string]string)
 			for _, v := range categoryArray {
 				kv[v.Key] = v.Value
 			}
-			entries = append(entries, &getcd.CategoryEntry{Category: category, Kv: kv})
+			entries = append(entries, &protocol.CategoryEntry{Category: category, Kv: kv})
 		}
 	} else {
-		entries = make([]*getcd.CategoryEntry, 0, len(req.Categories))
+		entries = make([]*protocol.CategoryEntry, 0, len(req.Categories))
 		for _, category := range req.Categories {
 			categoryArray, ok := allConfig[category]
 			if !ok {
@@ -94,7 +94,7 @@ func (s *myService) QueryGlobalConfig(ctx context.Context, req *getcd.QueryGloba
 			for _, v := range categoryArray {
 				kv[v.Key] = v.Value
 			}
-			entries = append(entries, &getcd.CategoryEntry{Category: category, Kv: kv})
+			entries = append(entries, &protocol.CategoryEntry{Category: category, Kv: kv})
 		}
 	}
 
@@ -102,14 +102,14 @@ func (s *myService) QueryGlobalConfig(ctx context.Context, req *getcd.QueryGloba
 	return rsp, nil
 }
 
-func (s *myService) QueryProtoLimit(ctx context.Context, req *getcd.QueryProtoLimitReq) (*getcd.QueryProtoLimitRsp, error) {
+func (s *myService) QueryProtoLimit(ctx context.Context, req *protocol.QueryProtoLimitReq) (*protocol.QueryProtoLimitRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &getcd.QueryProtoLimitRsp{Result: errno.OK}
+	rsp := &protocol.QueryProtoLimitRsp{Result: errno.OK}
 
-	entries := make([]*getcd.ProtoLimitEntry, 0, len(protoLimitArr))
+	entries := make([]*protocol.ProtoLimitEntry, 0, len(protoLimitArr))
 	for _, v := range protoLimitArr {
-		entries = append(entries, &getcd.ProtoLimitEntry{
+		entries = append(entries, &protocol.ProtoLimitEntry{
 			ProtoId:             int32(v.ProtoID),
 			PlayerLimitEnable:   int32(v.PlayerLimitEnable),
 			PlayerLimitCount:    int32(v.PlayerLimitCount),

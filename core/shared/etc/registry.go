@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 	"reflect"
-	"time"
 	"sync"
+	"time"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
@@ -36,8 +36,8 @@ var (
 	getcdAddr string
 	selfAddrs map[string]bool
 
-	serviceLastPrintTime time.Time
-	protolimitLastPrintTime time.Time
+	serviceLastPrintTime      time.Time
+	protolimitLastPrintTime   time.Time
 	globalconfigLastPrintTime time.Time
 )
 
@@ -50,15 +50,15 @@ func init() {
 	// init the self ip-addrs
 	selfAddrs = make(map[string]bool)
 	addrs, err := net.InterfaceAddrs()
-    if err == nil {
-	    for _, value := range addrs {
+	if err == nil {
+		for _, value := range addrs {
 			ipnet, ok := value.(*net.IPNet)
 			if !ok {
 				continue
 			}
-           	if ipnet.IP.To4() != nil {
+			if ipnet.IP.To4() != nil {
 				selfAddrs[ipnet.IP.String()] = true
-        	}
+			}
 		}
 	}
 }
@@ -87,7 +87,7 @@ func setServiceMap(newer map[string]*list.List) {
 	serviceMap = newer
 }
 
-func saveService(rsp *getcd.QueryRegistryRsp) {
+func saveService(rsp *protocol.QueryRegistryRsp) {
 	if rsp.Result != errno.OK {
 		return
 	}
@@ -187,7 +187,7 @@ func queryGlobalConfigPeriodically(categories []string, t uint32) {
 	}
 }
 
-func saveGlobalConfig(rsp *getcd.QueryGlobalConfigRsp) {
+func saveGlobalConfig(rsp *protocol.QueryGlobalConfigRsp) {
 	if rsp.Result != errno.OK {
 		return
 	}
@@ -199,7 +199,7 @@ func saveGlobalConfig(rsp *getcd.QueryGlobalConfigRsp) {
 		if !ok {
 			newerEntry = &categoryEntry{
 				category: cat,
-				kv: make(map[string]string),
+				kv:       make(map[string]string),
 			}
 			newer[cat] = newerEntry
 		}
@@ -236,15 +236,15 @@ func QueryService() error {
 	}
 	defer conn.Close()
 
-	c := getcd.NewGetcdServiceClient(conn)
+	c := protocol.NewGetcdServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rsp, err := c.QueryRegistry(ctx, &getcd.QueryRegistryReq{})
+	rsp, err := c.QueryRegistry(ctx, &protocol.QueryRegistryReq{})
 	if err != nil {
 		return err
 	}
-	
+
 	log.Debug("query registry service result: %d", rsp.Result)
 	saveService(rsp)
 	return nil
@@ -362,11 +362,11 @@ func QueryGlobalConfig(categories []string) error {
 	}
 	defer conn.Close()
 
-	c := getcd.NewGetcdServiceClient(conn)
+	c := protocol.NewGetcdServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rsp, err := c.QueryGlobalConfig(ctx, &getcd.QueryGlobalConfigReq{Categories: categories})
+	rsp, err := c.QueryGlobalConfig(ctx, &protocol.QueryGlobalConfigReq{Categories: categories})
 	if err != nil {
 		return err
 	}

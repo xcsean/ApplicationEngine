@@ -6,7 +6,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
@@ -23,10 +23,10 @@ var (
 
 type myService struct{}
 
-func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*ghost.RegisterVmRsp, error) {
+func (s *myService) RegisterVM(ctx context.Context, req *protocol.RegisterVmReq) (*protocol.RegisterVmRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.RegisterVmRsp{Result: errno.OK}
+	rsp := &protocol.RegisterVmRsp{Result: errno.OK}
 	addr, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
@@ -46,10 +46,10 @@ func (s *myService) RegisterVM(ctx context.Context, req *ghost.RegisterVmReq) (*
 	return rsp, nil
 }
 
-func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq) (*ghost.UnregisterVmRsp, error) {
+func (s *myService) UnregisterVM(ctx context.Context, req *protocol.UnregisterVmReq) (*protocol.UnregisterVmRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.UnregisterVmRsp{Result: errno.OK}
+	rsp := &protocol.UnregisterVmRsp{Result: errno.OK}
 	_, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
@@ -67,7 +67,7 @@ func (s *myService) UnregisterVM(ctx context.Context, req *ghost.UnregisterVmReq
 	return rsp, nil
 }
 
-func (s *myService) SendPacket(srv ghost.GhostService_SendPacketServer) error {
+func (s *myService) SendPacket(srv protocol.GhostService_SendPacketServer) error {
 	for {
 		if pkt, err := srv.Recv(); err == nil {
 			data, err := conn.MakeSessionPkt(pkt.Sessions, uint16(pkt.CmdId), pkt.UserData, pkt.Timestamp, []byte(pkt.Body))
@@ -84,10 +84,10 @@ func (s *myService) SendPacket(srv ghost.GhostService_SendPacketServer) error {
 	return nil
 }
 
-func (s *myService) BindSession(ctx context.Context, req *ghost.BindSessionReq) (*ghost.BindSessionRsp, error) {
+func (s *myService) BindSession(ctx context.Context, req *protocol.BindSessionReq) (*protocol.BindSessionRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.BindSessionRsp{Result: errno.OK, Division: req.Division, Sessionid: req.Sessionid, Uuid: req.Uuid}
+	rsp := &protocol.BindSessionRsp{Result: errno.OK, Division: req.Division, Sessionid: req.Sessionid, Uuid: req.Uuid}
 	_, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
@@ -105,10 +105,10 @@ func (s *myService) BindSession(ctx context.Context, req *ghost.BindSessionReq) 
 	return rsp, nil
 }
 
-func (s *myService) UnbindSession(ctx context.Context, req *ghost.UnbindSessionReq) (*ghost.UnbindSessionRsp, error) {
+func (s *myService) UnbindSession(ctx context.Context, req *protocol.UnbindSessionReq) (*protocol.UnbindSessionRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.UnbindSessionRsp{Result: errno.OK, Division: req.Division, Sessionid: req.Sessionid, Uuid: req.Uuid}
+	rsp := &protocol.UnbindSessionRsp{Result: errno.OK, Division: req.Division, Sessionid: req.Sessionid, Uuid: req.Uuid}
 	_, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
@@ -126,24 +126,24 @@ func (s *myService) UnbindSession(ctx context.Context, req *ghost.UnbindSessionR
 	return rsp, nil
 }
 
-func (s *myService) LockUserAsset(ctx context.Context, req *ghost.LockUserassetReq) (*ghost.LockUserassetRsp, error) {
+func (s *myService) LockUserAsset(ctx context.Context, req *protocol.LockUserassetReq) (*protocol.LockUserassetRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.LockUserassetRsp{Result: errno.OK}
+	rsp := &protocol.LockUserassetRsp{Result: errno.OK}
 	return rsp, nil
 }
 
-func (s *myService) UnlockUserAsset(ctx context.Context, req *ghost.UnlockUserassetReq) (*ghost.UnlockUserassetRsp, error) {
+func (s *myService) UnlockUserAsset(ctx context.Context, req *protocol.UnlockUserassetReq) (*protocol.UnlockUserassetRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.UnlockUserassetRsp{Result: errno.OK}
+	rsp := &protocol.UnlockUserassetRsp{Result: errno.OK}
 	return rsp, nil
 }
 
-func (s *myService) Debug(ctx context.Context, req *ghost.DebugReq) (*ghost.DebugRsp, error) {
+func (s *myService) Debug(ctx context.Context, req *protocol.DebugReq) (*protocol.DebugRsp, error) {
 	defer dbg.Stacktrace()
 
-	rsp := &ghost.DebugRsp{Result: errno.OK, Desc: ""}
+	rsp := &protocol.DebugRsp{Result: errno.OK, Desc: ""}
 	_, result := validateRemote(ctx, req.Division)
 	if result != errno.OK {
 		rsp.Result = result
@@ -197,7 +197,7 @@ func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
 	reqChannel = rpcChannel
 
 	srv := grpc.NewServer()
-	ghost.RegisterGhostServiceServer(srv, &myService{})
+	protocol.RegisterGhostServiceServer(srv, &myService{})
 	reflection.Register(srv)
 	srv.Serve(ls)
 

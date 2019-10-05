@@ -11,7 +11,7 @@ import (
 	"time"
 
 	ui "github.com/jroimartin/gocui"
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"google.golang.org/grpc"
@@ -28,7 +28,7 @@ const (
 var (
 	kbdVMChannel chan string
 	rpcVMChannel chan *hostCmd
-	sndVMChannel chan *ghost.GhostPacket
+	sndVMChannel chan *protocol.GhostPacket
 	hostAddr     string
 	division     string
 	vmID         uint64
@@ -63,7 +63,7 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	division = config.Division
 	kbdVMChannel = make(chan string, 100)
 	rpcVMChannel = make(chan *hostCmd, 100)
-	sndVMChannel = make(chan *ghost.GhostPacket, 100)
+	sndVMChannel = make(chan *protocol.GhostPacket, 100)
 	vmLog := func(s string) {
 		g.Update(func(g *ui.Gui) error {
 			v, _ := g.View(vmView)
@@ -176,8 +176,8 @@ func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 }
 
 func callRegisterVM(division, version string, vmLog func(s string)) {
-	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
-		req := &ghost.RegisterVmReq{
+	callGhost(func(c protocol.GhostServiceClient, ctx context.Context) error {
+		req := &protocol.RegisterVmReq{
 			Division: division,
 			Version:  version,
 		}
@@ -195,8 +195,8 @@ func callRegisterVM(division, version string, vmLog func(s string)) {
 }
 
 func callUnregisterVM(division, version string, vmLog func(s string)) {
-	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
-		req := &ghost.UnregisterVmReq{
+	callGhost(func(c protocol.GhostServiceClient, ctx context.Context) error {
+		req := &protocol.UnregisterVmReq{
 			Division: division,
 			Version:  version,
 			Vmid:     vmID,
@@ -217,8 +217,8 @@ func callUnregisterVM(division, version string, vmLog func(s string)) {
 func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
 	vmLog(fmt.Sprintf("[VM] bind sesssion=%d uuid=%d", sessionID, uuid))
 	result := int32(0)
-	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
-		req := &ghost.BindSessionReq{
+	callGhost(func(c protocol.GhostServiceClient, ctx context.Context) error {
+		req := &protocol.BindSessionReq{
 			Division:  division,
 			Sessionid: sessionID,
 			Uuid:      uuid,
@@ -241,7 +241,7 @@ func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
 		innerBody.Kv["result"] = fmt.Sprintf("%d", result)
 		innerBody.Kv["uuid"] = fmt.Sprintf("%d", uuid)
 		body, _ := json.Marshal(innerBody)
-		pkt := &ghost.GhostPacket{
+		pkt := &protocol.GhostPacket{
 			CmdId:     cmdLogin,
 			UserData:  0,
 			Timestamp: 0,
@@ -257,8 +257,8 @@ func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
 
 func callUnbindSession(sessionID, uuid uint64, vmLog func(s string)) {
 	vmLog(fmt.Sprintf("[VM] unbind session=%d uuid=%d", sessionID, uuid))
-	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
-		req := &ghost.UnbindSessionReq{
+	callGhost(func(c protocol.GhostServiceClient, ctx context.Context) error {
+		req := &protocol.UnbindSessionReq{
 			Division:  division,
 			Sessionid: sessionID,
 			Uuid:      uuid,
@@ -274,8 +274,8 @@ func callUnbindSession(sessionID, uuid uint64, vmLog func(s string)) {
 }
 
 func callDebug(division, cmdOp, cmdParam string, vmLog func(s string)) {
-	callGhost(func(c ghost.GhostServiceClient, ctx context.Context) error {
-		req := &ghost.DebugReq{
+	callGhost(func(c protocol.GhostServiceClient, ctx context.Context) error {
+		req := &protocol.DebugReq{
 			Division: division,
 			Cmdop:    cmdOp,
 			Cmdparam: cmdParam,
@@ -290,27 +290,27 @@ func callDebug(division, cmdOp, cmdParam string, vmLog func(s string)) {
 	}, 3)
 }
 
-func callGhost(handler func(c ghost.GhostServiceClient, ctx context.Context) error, timeout time.Duration) error {
+func callGhost(handler func(c protocol.GhostServiceClient, ctx context.Context) error, timeout time.Duration) error {
 	conn, err := grpc.Dial(hostAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	c := ghost.NewGhostServiceClient(conn)
+	c := protocol.NewGhostServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
 	defer cancel()
 
 	return handler(c, ctx)
 }
 
-func hostSend(pkt *ghost.GhostPacket) {
+func hostSend(pkt *protocol.GhostPacket) {
 	sndVMChannel <- pkt
 }
 
 type hostContext struct {
 	conn   *grpc.ClientConn
-	stream ghost.GhostService_SendPacketClient
+	stream protocol.GhostService_SendPacketClient
 }
 
 func hostInitStream(addr string) (*hostContext, error) {
@@ -318,7 +318,7 @@ func hostInitStream(addr string) (*hostContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := ghost.NewGhostServiceClient(conn)
+	c := protocol.NewGhostServiceClient(conn)
 	stream, err := c.SendPacket(context.Background())
 	if err != nil {
 		return nil, err
@@ -326,7 +326,7 @@ func hostInitStream(addr string) (*hostContext, error) {
 	return &hostContext{conn: conn, stream: stream}, nil
 }
 
-func hostSendLoop(addr string, in chan struct{}, out chan *ghost.GhostPacket, vmLog func(s string)) {
+func hostSendLoop(addr string, in chan struct{}, out chan *protocol.GhostPacket, vmLog func(s string)) {
 	ctx, err := hostInitStream(addr)
 	if err != nil {
 		vmLog(fmt.Sprintf("[VM] stream init failed: %s", err.Error()))

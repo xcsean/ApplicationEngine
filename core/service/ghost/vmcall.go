@@ -6,20 +6,20 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"google.golang.org/grpc"
 )
 
-func callVM(vmAddr string, handler func(c ghost.VMServiceClient, ctx context.Context) error, timeout time.Duration) error {
+func callVM(vmAddr string, handler func(c protocol.VMServiceClient, ctx context.Context) error, timeout time.Duration) error {
 	conn, err := grpc.Dial(vmAddr, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	c := ghost.NewVMServiceClient(conn)
+	c := protocol.NewVMServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
 	defer cancel()
 
@@ -37,8 +37,8 @@ func debugNotifyStatusToVM(division, cmdParam string) {
 	if err != nil {
 		status = 0
 	}
-	err = callVM(vmAddr, func(c ghost.VMServiceClient, ctx context.Context) error {
-		req := &ghost.NotifyStatusReq{
+	err = callVM(vmAddr, func(c protocol.VMServiceClient, ctx context.Context) error {
+		req := &protocol.NotifyStatusReq{
 			Status: uint32(status),
 		}
 		rsp, err := c.OnNotifyStatus(ctx, req)

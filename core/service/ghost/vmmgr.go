@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xcsean/ApplicationEngine/core/protocol/ghost"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
@@ -17,7 +17,7 @@ type vmEntity struct {
 	division  string
 	version   string
 	addr      string
-	pkt       chan *ghost.GhostPacket
+	pkt       chan *protocol.GhostPacket
 	in        chan *innerCmd
 	checkTime int64
 }
@@ -70,7 +70,7 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 	}
 
 	vmID, _ := vmm.sf.NextID()
-	pkt := make(chan *ghost.GhostPacket, 1000)
+	pkt := make(chan *protocol.GhostPacket, 1000)
 	in := make(chan *innerCmd, 10)
 	checkTime := time.Now().Unix() + etc.GetInt64WithDefault("global", "keepAlive", 10)
 	vm := &vmEntity{
@@ -140,7 +140,7 @@ func (vmm *vmMgr) onTick() {
 	interval := etc.GetInt64WithDefault("global", "keepAlive", 10)
 	for _, vm := range vmm.vms {
 		if now >= vm.checkTime {
-			vm.pkt <- &ghost.GhostPacket{
+			vm.pkt <- &protocol.GhostPacket{
 				CmdId:     conn.CmdPing,
 				UserData:  0,
 				Timestamp: uint32(now),
@@ -203,7 +203,7 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 			count = 10
 		}
 		for i := int64(0); i < count; i++ {
-			vm.pkt <- &ghost.GhostPacket{
+			vm.pkt <- &protocol.GhostPacket{
 				CmdId:     conn.CmdPing,
 				UserData:  uint32(i),
 				Timestamp: uint32(time.Now().Unix()),
@@ -221,7 +221,7 @@ func (vmm *vmMgr) forward(division string, sessionID uint64, header *conn.Header
 		return errno.HOSTVMNOTEXIST
 	}
 
-	pkt := &ghost.GhostPacket{
+	pkt := &protocol.GhostPacket{
 		CmdId:     uint32(header.CmdID),
 		UserData:  header.UserData,
 		Timestamp: header.Timestamp,

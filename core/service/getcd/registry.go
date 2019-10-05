@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang/protobuf/proto"
-	"github.com/xcsean/ApplicationEngine/core/protocol/getcd"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	svc "github.com/xcsean/ApplicationEngine/core/shared/service"
@@ -17,10 +17,10 @@ import (
 
 var (
 	// registry server & service
-	serverLock   sync.RWMutex
-	serverMap    map[string]*svc.RegistryServerConfig
-	serviceLock  sync.RWMutex
-	serviceMap   map[string]*list.List
+	serverLock  sync.RWMutex
+	serverMap   map[string]*svc.RegistryServerConfig
+	serviceLock sync.RWMutex
+	serviceMap  map[string]*list.List
 
 	// registry global config & proto limitation
 	globalConfigMap map[string][]*svc.RegistryGlobalConfig
@@ -318,7 +318,7 @@ func getServiceCount(m map[string]*list.List) uint32 {
 }
 
 func getRegistryPbFormat() ([]byte, error) {
-	rsp := &getcd.QueryRegistryRsp{Result: 0}
+	rsp := &protocol.QueryRegistryRsp{Result: 0}
 
 	server := getServerMap()
 	serverLen := getServerCount(server)
@@ -326,11 +326,11 @@ func getRegistryPbFormat() ([]byte, error) {
 	service := getServiceMap()
 	serviceLen := getServiceCount(service)
 
-	serverArray := make([]*getcd.RegistryServer, serverLen)
+	serverArray := make([]*protocol.RegistryServer, serverLen)
 	i := 0
 	for _, v := range server {
 		c := v
-		s := &getcd.RegistryServer{
+		s := &protocol.RegistryServer{
 			App:           c.App,
 			Server:        c.Server,
 			Division:      c.Division,
@@ -340,16 +340,16 @@ func getRegistryPbFormat() ([]byte, error) {
 			ServiceStatus: c.ServiceStatus,
 		}
 		serverArray[i] = s
-		i ++
+		i++
 	}
 	rsp.Servers = serverArray
 
-	serviceArray := make([]*getcd.RegistryService, serviceLen)
+	serviceArray := make([]*protocol.RegistryService, serviceLen)
 	i = 0
 	for _, v := range service {
 		for e := v.Front(); e != nil; e = e.Next() {
 			c := e.Value.(svc.RegistryServiceConfig)
-			s := &getcd.RegistryService{
+			s := &protocol.RegistryService{
 				App:         c.App,
 				Server:      c.Server,
 				Division:    c.Division,
@@ -361,7 +361,7 @@ func getRegistryPbFormat() ([]byte, error) {
 				AdminPort:   c.AdminPort,
 			}
 			serviceArray[i] = s
-			i ++
+			i++
 		}
 	}
 	rsp.Services = serviceArray

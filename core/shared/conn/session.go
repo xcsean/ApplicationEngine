@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"time"
 )
 
@@ -121,61 +120,4 @@ func MakeCommonPkt(cmdID uint16, userData, timestamp uint32, body []byte) []byte
 func CopyCommonPkt(hdr, body []byte) ([]byte, uint16) {
 	header := ParseHeader(hdr)
 	return MakeCommonPkt(header.CmdID, header.UserData, header.Timestamp, body), header.CmdID
-}
-
-// MakeMasterSet make MasterSet packet
-func MakeMasterSet() []byte {
-	return MakeHeader(0, CmdMasterSet, 0, 0)
-}
-
-// MakeMasterYou make MasterYou packet
-func MakeMasterYou() []byte {
-	return MakeHeader(0, CmdMasterYou, 0, 0)
-}
-
-// MakeMasterNot make MasterNot packet
-func MakeMasterNot() []byte {
-	return MakeHeader(0, CmdMasterNot, 0, 0)
-}
-
-// MakeKickAll make KickAll packet
-func MakeKickAll() []byte {
-	return MakeHeader(0, CmdKickAll, 0, 0)
-}
-
-// MakeBroadcastAll make BroadcastAll packet
-func MakeBroadcastAll(pkt []byte) ([]byte, error) {
-	pkt2 := MakeCommonPkt(CmdBroadcastAll, 0, 0, pkt)
-	if len(pkt2) > LengthOfMaxBody {
-		return nil, fmt.Errorf("broadcast all length=%d above max body=%d", len(pkt2), LengthOfMaxBody)
-	}
-	return pkt2, nil
-}
-
-// SendMasterSet send the MasterSet packet to conn
-func SendMasterSet(w io.Writer) error {
-	hdr := MakeMasterSet()
-	_, err := w.Write(hdr)
-	return err
-}
-
-// SendMasterYou send the MasterYou packet to backend
-func SendMasterYou(w io.Writer) error {
-	hdr := MakeMasterYou()
-	_, err := w.Write(hdr)
-	return err
-}
-
-// SendMasterNot send the MasterNot packet to backend
-func SendMasterNot(w io.Writer) error {
-	hdr := MakeMasterNot()
-	_, err := w.Write(hdr)
-	return err
-}
-
-// SendNotifyToClient send the notify packet to client
-func SendNotifyToClient(w io.Writer, result int32) error {
-	hdr := MakeHeader(0, CmdNotifyClient, uint32(result), 0)
-	_, err := w.Write(hdr)
-	return err
 }

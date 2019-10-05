@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 const (
@@ -18,28 +18,24 @@ const (
 // all dispatchXXX functions run in the main routine context!!!
 
 func dispatchSessionEnter(hdr, body []byte) {
-	_, sessionIDs, innerBody := conn.ParseSessionBody(body)
+	sessionIDs, addr := packet.ParseSessionEnterBody(body)
 	sessionID := sessionIDs[0]
-
-	// get the client address
-	var rb conn.ReservedBody
-	json.Unmarshal(innerBody, &rb)
-	log.Debug("session=%d addr='%s' enter", sessionID, rb.StrParam)
+	log.Debug("session=%d addr='%s' enter", sessionID, addr)
 
 	// create a new session and monitor it
 	sm := getSessionMgr()
-	sm.addSession(sessionID, rb.StrParam)
+	sm.addSession(sessionID, addr)
 	setSessionVerCheck(sessionID)
 }
 
 func dispatchSessionLeave(hdr, body []byte) {
-	sm := getSessionMgr()
-	_, sessionIDs, _ := conn.ParseSessionBody(body)
+	sessionIDs := packet.ParseSessionLeaveBody(body)
 	sessionID := sessionIDs[0]
+
+	sm := getSessionMgr()
 	if !sm.isSessionExist(sessionID) {
 		return
 	}
-
 	log.Debug("session=%d leave", sessionID)
 	uuid, bind := sm.getBindUUID(sessionID)
 	if bind {
@@ -50,7 +46,11 @@ func dispatchSessionLeave(hdr, body []byte) {
 }
 
 func dispatchSessionVerCheck(hdr, body []byte) {
-	_, sessionIDs, innerBody := conn.ParseSessionBody(body)
+	sessionIDs, ver, err := packet.ParseSessionVerCheckBody(body)
+	if err != nil {
+		log.Debug("parse ver-check body failed: %s", err.Error())
+		return
+	}
 	sessionID := sessionIDs[0]
 
 	// check the session exist and its state
@@ -61,28 +61,18 @@ func dispatchSessionVerCheck(hdr, body []byte) {
 		return
 	}
 
-	// get the client version & try to pick a vm
+	// get the client version & try to pick a vm to serve this client
 	shouldKick := false
-	var rb conn.ReservedBody
-	err := json.Unmarshal(innerBody, &rb)
-	if err == nil {
-		ver := rb.StrParam
-		log.Debug("session=%d version=%s", sessionID, ver)
-		// pick a division to serve this client
-		vmm := getVMMgr()
-		division, result := vmm.pick(ver)
-		if result == errno.OK {
-			log.Debug("session=%d pick division=%s", sessionID, division)
-			sm.setSessionRouting(sessionID, ver, division)
-			setSessionWaitBind(sessionID)
-			notifyClientVerCheck(sessionID, "ver-check ok")
-		} else {
-			notifyClientVerCheck(sessionID, "no available division can serve you")
-			shouldKick = true
-		}
+	log.Debug("session=%d version=%s", sessionID, ver)
+	division, result := getVMMgr().pick(ver)
+	if result == errno.OK {
+		log.Debug("session=%d pick division=%s", sessionID, division)
+		sm.setSessionRouting(sessionID, ver, division)
+		setSessionWaitBind(sessionID)
+		sendClientVerReply(sessionIDs, result)
 	} else {
-		notifyClientVerCheck(sessionID, err.Error())
 		shouldKick = true
+		sendClientVerReply(sessionIDs, result)
 	}
 
 	if shouldKick {

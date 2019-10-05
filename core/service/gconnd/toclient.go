@@ -3,9 +3,11 @@ package main
 import (
 	"net"
 
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 func handleClientConn(cliConn net.Conn, sessionID uint64, srvMst string, cliChannel chan<- *innerCmd) {
@@ -17,7 +19,8 @@ func handleClientConn(cliConn net.Conn, sessionID uint64, srvMst string, cliChan
 
 	err := conn.HandleStream(cliConn, func(_ net.Conn, hdr, body []byte) {
 		header := conn.ParseHeader(hdr)
-		if conn.IsPrivateCmd(header.CmdID) {
+		cmdID := protocol.PacketType(header.CmdID)
+		if packet.IsPrivateCmdID(cmdID) {
 			return
 		}
 

@@ -4,14 +4,18 @@ import (
 	"encoding/binary"
 )
 
-// IsPublicCmd tell whether it's a public command or not
-func IsPublicCmd(cmdID uint16) bool {
-	return cmdID < CmdPrivateBegin || cmdID > CmdPrivateEnd
-}
-
-// IsPrivateCmd tell whether it's a private command or not
-func IsPrivateCmd(cmdID uint16) bool {
-	return cmdID >= CmdPrivateBegin && cmdID <= CmdPrivateEnd
+// MakeHeader make the header
+func MakeHeader(bodyLen, cmdID uint16, userData, timestamp uint32) []byte {
+	hdr := make([]byte, LengthOfHeader)
+	bodyLenBuf := hdr[BodyLenStart:BodyLenEnd]
+	binary.BigEndian.PutUint16(bodyLenBuf, bodyLen)
+	cmdIDBuf := hdr[CmdIDStart:CmdIDEnd]
+	binary.BigEndian.PutUint16(cmdIDBuf, cmdID)
+	userDataBuf := hdr[UserDataStart:UserDataEnd]
+	binary.BigEndian.PutUint32(userDataBuf, userData)
+	timestampBuf := hdr[TimestampStart:TimestampEnd]
+	binary.BigEndian.PutUint32(timestampBuf, timestamp)
+	return hdr
 }
 
 // ParseHeader parse the header
@@ -26,18 +30,4 @@ func ParseHeader(hdr []byte) *Header {
 		UserData:  userData,
 		Timestamp: timestamp,
 	}
-}
-
-// MakeHeader make the header
-func MakeHeader(bodyLen, cmdID uint16, userData, timestamp uint32) []byte {
-	hdr := make([]byte, LengthOfHeader)
-	bodyLenBuf := hdr[BodyLenStart:BodyLenEnd]
-	binary.BigEndian.PutUint16(bodyLenBuf, bodyLen)
-	cmdIDBuf := hdr[CmdIDStart:CmdIDEnd]
-	binary.BigEndian.PutUint16(cmdIDBuf, cmdID)
-	userDataBuf := hdr[UserDataStart:UserDataEnd]
-	binary.BigEndian.PutUint32(userDataBuf, userData)
-	timestampBuf := hdr[TimestampStart:TimestampEnd]
-	binary.BigEndian.PutUint32(timestampBuf, timestamp)
-	return hdr
 }

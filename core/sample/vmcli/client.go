@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	ui "github.com/jroimartin/gocui"
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 const (
@@ -109,10 +111,7 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 			cliLog("[C] please type 'conn' first!")
 		} else {
 			if len(array) >= 2 {
-				var rb conn.ReservedBody
-				rb.StrParam = array[1]
-				body, _ := json.Marshal(rb)
-				pkt := conn.MakeCommonPkt(conn.CmdVerCheck, 0, 0, body)
+				pkt := packet.MakeVerCheck(array[1])
 				cliConn.Write(pkt)
 				cliLog(fmt.Sprintf("[C] version=%s", array[1]))
 			} else {
@@ -170,13 +169,12 @@ func dealNetCmd(cmd *netCmd, cliLog func(s string)) {
 	if cmd.cmdID == 1 {
 		header := conn.ParseHeader(cmd.hdr)
 		switch header.CmdID {
-		case conn.CmdVerCheck:
-			var rb conn.ReservedBody
-			err := json.Unmarshal(cmd.body, &rb)
+		case uint16(protocol.Packet_PUBLIC_SESSION_VERREPLY):
+			result, err := packet.ParseVerReplyBody(cmd.body)
 			if err == nil {
-				cliLog(fmt.Sprintf("[S] ver-check: %s", rb.StrParam))
+				cliLog(fmt.Sprintf("[S] ver-check: %d", result))
 			} else {
-				cliLog(fmt.Sprintf("[S] ver-check parse body failed: %s", err.Error()))
+				cliLog(fmt.Sprintf("[S] ver-check failed: %s", err.Error()))
 			}
 		case cmdLogin:
 			var innerBody cmdBody

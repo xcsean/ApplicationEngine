@@ -1,18 +1,19 @@
 ﻿package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"path"
 	"time"
 
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 type srvSession net.Conn
@@ -147,14 +148,16 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		if !ok {
 			// master isn't ready, so kick the client
 			log.Debug("master is nil, so close the connection from client=%s", cliAddr)
-			conn.SendNotifyToClient(cliConn, errno.CONNMASTEROFFLINE)
+			pkt := packet.MakeNotifyClient(map[string]string{"result": fmt.Sprintf("%d", errno.CONNMASTEROFFLINE)})
+			cliConn.Write(pkt)
 			cliConn.Close()
 		} else {
 			count := len(cliMap)
 			funGE := func(a, b int64) bool { return a >= b }
 			if etc.CompareInt64WithConfig("global", "maxClientConnections", int64(count), int64(config.CliMaxConns), funGE) {
 				log.Debug("client connections full, client num=%d", count)
-				conn.SendNotifyToClient(cliConn, errno.CONNMAXCONNECTIONS)
+				pkt := packet.MakeNotifyClient(map[string]string{"result": fmt.Sprintf("%d", errno.CONNMAXCONNECTIONS)})
+				cliConn.Write(pkt)
 				cliConn.Close()
 			} else {
 				sessionID := conn.MakeSessionID(uint16(selfID), seedID)
@@ -166,13 +169,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				log.Debug("client map size=%d", count+1)
 
 				// send a session enter to master, with "client address" in body
-				sessionIDs := make([]uint64, 1)
-				sessionIDs[0] = sessionID
-
-				rb := conn.ReservedBody{StrParam: cliAddr}
-				body, _ := json.Marshal(rb)
-
-				pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionEnter, 0, 0, body)
+				pkt, _ := packet.MakeSessionEnter([]uint64{sessionID}, cliAddr)
 				_, err := srvConn.Write(pkt)
 				if err != nil {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
@@ -192,13 +189,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		// send a session leave to master, with "client address" in body
 		srvConn, ok := srvMap[srvMst]
 		if ok {
-			sessionIDs := make([]uint64, 1)
-			sessionIDs[0] = sessionID
-
-			rb := conn.ReservedBody{StrParam: cliAddr}
-			body, _ := json.Marshal(rb)
-
-			pkt, _ := conn.MakeSessionPkt(sessionIDs, conn.CmdSessionLeave, 0, 0, body)
+			pkt, _ := packet.MakeSessionLeave([]uint64{sessionID})
 			_, err := srvConn.Write(pkt)
 			if err != nil {
 				log.Error("send session=%d leave failed: %s", sessionID, err.Error())
@@ -282,11 +273,13 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 		_, ok := srvMap[srvMst]
 		if ok {
 			log.Debug("master=%s exist, refuse the request from %s", srvMst, srvAddr)
-			conn.SendMasterNot(srvConn)
+			pkt, _ := packet.MakeMasterNot()
+			srvConn.Write(pkt)
 		} else {
 			srvMst = srvAddr
 			log.Info("master=%s apply", srvMst)
-			conn.SendMasterYou(srvConn)
+			pkt, _ := packet.MakeMasterYou()
+			srvConn.Write(pkt)
 		}
 	case innerCmdServerBroadcast:
 		srvConn, hdr, body := c.getServerCmd()
@@ -411,7 +404,8 @@ func broadcastAll(pkt []byte) {
 
 func kickClients(hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
-	if header.CmdID == conn.CmdSessionKick {
+	cmdID := protocol.PacketType(header.CmdID)
+	if cmdID == protocol.Packet_PRIVATE_SESSION_KICK {
 		sessionNum, sessionIDs, _ := conn.ParseSessionBody(body)
 		log.Debug("kick %d client(s)", sessionNum)
 		for i := 0; i < int(sessionNum); i++ {
@@ -436,18 +430,10 @@ func kickAllClients() {
 
 func setRouteForClients(hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
-	if header.CmdID == conn.CmdSessionRoute {
-		sessionNum, sessionIDs, innerBody := conn.ParseSessionBody(body)
-
-		var rb conn.ReservedBody
-		err := json.Unmarshal(innerBody, &rb)
-		if err != nil {
-			log.Error("set route unmarshal failed: %s", err.Error())
-			return
-		}
-		log.Debug("reserved body=%v", rb)
-
-		newForwardTo := rb.StrParam
+	cmdID := protocol.PacketType(header.CmdID)
+	if cmdID == protocol.Packet_PRIVATE_SESSION_ROUTE {
+		sessionIDs, newForwardTo := packet.ParseSessionRouteBody(body)
+		sessionNum := len(sessionIDs)
 		_, ok := srvMap[newForwardTo]
 		if ok {
 			for i := 0; i < int(sessionNum); i++ {

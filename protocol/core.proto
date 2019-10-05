@@ -9,10 +9,8 @@ message packet {
     
     // used by cmd_id
     enum type {
+        // user type
         PUBLIC_BEGIN = 0;
-
-        // user type begin with 1
-        // user type end with 59999
 
         // reserved type
         PRIVATE_BEGIN = 60000;
@@ -22,12 +20,20 @@ message packet {
         PRIVATE_SESSION_KICK = 60004;
         PRIVATE_SESSION_PING = 60005;
         PRIVATE_SESSION_PONG = 60006;
+        PRIVATE_MASTER_SET = 60011;
+        PRIVATE_MASTER_YOU = 60012;
+        PRIVATE_MASTER_NOT = 60013;
+        PRIVATE_BROADCAST_ALL = 60021;
+        PRIVATE_KICK_ALL = 60031;
+        PRIVATE_NOTIFY_CLIENT = 65001;
+        PRIVATE_NOTIFY_VM_BIND = 65011;
+        PRIVATE_NOTIFY_VM_UNBIND = 65012;
         PRIVATE_END = 65500;
 
         PUBLIC_PING = 65501;
         PUBLIC_PONG = 65502;
-        PUBLIC_VERCHECK = 65534;
-
+        PUBLIC_SESSION_VERCHECK = 65533;
+        PUBLIC_SESSION_VERREPLY = 65534;
         PUBLIC_END = 65535;
     }
     
@@ -38,8 +44,8 @@ message packet {
 }
 
 message session_packet {
-    packet common = 1;
-    repeated uint64 sessions = 2;
+    repeated uint64 sessions = 1;
+    packet common = 2;
 }
 
 message stream_session_packet_rsp {

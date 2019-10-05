@@ -3,30 +3,33 @@ package main
 import (
 	"net"
 
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 func handleSrvPkt(srvConn net.Conn, srvChannel chan<- *innerCmd, hdr, body []byte) {
 	header := conn.ParseHeader(hdr)
-	if conn.IsPublicCmd(header.CmdID) {
+	cmdID := protocol.PacketType(header.CmdID)
+	if packet.IsPublicCmdID(cmdID) {
 		// this is a public cmd, just wrap as a server broadcast
 		srvChannel <- newServerCmd(innerCmdServerBroadcast, srvConn, hdr, body)
 		return
 	}
 
 	// a private cmd
-	switch header.CmdID {
-	case conn.CmdMasterSet:
+	switch cmdID {
+	case protocol.Packet_PRIVATE_MASTER_SET:
 		srvChannel <- newServerCmd(innerCmdServerMasterSet, srvConn, hdr, body)
-	case conn.CmdBroadcastAll:
+	case protocol.Packet_PRIVATE_BROADCAST_ALL:
 		srvChannel <- newServerCmd(innerCmdServerBroadcastAll, srvConn, hdr, body)
-	case conn.CmdSessionKick:
+	case protocol.Packet_PRIVATE_SESSION_KICK:
 		srvChannel <- newServerCmd(innerCmdServerKick, srvConn, hdr, body)
-	case conn.CmdKickAll:
+	case protocol.Packet_PRIVATE_KICK_ALL:
 		srvChannel <- newServerCmd(innerCmdServerKickAll, srvConn, nil, nil)
-	case conn.CmdSessionRoute:
+	case protocol.Packet_PRIVATE_SESSION_ROUTE:
 		srvChannel <- newServerCmd(innerCmdServerSetRoute, srvConn, hdr, body)
 	}
 }

@@ -142,7 +142,7 @@ func (vmm *vmMgr) onTick() {
 		if now >= vm.checkTime {
 			vm.pkt <- &protocol.SessionPacket{
 				Common: &protocol.Packet{
-					CmdId:     conn.CmdPing,
+					CmdId:     uint32(protocol.Packet_PUBLIC_PING),
 					UserData:  0,
 					Timestamp: uint32(now),
 					Body:      "KEEP-ALIVE",
@@ -207,7 +207,7 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 		for i := int64(0); i < count; i++ {
 			vm.pkt <- &protocol.SessionPacket{
 				Common: &protocol.Packet{
-					CmdId:     conn.CmdPing,
+					CmdId:     uint32(protocol.Packet_PUBLIC_PING),
 					UserData:  uint32(i),
 					Timestamp: uint32(time.Now().Unix()),
 					Body:      "DEBUG-PING",

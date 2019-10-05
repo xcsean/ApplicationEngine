@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 // all dispatchXXX functions run in the main routine context!!!
@@ -64,11 +66,12 @@ func dispatchConn(cmd *connCmd) bool {
 	case innerCmdConnSessionUp:
 		hdr, body := cmd.getConnCmd()
 		header := conn.ParseHeader(hdr)
-		if header.CmdID == conn.CmdSessionEnter {
+		c := protocol.PacketType(header.CmdID)
+		if c == protocol.Packet_PRIVATE_SESSION_ENTER {
 			dispatchSessionEnter(hdr, body)
-		} else if header.CmdID == conn.CmdSessionLeave {
+		} else if c == protocol.Packet_PRIVATE_SESSION_LEAVE {
 			dispatchSessionLeave(hdr, body)
-		} else if header.CmdID == conn.CmdVerCheck {
+		} else if c == protocol.Packet_PUBLIC_SESSION_VERCHECK {
 			dispatchSessionVerCheck(hdr, body)
 		} else {
 			dispatchSessionForward(hdr, body)
@@ -110,7 +113,7 @@ func dispatchTMM(cmd *timerCmd) bool {
 			sm.setSessionState(sessionID, timerCmdSessionDeleted)
 			sm.delSession(sessionID)
 			// kick the session
-			pkt, _ := conn.MakeOneSessionPkt(sessionID, conn.CmdSessionKick, 0, 0, nil)
+			pkt, _ := packet.MakeSessionKick([]uint64{sessionID})
 			connSend(pkt)
 		} else {
 			log.Debug("discard timer type='%s', userdata1=%d, userdata2=%d", getTimerDesc(cmdType), sessionID, cmd.Userdata2)

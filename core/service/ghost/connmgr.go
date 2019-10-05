@@ -3,9 +3,11 @@ package main
 import (
 	"net"
 
+	"github.com/xcsean/ApplicationEngine/core/protocol"
 	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
 type connCmd struct {
@@ -97,7 +99,8 @@ exit:
 
 func connRecvLoop(csk net.Conn, connChannel chan *connCmd) {
 	// try to request master
-	conn.SendMasterSet(csk)
+	pkt, _ := packet.MakeMasterSet()
+	csk.Write(pkt)
 
 	isMaster := false
 	err := conn.HandleStream(csk, func(_ net.Conn, hdr, body []byte) {
@@ -115,13 +118,14 @@ func connRecvLoop(csk net.Conn, connChannel chan *connCmd) {
 			}
 		} else {
 			// wait the CmdMasterYou or CmdMasterNot
-			switch h.CmdID {
-			case conn.CmdMasterYou:
+			cmdID := protocol.PacketType(h.CmdID)
+			switch cmdID {
+			case protocol.Packet_PRIVATE_MASTER_YOU:
 				log.Info("I'm master, that's ok")
 				// init the conn-manager
 				isMaster = true
 				initConnMgr(csk)
-			case conn.CmdMasterNot:
+			case protocol.Packet_PRIVATE_MASTER_NOT:
 				log.Fatal("I can't be master, so exit")
 			}
 		}

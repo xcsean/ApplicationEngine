@@ -12,7 +12,6 @@ import (
 
 	ui "github.com/jroimartin/gocui"
 	"github.com/xcsean/ApplicationEngine/core/protocol"
-	"github.com/xcsean/ApplicationEngine/core/shared/conn"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"google.golang.org/grpc"
 )
@@ -141,7 +140,7 @@ func dealHostRPC(cmd *hostCmd, vmLog func(s string)) {
 func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 	switch cmd.Pkt.Common.CmdId {
 	case cmdLogin:
-		var rb conn.ReservedBody
+		var rb cmdBody
 		err := json.Unmarshal([]byte(cmd.Pkt.Common.Body), &rb)
 		if err != nil {
 			return
@@ -155,8 +154,8 @@ func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 			return
 		}
 		go callBindSession(cmd.Pkt.Sessions[0], uint64(uuid), vmLog)
-	case conn.CmdNotifyVMUnbind:
-		var rb conn.ReservedBody
+	case uint32(protocol.Packet_PRIVATE_NOTIFY_VM_UNBIND):
+		var rb protocol.PacketReservedBody
 		err := json.Unmarshal([]byte(cmd.Pkt.Common.Body), &rb)
 		if err != nil {
 			return

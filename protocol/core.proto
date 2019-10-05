@@ -6,6 +6,23 @@ message packet {
     uint32 user_data = 2;
     uint32 timestamp = 3;
     string body = 4;
+    enum type {
+        PUBLIC_BEGIN = 0;
+
+        PRIVATE_BEGIN = 60000;
+        PRIVATE_SESSION_ENTER = 60001;
+        PRIVATE_SESSION_LEAVE = 60002;
+        PRIVATE_SESSION_ROUTE = 60003;
+        PRIVATE_SESSION_KICK = 60004;
+        PRIVATE_SESSION_PING = 60005;
+        PRIVATE_SESSION_PONG = 60006;
+        PRIVATE_END = 65500;
+
+        PUBLIC_PING = 65501;
+        PUBLIC_PONG = 65502;
+        PUBLIC_VERCHECK = 65534;
+        PUBLIC_END = 65535;
+    }
 }
 
 message session_packet {

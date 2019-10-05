@@ -30,5 +30,5 @@ service GconndService {
     rpc IsSessionAlive(session_alive_req) returns(session_alive_rsp) {}
 
     // send packets to client(s)
-    rpc SendPacket(stream session_packet) returns(send_packet_rsp) {}
+    rpc SendPacket(stream session_packet) returns(stream_session_packet_rsp) {}
 }

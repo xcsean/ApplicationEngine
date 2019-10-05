@@ -71,7 +71,7 @@ func start(c *ghostConfig, selfID int64) bool {
 	if err != nil {
 		log.Fatal("RPC service listen failed: %s", err.Error())
 	}
-	go startRPC(ls, rpcChannel)
+	go startRPCLoop(ls, rpcChannel)
 
 	connAddr := fmt.Sprintf("%s:%d", connIP, connPort)
 	csk, err := net.Dial("tcp", connAddr)

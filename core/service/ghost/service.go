@@ -191,7 +191,7 @@ func validateRemote(ctx context.Context, division string) (string, int32) {
 	return fmt.Sprintf("%s:%d", requiredIP, rpcPort), errno.OK
 }
 
-func startRPC(ls net.Listener, rpcChannel chan *innerCmd) {
+func startRPCLoop(ls net.Listener, rpcChannel chan *innerCmd) {
 	defer ls.Close()
 
 	reqChannel = rpcChannel

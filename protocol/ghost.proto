@@ -102,7 +102,7 @@ service GhostService {
     rpc UnregisterVM(unregister_vm_req) returns(unregister_vm_rsp) {}
 
     // send packet to client(s)
-    rpc SendPacket(stream session_packet) returns(send_packet_rsp) {}
+    rpc SendPacket(stream session_packet) returns(stream_session_packet_rsp) {}
 
     // session bind & unbind with uuid(user unique id)
     rpc BindSession(bind_session_req) returns(bind_session_rsp) {}
@@ -133,5 +133,5 @@ message notify_packet_rsp {
 
 service VMService {
     rpc OnNotifyStatus(notify_status_req) returns(notify_status_rsp) {}
-    rpc OnNotifyPacket(stream session_packet) returns(send_packet_rsp) {}
+    rpc OnNotifyPacket(stream session_packet) returns(stream_session_packet_rsp) {}
 }

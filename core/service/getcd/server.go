@@ -27,7 +27,7 @@ func start(c *getcdConfig, _ int64) bool {
 
 	// start RPC service
 	ch := make(chan string, 1)
-	go startRPC(c, ch)
+	go startRPCLoop(c, ch)
 	select {
 	case s, _ := <-ch:
 		if s == "ready" {
@@ -56,7 +56,7 @@ func start(c *getcdConfig, _ int64) bool {
 	return true
 }
 
-func startRPC(c *getcdConfig, ch chan<- string) {
+func startRPCLoop(c *getcdConfig, ch chan<- string) {
 	s := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", c.Mysql.Username, c.Mysql.Password, c.Mysql.Addr(), c.Mysql.Database)
 
 	// load registry from mysql immediately

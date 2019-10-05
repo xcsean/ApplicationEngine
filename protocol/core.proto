@@ -6,9 +6,15 @@ message packet {
     uint32 user_data = 2;
     uint32 timestamp = 3;
     string body = 4;
+    
+    // used by cmd_id
     enum type {
         PUBLIC_BEGIN = 0;
 
+        // user type begin with 1
+        // user type end with 59999
+
+        // reserved type
         PRIVATE_BEGIN = 60000;
         PRIVATE_SESSION_ENTER = 60001;
         PRIVATE_SESSION_LEAVE = 60002;
@@ -21,7 +27,13 @@ message packet {
         PUBLIC_PING = 65501;
         PUBLIC_PONG = 65502;
         PUBLIC_VERCHECK = 65534;
+
         PUBLIC_END = 65535;
+    }
+    
+    // used by reserved type
+    message reserved_body {
+        map<string, string> kv = 1;
     }
 }
 
@@ -30,6 +42,6 @@ message session_packet {
     repeated uint64 sessions = 2;
 }
 
-message send_packet_rsp {
+message stream_session_packet_rsp {
     int32 result = 1;
 }

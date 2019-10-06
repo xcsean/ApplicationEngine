@@ -1,6 +1,6 @@
 syntax = "proto3";
 package protocol;
-import "core.proto";
+import "packet.proto";
 
 // master
 message register_master_req {
@@ -23,12 +23,11 @@ message session_alive_rsp {
 }
 
 service GconndService {
-    // master management
     rpc RegisterMaster(register_master_req) returns(register_master_rsp) {}
-
-    // session query
     rpc IsSessionAlive(session_alive_req) returns(session_alive_rsp) {}
+}
 
-    // send packets to client(s)
-    rpc SendPacket(stream session_packet) returns(stream_session_packet_rsp) {}
+service MasterService {
+    rpc Push(stream session_packet) returns(stream_session_packet_rsp) {}
+    rpc Pull(stream_session_packet_req) returns(stream session_packet) {}
 }

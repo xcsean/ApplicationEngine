@@ -1,6 +1,6 @@
 syntax = "proto3";
 package protocol;
-import "core.proto";
+import "packet.proto";
 
 // ghost service for vm
 

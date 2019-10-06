@@ -208,25 +208,27 @@ func init() {
 func init() { proto.RegisterFile("gconnd.proto", fileDescriptor_bf4e23270b453c13) }
 
 var fileDescriptor_bf4e23270b453c13 = []byte{
-	// 282 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x50, 0xcd, 0x4a, 0xc3, 0x40,
-	0x10, 0x36, 0xa5, 0x0d, 0xc9, 0xa0, 0x05, 0x57, 0x28, 0x21, 0xa5, 0x50, 0xe2, 0x25, 0xa7, 0x80,
-	0xf5, 0x09, 0xc4, 0x83, 0x44, 0x14, 0xcb, 0xe6, 0x01, 0x42, 0xcc, 0x0e, 0x65, 0x31, 0xcd, 0xc6,
-	0xdd, 0x6d, 0xce, 0x3e, 0xba, 0x74, 0x92, 0xfa, 0x43, 0xda, 0x9e, 0x86, 0xf9, 0xfe, 0xe6, 0x07,
-	0x2e, 0x37, 0xa5, 0xaa, 0x6b, 0x91, 0x34, 0x5a, 0x59, 0xc5, 0x3c, 0x2a, 0xa5, 0xaa, 0x42, 0x28,
-	0x95, 0xc6, 0x0e, 0x8d, 0xee, 0xe0, 0x46, 0xe3, 0x46, 0x1a, 0x8b, 0x3a, 0xdf, 0x16, 0x54, 0x34,
-	0x7e, 0xb2, 0x10, 0x3c, 0x21, 0x5b, 0x69, 0xa4, 0xaa, 0x03, 0x67, 0xe9, 0xc4, 0x3e, 0xff, 0xe9,
-	0xa3, 0xe7, 0x23, 0x16, 0xd3, 0xb0, 0x19, 0xb8, 0x1a, 0xcd, 0xae, 0xb2, 0x64, 0x98, 0xf0, 0xbe,
-	0x63, 0x73, 0xf0, 0x7b, 0x95, 0x14, 0xc1, 0x68, 0xe9, 0xc4, 0x63, 0xee, 0x75, 0x40, 0x2a, 0xa2,
-	0x15, 0x5c, 0x1b, 0x34, 0xfb, 0xd8, 0xbc, 0xa8, 0x64, 0x8b, 0x34, 0x7c, 0x01, 0x70, 0x00, 0xa5,
-	0xa0, 0xb4, 0x31, 0xf7, 0x7b, 0x24, 0x15, 0xd1, 0xe3, 0xc0, 0x73, 0x66, 0xfa, 0x0c, 0x5c, 0x63,
-	0x0b, 0xbb, 0x33, 0x34, 0x7a, 0xc2, 0xfb, 0x6e, 0xf5, 0x35, 0x82, 0xab, 0x27, 0x7a, 0x4f, 0x86,
-	0xba, 0x95, 0x25, 0xb2, 0x35, 0x4c, 0x79, 0x7f, 0xd6, 0x2b, 0xad, 0xc7, 0x16, 0xc9, 0xe1, 0x65,
-	0xc9, 0x91, 0x1f, 0x85, 0xe7, 0x68, 0xd3, 0x44, 0x17, 0xec, 0x05, 0xa6, 0xa9, 0xc9, 0xba, 0x55,
-	0x1f, 0xf6, 0x9b, 0xb2, 0xf9, 0xaf, 0x65, 0x70, 0x76, 0x78, 0x9a, 0xa4, 0xb4, 0x37, 0x80, 0x0c,
-	0x6b, 0xb1, 0x2e, 0xca, 0x0f, 0xb4, 0x2c, 0x18, 0x8a, 0x1b, 0x62, 0xc2, 0xdb, 0x3f, 0x8c, 0xd5,
-	0x58, 0x6c, 0xf3, 0xff, 0x82, 0x2e, 0x2e, 0x76, 0xde, 0x5d, 0xd2, 0xdd, 0x7f, 0x07, 0x00, 0x00,
-	0xff, 0xff, 0xcc, 0xf0, 0x97, 0x5c, 0x27, 0x02, 0x00, 0x00,
+	// 306 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x51, 0xdd, 0x6a, 0xc2, 0x30,
+	0x14, 0x36, 0x43, 0x45, 0x0f, 0x2a, 0x2c, 0x03, 0x91, 0x88, 0x20, 0xd9, 0x4d, 0xaf, 0xca, 0xd6,
+	0x3d, 0xc1, 0xd8, 0xc5, 0xe8, 0xd8, 0x40, 0xe2, 0x03, 0x94, 0xae, 0x09, 0x2e, 0xac, 0xb6, 0x35,
+	0x49, 0xfb, 0x46, 0xbb, 0xde, 0x2b, 0x8e, 0x26, 0xed, 0x7e, 0xa8, 0xba, 0xab, 0x70, 0xbe, 0x2f,
+	0xdf, 0x4f, 0x4e, 0x60, 0xb2, 0x4b, 0xf2, 0x2c, 0xe3, 0x7e, 0xa1, 0x72, 0x93, 0xe3, 0x91, 0x3d,
+	0x92, 0x3c, 0x25, 0x93, 0x22, 0x4e, 0xde, 0x85, 0x71, 0x38, 0xbd, 0x85, 0x2b, 0x25, 0x76, 0x52,
+	0x1b, 0xa1, 0xa2, 0x7d, 0x6c, 0x0f, 0x25, 0x0e, 0x98, 0xc0, 0x88, 0xcb, 0x4a, 0x6a, 0x99, 0x67,
+	0x0b, 0xb4, 0x46, 0xde, 0x98, 0x7d, 0xcf, 0xf4, 0xe9, 0x88, 0x44, 0x17, 0x78, 0x0e, 0x43, 0x25,
+	0x74, 0x99, 0x1a, 0x2b, 0x18, 0xb0, 0x66, 0xc2, 0x4b, 0x18, 0x37, 0xb7, 0x24, 0x5f, 0x5c, 0xac,
+	0x91, 0xd7, 0x67, 0x23, 0x07, 0x84, 0x9c, 0x06, 0x70, 0xa9, 0x85, 0xae, 0x6d, 0xa3, 0x38, 0x95,
+	0x95, 0xb0, 0xe1, 0x2b, 0x80, 0x16, 0x94, 0xdc, 0xba, 0xf5, 0xd9, 0xb8, 0x41, 0x42, 0x4e, 0x1f,
+	0x3a, 0x9a, 0x33, 0xe9, 0x73, 0x18, 0x6a, 0x13, 0x9b, 0x52, 0xdb, 0xe8, 0x01, 0x6b, 0xa6, 0xe0,
+	0x13, 0xc1, 0xf4, 0xd1, 0x2e, 0x68, 0x2b, 0x54, 0x25, 0x13, 0x81, 0x37, 0x30, 0x63, 0xcd, 0xb3,
+	0x5e, 0x6c, 0x3d, 0xbc, 0xf2, 0xdb, 0xa5, 0xf9, 0x47, 0x76, 0x44, 0xce, 0xd1, 0xba, 0xa0, 0x3d,
+	0xfc, 0x0c, 0xb3, 0x50, 0x6f, 0x5d, 0xd5, 0xfb, 0xba, 0x29, 0x5e, 0xfe, 0x48, 0x3a, 0xcf, 0x26,
+	0xa7, 0xc9, 0xda, 0x2d, 0xf8, 0x40, 0x30, 0x75, 0xc5, 0xda, 0xc6, 0x21, 0xf4, 0x37, 0xa5, 0x7e,
+	0xc3, 0x8b, 0xae, 0xd0, 0xfd, 0x31, 0xb9, 0xfe, 0xc5, 0x18, 0x25, 0xe2, 0x7d, 0xf4, 0xf7, 0x82,
+	0xb3, 0xf6, 0x90, 0xb3, 0x4a, 0x53, 0xfc, 0xbf, 0x40, 0x1c, 0xc8, 0xc9, 0x3c, 0xda, 0xbb, 0x41,
+	0xaf, 0x43, 0x4b, 0xde, 0x7d, 0x05, 0x00, 0x00, 0xff, 0xff, 0x23, 0xf3, 0xb6, 0x3f, 0x80, 0x02,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -241,12 +243,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type GconndServiceClient interface {
-	// master management
 	RegisterMaster(ctx context.Context, in *RegisterMasterReq, opts ...grpc.CallOption) (*RegisterMasterRsp, error)
-	// session query
 	IsSessionAlive(ctx context.Context, in *SessionAliveReq, opts ...grpc.CallOption) (*SessionAliveRsp, error)
-	// send packets to client(s)
-	SendPacket(ctx context.Context, opts ...grpc.CallOption) (GconndService_SendPacketClient, error)
 }
 
 type gconndServiceClient struct {
@@ -275,48 +273,10 @@ func (c *gconndServiceClient) IsSessionAlive(ctx context.Context, in *SessionAli
 	return out, nil
 }
 
-func (c *gconndServiceClient) SendPacket(ctx context.Context, opts ...grpc.CallOption) (GconndService_SendPacketClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_GconndService_serviceDesc.Streams[0], "/protocol.GconndService/SendPacket", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &gconndServiceSendPacketClient{stream}
-	return x, nil
-}
-
-type GconndService_SendPacketClient interface {
-	Send(*SessionPacket) error
-	CloseAndRecv() (*StreamSessionPacketRsp, error)
-	grpc.ClientStream
-}
-
-type gconndServiceSendPacketClient struct {
-	grpc.ClientStream
-}
-
-func (x *gconndServiceSendPacketClient) Send(m *SessionPacket) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *gconndServiceSendPacketClient) CloseAndRecv() (*StreamSessionPacketRsp, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(StreamSessionPacketRsp)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // GconndServiceServer is the server API for GconndService service.
 type GconndServiceServer interface {
-	// master management
 	RegisterMaster(context.Context, *RegisterMasterReq) (*RegisterMasterRsp, error)
-	// session query
 	IsSessionAlive(context.Context, *SessionAliveReq) (*SessionAliveRsp, error)
-	// send packets to client(s)
-	SendPacket(GconndService_SendPacketServer) error
 }
 
 // UnimplementedGconndServiceServer can be embedded to have forward compatible implementations.
@@ -328,9 +288,6 @@ func (*UnimplementedGconndServiceServer) RegisterMaster(ctx context.Context, req
 }
 func (*UnimplementedGconndServiceServer) IsSessionAlive(ctx context.Context, req *SessionAliveReq) (*SessionAliveRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsSessionAlive not implemented")
-}
-func (*UnimplementedGconndServiceServer) SendPacket(srv GconndService_SendPacketServer) error {
-	return status.Errorf(codes.Unimplemented, "method SendPacket not implemented")
 }
 
 func RegisterGconndServiceServer(s *grpc.Server, srv GconndServiceServer) {
@@ -373,32 +330,6 @@ func _GconndService_IsSessionAlive_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GconndService_SendPacket_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(GconndServiceServer).SendPacket(&gconndServiceSendPacketServer{stream})
-}
-
-type GconndService_SendPacketServer interface {
-	SendAndClose(*StreamSessionPacketRsp) error
-	Recv() (*SessionPacket, error)
-	grpc.ServerStream
-}
-
-type gconndServiceSendPacketServer struct {
-	grpc.ServerStream
-}
-
-func (x *gconndServiceSendPacketServer) SendAndClose(m *StreamSessionPacketRsp) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *gconndServiceSendPacketServer) Recv() (*SessionPacket, error) {
-	m := new(SessionPacket)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 var _GconndService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "protocol.GconndService",
 	HandlerType: (*GconndServiceServer)(nil),
@@ -412,11 +343,174 @@ var _GconndService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _GconndService_IsSessionAlive_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gconnd.proto",
+}
+
+// MasterServiceClient is the client API for MasterService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type MasterServiceClient interface {
+	Push(ctx context.Context, opts ...grpc.CallOption) (MasterService_PushClient, error)
+	Pull(ctx context.Context, in *StreamSessionPacketReq, opts ...grpc.CallOption) (MasterService_PullClient, error)
+}
+
+type masterServiceClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewMasterServiceClient(cc *grpc.ClientConn) MasterServiceClient {
+	return &masterServiceClient{cc}
+}
+
+func (c *masterServiceClient) Push(ctx context.Context, opts ...grpc.CallOption) (MasterService_PushClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_MasterService_serviceDesc.Streams[0], "/protocol.MasterService/Push", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &masterServicePushClient{stream}
+	return x, nil
+}
+
+type MasterService_PushClient interface {
+	Send(*SessionPacket) error
+	CloseAndRecv() (*StreamSessionPacketRsp, error)
+	grpc.ClientStream
+}
+
+type masterServicePushClient struct {
+	grpc.ClientStream
+}
+
+func (x *masterServicePushClient) Send(m *SessionPacket) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *masterServicePushClient) CloseAndRecv() (*StreamSessionPacketRsp, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(StreamSessionPacketRsp)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *masterServiceClient) Pull(ctx context.Context, in *StreamSessionPacketReq, opts ...grpc.CallOption) (MasterService_PullClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_MasterService_serviceDesc.Streams[1], "/protocol.MasterService/Pull", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &masterServicePullClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MasterService_PullClient interface {
+	Recv() (*SessionPacket, error)
+	grpc.ClientStream
+}
+
+type masterServicePullClient struct {
+	grpc.ClientStream
+}
+
+func (x *masterServicePullClient) Recv() (*SessionPacket, error) {
+	m := new(SessionPacket)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// MasterServiceServer is the server API for MasterService service.
+type MasterServiceServer interface {
+	Push(MasterService_PushServer) error
+	Pull(*StreamSessionPacketReq, MasterService_PullServer) error
+}
+
+// UnimplementedMasterServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedMasterServiceServer struct {
+}
+
+func (*UnimplementedMasterServiceServer) Push(srv MasterService_PushServer) error {
+	return status.Errorf(codes.Unimplemented, "method Push not implemented")
+}
+func (*UnimplementedMasterServiceServer) Pull(req *StreamSessionPacketReq, srv MasterService_PullServer) error {
+	return status.Errorf(codes.Unimplemented, "method Pull not implemented")
+}
+
+func RegisterMasterServiceServer(s *grpc.Server, srv MasterServiceServer) {
+	s.RegisterService(&_MasterService_serviceDesc, srv)
+}
+
+func _MasterService_Push_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MasterServiceServer).Push(&masterServicePushServer{stream})
+}
+
+type MasterService_PushServer interface {
+	SendAndClose(*StreamSessionPacketRsp) error
+	Recv() (*SessionPacket, error)
+	grpc.ServerStream
+}
+
+type masterServicePushServer struct {
+	grpc.ServerStream
+}
+
+func (x *masterServicePushServer) SendAndClose(m *StreamSessionPacketRsp) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *masterServicePushServer) Recv() (*SessionPacket, error) {
+	m := new(SessionPacket)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _MasterService_Pull_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(StreamSessionPacketReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MasterServiceServer).Pull(m, &masterServicePullServer{stream})
+}
+
+type MasterService_PullServer interface {
+	Send(*SessionPacket) error
+	grpc.ServerStream
+}
+
+type masterServicePullServer struct {
+	grpc.ServerStream
+}
+
+func (x *masterServicePullServer) Send(m *SessionPacket) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+var _MasterService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "protocol.MasterService",
+	HandlerType: (*MasterServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "SendPacket",
-			Handler:       _GconndService_SendPacket_Handler,
+			StreamName:    "Push",
+			Handler:       _MasterService_Push_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "Pull",
+			Handler:       _MasterService_Pull_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "gconnd.proto",

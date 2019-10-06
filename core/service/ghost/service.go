@@ -66,24 +66,6 @@ func (s *myService) UnregisterVM(ctx context.Context, req *protocol.UnregisterVm
 	return rsp, nil
 }
 
-func (s *myService) SendPacket(srv protocol.GhostService_SendPacketServer) error {
-	for {
-		if pkt, err := srv.Recv(); err == nil {
-			if err == nil {
-				cmd := newRPCReq(innerCmdSendPacket, "", "", "", nil)
-				cmd.pkt = pkt
-				reqChannel <- cmd
-			} else {
-				log.Error("MakeSessionPkt failed: %s", err.Error())
-			}
-		} else {
-			log.Error("%s", err.Error())
-			break
-		}
-	}
-	return nil
-}
-
 func (s *myService) BindSession(ctx context.Context, req *protocol.BindSessionReq) (*protocol.BindSessionRsp, error) {
 	defer dbg.Stacktrace()
 

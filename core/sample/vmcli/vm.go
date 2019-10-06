@@ -81,8 +81,8 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 	go startRPC(ls)
 
 	// init the send goroutine which send pkts to host
-	exitC := make(chan struct{}, 1)
-	go hostSendLoop(addr, exitC, sndVMChannel, vmLog)
+	//exitC := make(chan struct{}, 1)
+	//go hostSendLoop(addr, exitC, sndVMChannel, vmLog)
 
 	// wait for message from kbdVMChannel & netVMChannel
 	for {
@@ -307,48 +307,4 @@ func callGhost(handler func(c protocol.GhostServiceClient, ctx context.Context) 
 
 func hostSend(pkt *protocol.SessionPacket) {
 	sndVMChannel <- pkt
-}
-
-type hostContext struct {
-	conn   *grpc.ClientConn
-	stream protocol.GhostService_SendPacketClient
-}
-
-func hostInitStream(addr string) (*hostContext, error) {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	c := protocol.NewGhostServiceClient(conn)
-	stream, err := c.SendPacket(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	return &hostContext{conn: conn, stream: stream}, nil
-}
-
-func hostSendLoop(addr string, in chan struct{}, out chan *protocol.SessionPacket, vmLog func(s string)) {
-	ctx, err := hostInitStream(addr)
-	if err != nil {
-		vmLog(fmt.Sprintf("[VM] stream init failed: %s", err.Error()))
-		return
-	}
-
-	vmLog("[VM] host send loop start")
-	for {
-		exit := false
-		select {
-		case <-in:
-			exit = true
-		case pkt := <-out:
-			err = ctx.stream.Send(pkt)
-			if err != nil {
-				vmLog(fmt.Sprintf("[VM] send to host: %s failed: %s", addr, err.Error()))
-			}
-		}
-		if exit {
-			break
-		}
-	}
-	vmLog("[VM] host send loop exit")
 }

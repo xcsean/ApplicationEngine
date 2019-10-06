@@ -24,8 +24,6 @@ func dispatchRPC(cmd *innerCmd) bool {
 		uuid, _ := parseUint64(sUUID)
 		result := vmm.delVM(division, uuid)
 		rspChannel <- newRPCRsp(innerCmdUnregisterVM, result, "")
-	case innerCmdSendPacket:
-		connSend(cmd.pkt)
 	case innerCmdDebug:
 		division, cmdOp, cmdParam, rspChannel := cmd.getRPCReq()
 		desc, result := vmm.debug(division, cmdOp, cmdParam)
@@ -44,10 +42,12 @@ func dispatchVMM(cmd *innerCmd) bool {
 	vmm := getVMMgr()
 	cmdID := cmd.getID()
 	switch cmdID {
-	case innerCmdVMStreamConnFault, innerCmdVMStreamSendFault:
+	case innerCmdVMStreamInitFault, innerCmdVMStreamSendFault, innerCmdVMStreamRecvFault:
 		division, sVMID, _ := cmd.getVMMCmd()
 		vmID, _ := parseUint64(sVMID)
 		vmm.delVM(division, vmID)
+	case innerCmdVMStreamRecvPkt:
+		connSend(cmd.pkt)
 	}
 	return false
 }

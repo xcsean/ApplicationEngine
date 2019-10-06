@@ -2,7 +2,7 @@ syntax = "proto3";
 package protocol;
 import "core.proto";
 
-// ghost service
+// ghost service for vm
 
 message ghost_userasset {
     uint64 uuid = 1;
@@ -101,9 +101,6 @@ service GhostService {
     rpc RegisterVM(register_vm_req) returns(register_vm_rsp) {}
     rpc UnregisterVM(unregister_vm_req) returns(unregister_vm_rsp) {}
 
-    // send packet to client(s)
-    rpc SendPacket(stream session_packet) returns(stream_session_packet_rsp) {}
-
     // session bind & unbind with uuid(user unique id)
     rpc BindSession(bind_session_req) returns(bind_session_rsp) {}
     rpc UnbindSession(unbind_session_req) returns(unbind_session_rsp) {}
@@ -132,6 +129,7 @@ message notify_packet_rsp {
 }
 
 service VMService {
-    rpc OnNotifyStatus(notify_status_req) returns(notify_status_rsp) {}
-    rpc OnNotifyPacket(stream session_packet) returns(stream_session_packet_rsp) {}
+    rpc NotifyStatus(notify_status_req) returns(notify_status_rsp) {}
+    rpc Push(stream session_packet) returns(stream_session_packet_rsp) {}
+    rpc Pull(stream_session_packet_req) returns(stream session_packet) {}
 }

@@ -48,6 +48,10 @@ message session_packet {
     packet common = 2;
 }
 
+message stream_session_packet_req {
+    int32 result = 1;
+}
+
 message stream_session_packet_rsp {
     int32 result = 1;
 }

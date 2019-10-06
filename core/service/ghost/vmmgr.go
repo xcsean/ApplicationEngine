@@ -16,8 +16,9 @@ type vmEntity struct {
 	division  string
 	version   string
 	addr      string
-	pkt       chan *protocol.SessionPacket
-	in        chan *innerCmd
+	pktPush   chan *protocol.SessionPacket
+	exitPush  chan struct{}
+	exitPull  chan struct{}
 	checkTime int64
 }
 
@@ -69,16 +70,18 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 	}
 
 	vmID, _ := vmm.sf.NextID()
-	pkt := make(chan *protocol.SessionPacket, 1000)
-	in := make(chan *innerCmd, 10)
+	pktPush := make(chan *protocol.SessionPacket, 1000)
+	exitPush := make(chan struct{}, 1)
+	exitPull := make(chan struct{}, 1)
 	checkTime := time.Now().Unix() + etc.GetInt64WithDefault("global", "keepAlive", 10)
 	vm := &vmEntity{
 		vmID:      vmID,
 		division:  division,
 		version:   version,
 		addr:      addr,
-		pkt:       pkt,
-		in:        in,
+		pktPush:   pktPush,
+		exitPush:  exitPush,
+		exitPull:  exitPull,
 		checkTime: checkTime,
 	}
 
@@ -94,23 +97,23 @@ func (vmm *vmMgr) addVM(division, version, addr string) (uint64, int32) {
 	}
 	status[division] = vmEntityStatus{curLoad: 0, maxLoad: 5000}
 
-	in <- newVMMCmd(innerCmdVMStart, "", "", "")
 	ctx := &vmEntityContext{
 		division: division,
 		version:  version,
 		addr:     addr,
 		vmID:     fmt.Sprintf("%d", vmID),
 	}
-	go vmEntityLoop(ctx, pkt, in, vmm.out)
+	go vmEntityPushLoop(ctx, pktPush, exitPush, vmm.out)
+	go vmEntityPullLoop(ctx, exitPull, vmm.out)
 	return vmID, errno.OK
 }
 
 func (vmm *vmMgr) delVM(division string, vmID uint64) int32 {
 	vm, ok := vmm.vms[division]
 	if ok && vm.vmID == vmID {
-		vm.in <- newVMMCmd(innerCmdVMShouldExit, "", "", "")
-		close(vm.in)
-		close(vm.pkt)
+		close(vm.exitPull)
+		close(vm.exitPush)
+		close(vm.pktPush)
 		status, ok := vmm.vers[vm.version]
 		if ok {
 			delete(status, division)
@@ -139,7 +142,7 @@ func (vmm *vmMgr) onTick() {
 	interval := etc.GetInt64WithDefault("global", "keepAlive", 10)
 	for _, vm := range vmm.vms {
 		if now >= vm.checkTime {
-			vm.pkt <- &protocol.SessionPacket{
+			vm.pktPush <- &protocol.SessionPacket{
 				Common: &protocol.Packet{
 					CmdId:     int32(protocol.Packet_PUBLIC_PING),
 					UserData:  0,
@@ -204,7 +207,7 @@ func (vmm *vmMgr) debug(division, cmdOp, cmdParam string) (string, int32) {
 			count = 10
 		}
 		for i := int64(0); i < count; i++ {
-			vm.pkt <- &protocol.SessionPacket{
+			vm.pktPush <- &protocol.SessionPacket{
 				Common: &protocol.Packet{
 					CmdId:     int32(protocol.Packet_PUBLIC_PING),
 					UserData:  uint32(i),
@@ -224,7 +227,7 @@ func (vmm *vmMgr) forward(division string, pkt *protocol.SessionPacket) int32 {
 		return errno.HOSTVMNOTEXIST
 	}
 	select {
-	case vm.pkt <- pkt:
+	case vm.pktPush <- pkt:
 		return errno.OK
 	default:
 		return errno.HOSTVMSENDCHANNELFULL

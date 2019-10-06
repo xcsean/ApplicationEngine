@@ -41,14 +41,14 @@ func debugNotifyStatusToVM(division, cmdParam string) {
 		req := &protocol.NotifyStatusReq{
 			Status: uint32(status),
 		}
-		rsp, err := c.OnNotifyStatus(ctx, req)
+		rsp, err := c.NotifyStatus(ctx, req)
 		if err != nil {
 			return err
 		}
-		log.Debug("call vm %s OnNotifyStatus rsp=%v", division, rsp)
+		log.Debug("call vm %s NotifyStatus rsp=%v", division, rsp)
 		return nil
 	}, 3)
 	if err != nil {
-		log.Error("call vm %s OnNotifyStatus failed: %s", division, err.Error())
+		log.Error("call vm %s NotifyStatus failed: %s", division, err.Error())
 	}
 }

@@ -14,51 +14,44 @@ type vmEntityContext struct {
 	addr     string
 	vmID     string
 }
-type vmEntityStreamContext struct {
+type vmEntityPushContext struct {
 	conn   *grpc.ClientConn
-	stream protocol.VMService_OnNotifyPacketClient
+	stream protocol.VMService_PushClient
 }
 
-func vmEntityInitStream(vmAddr string) (*vmEntityStreamContext, error) {
+func vmEntityPushInit(vmAddr string) (*vmEntityPushContext, error) {
 	conn, err := grpc.Dial(vmAddr, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
 	c := protocol.NewVMServiceClient(conn)
-	stream, err := c.OnNotifyPacket(context.Background())
+	stream, err := c.Push(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	return &vmEntityStreamContext{conn: conn, stream: stream}, nil
+	return &vmEntityPushContext{conn: conn, stream: stream}, nil
 }
 
-func vmEntityLoop(ent *vmEntityContext, pktChannel chan *protocol.SessionPacket, inChannel, outChannel chan *innerCmd) {
-	var err error
-	var ctx *vmEntityStreamContext
+func vmEntityPushLoop(ent *vmEntityContext, pktChannel chan *protocol.SessionPacket, exitC chan struct{}, outChannel chan *innerCmd) {
+	ctx, err := vmEntityPushInit(ent.addr)
+	if err != nil {
+		log.Error("vm push %s %s %s %s stream init failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
+		outChannel <- newVMMCmd(innerCmdVMStreamInitFault, ent.division, ent.vmID, "")
+		return
+	}
+	defer ctx.conn.Close()
+	log.Info("vm push %s %s %s %s start", ent.division, ent.version, ent.addr, ent.vmID)
+
 	for {
 		exit := false
 		select {
-		case cmd := <-inChannel:
-			cmdID := cmd.getID()
-			if cmdID == innerCmdVMStart {
-				log.Info("vm %s %s %s %s start", ent.division, ent.version, ent.addr, ent.vmID)
-				ctx, err = vmEntityInitStream(ent.addr)
-				if err != nil {
-					log.Error("vm %s %s %s %s stream conn failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
-					outChannel <- newVMMCmd(innerCmdVMStreamConnFault, ent.division, ent.vmID, "")
-					exit = true
-				} else {
-					defer ctx.conn.Close()
-					log.Info("vm %s %s %s %s stream ready", ent.division, ent.version, ent.addr, ent.vmID)
-				}
-			} else if cmdID == innerCmdVMShouldExit {
-				log.Info("vm %s %s %s %s recv VMShouldExit command, so exit", ent.division, ent.version, ent.addr, ent.vmID)
-				exit = true
-			}
+		case <-exitC:
+			log.Info("vm push %s %s %s %s recv exit command, so exit", ent.division, ent.version, ent.addr, ent.vmID)
+			exit = true
 		case pkt := <-pktChannel:
 			err = ctx.stream.Send(pkt)
 			if err != nil {
-				log.Info("vm %s %s %s %s steam send failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
+				log.Error("vm push %s %s %s %s steam send failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
 				outChannel <- newVMMCmd(innerCmdVMStreamSendFault, ent.division, ent.vmID, "")
 				exit = true
 			}
@@ -69,5 +62,49 @@ func vmEntityLoop(ent *vmEntityContext, pktChannel chan *protocol.SessionPacket,
 		}
 	}
 
-	log.Info("vm %s %s %s %s exit", ent.division, ent.version, ent.addr, ent.vmID)
+	log.Info("vm push %s %s %s %s exit", ent.division, ent.version, ent.addr, ent.vmID)
+}
+
+type vmEntityPullContext struct {
+	conn   *grpc.ClientConn
+	stream protocol.VMService_PullClient
+}
+
+func vmEntityPullInit(vmAddr string) (*vmEntityPullContext, error) {
+	conn, err := grpc.Dial(vmAddr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	c := protocol.NewVMServiceClient(conn)
+	stream, err := c.Pull(context.Background(), &protocol.StreamSessionPacketReq{Result: 1})
+	if err != nil {
+		return nil, err
+	}
+	return &vmEntityPullContext{conn: conn, stream: stream}, nil
+}
+
+func vmEntityPullLoop(ent *vmEntityContext, exitC chan struct{}, outChannel chan *innerCmd) {
+	ctx, err := vmEntityPullInit(ent.addr)
+	if err != nil {
+		log.Error("vm pull %s %s %s %s stream init failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
+		outChannel <- newVMMCmd(innerCmdVMStreamInitFault, ent.division, ent.vmID, "")
+		return
+	}
+	defer ctx.conn.Close()
+	log.Info("vm pull %s %s %s %s start", ent.division, ent.version, ent.addr, ent.vmID)
+
+	for {
+		pkt, err := ctx.stream.Recv()
+		if err != nil {
+			log.Error("vm pull %s %s %s %s stream recv failed: %s", ent.division, ent.version, ent.addr, ent.vmID, err.Error())
+			outChannel <- newVMMCmd(innerCmdVMStreamRecvFault, ent.division, ent.vmID, "")
+			break
+		} else {
+			cmd := newVMMCmd(innerCmdVMStreamRecvPkt, ent.division, ent.vmID, "")
+			cmd.pkt = pkt
+			outChannel <- cmd
+		}
+	}
+
+	log.Info("vm pull %s %s %s %s exit", ent.division, ent.version, ent.addr, ent.vmID)
 }

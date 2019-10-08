@@ -42,7 +42,7 @@ func (s *myService) Pull(_ *protocol.StreamSessionPacketReq, srv protocol.VMServ
 	return nil
 }
 
-func startRPC(ls net.Listener) {
+func startRPCLoop(ls net.Listener) {
 	defer ls.Close()
 
 	srv := grpc.NewServer()

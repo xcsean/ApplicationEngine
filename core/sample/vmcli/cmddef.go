@@ -1,8 +1,9 @@
 package main
 
 const (
-	cmdLogin = 1
-	cmdSAY   = 3
+	cmdLoginReq = 1
+	cmdLoginRsp = 2
+	cmdSAY      = 3
 )
 
 type cmdBody struct {

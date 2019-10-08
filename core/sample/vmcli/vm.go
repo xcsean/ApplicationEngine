@@ -78,11 +78,7 @@ func vmLoop(addr, vmAddr string, g *ui.Gui) {
 		time.Sleep(1 * time.Second)
 		os.Exit(-1)
 	}
-	go startRPC(ls)
-
-	// init the send goroutine which send pkts to host
-	//exitC := make(chan struct{}, 1)
-	//go hostSendLoop(addr, exitC, sndVMChannel, vmLog)
+	go startRPCLoop(ls)
 
 	// wait for message from kbdVMChannel & netVMChannel
 	for {
@@ -123,7 +119,6 @@ func dealVMKeyboard(text string, vmLog func(s string)) {
 			vmLog("help debug: debug op param")
 		}
 	}
-
 }
 
 func dealHostRPC(cmd *hostCmd, vmLog func(s string)) {
@@ -139,7 +134,7 @@ func dealHostRPC(cmd *hostCmd, vmLog func(s string)) {
 
 func dealHostPkt(cmd *hostCmd, vmLog func(s string)) {
 	switch cmd.Pkt.Common.CmdId {
-	case cmdLogin:
+	case cmdLoginReq:
 		var rb cmdBody
 		err := json.Unmarshal([]byte(cmd.Pkt.Common.Body), &rb)
 		if err != nil {
@@ -242,7 +237,7 @@ func callBindSession(sessionID, uuid uint64, vmLog func(s string)) {
 		body, _ := json.Marshal(innerBody)
 		pkt := &protocol.SessionPacket{
 			Common: &protocol.Packet{
-				CmdId:     cmdLogin,
+				CmdId:     cmdLoginRsp,
 				UserData:  0,
 				Timestamp: 0,
 				Body:      string(body[:]),

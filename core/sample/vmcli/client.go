@@ -132,7 +132,7 @@ func dealCliKeyboard(text string, cliLog func(s string)) {
 					innerBody.Kv["uuid"] = array[1]
 					innerBody.Kv["token"] = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 					body, _ := json.Marshal(innerBody)
-					pkt := conn.MakeCommonPkt(cmdLogin, 0, 0, body)
+					pkt := conn.MakeCommonPkt(cmdLoginReq, 0, 0, body)
 					cliConn.Write(pkt)
 					cliLog(fmt.Sprintf("[C] login with uuid='%s'", array[1]))
 				} else {
@@ -176,7 +176,7 @@ func dealNetCmd(cmd *netCmd, cliLog func(s string)) {
 			} else {
 				cliLog(fmt.Sprintf("[S] ver-check failed: %s", err.Error()))
 			}
-		case cmdLogin:
+		case cmdLoginRsp:
 			var innerBody cmdBody
 			err := json.Unmarshal(cmd.body, &innerBody)
 			if err == nil {

@@ -124,10 +124,6 @@ message notify_status_rsp {
     string desc = 2;
 }
 
-message notify_packet_rsp {
-    int32 result = 1;
-}
-
 service VMService {
     rpc NotifyStatus(notify_status_req) returns(notify_status_rsp) {}
     rpc Push(stream session_packet) returns(stream_session_packet_rsp) {}

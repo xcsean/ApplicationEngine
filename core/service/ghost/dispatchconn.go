@@ -68,10 +68,12 @@ func dispatchSessionVerCheck(pkt *protocol.SessionPacket) {
 		log.Debug("session=%d pick division=%s", sessionID, division)
 		sm.setSessionRouting(sessionID, ver, division)
 		setSessionWaitBind(sessionID)
-		sendClientVerReply(sessionID, result)
+		rsp := makeClientVerReply(sessionID, result)
+		connSend(rsp)
 	} else {
 		shouldKick = true
-		sendClientVerReply(sessionID, result)
+		rsp := makeClientVerReply(sessionID, result)
+		connSend(rsp)
 	}
 
 	if shouldKick {

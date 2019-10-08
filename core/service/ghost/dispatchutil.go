@@ -12,8 +12,7 @@ import (
 )
 
 func parseUint64(s string) (uint64, error) {
-	i, err := strconv.ParseInt(s, 10, 64)
-	return uint64(i), err
+	return strconv.ParseUint(s, 10, 64)
 }
 func makeVMUnbind(sessionID, uuid uint64) *protocol.SessionPacket {
 	rb := protocol.PacketReservedBody{Kv: map[string]string{"uuid": fmt.Sprintf("%d", uuid)}}
@@ -30,7 +29,7 @@ func makeVMUnbind(sessionID, uuid uint64) *protocol.SessionPacket {
 	return pkt
 }
 
-func sendClientVerReply(sessionID uint64, result int32) {
+func makeClientVerReply(sessionID uint64, result int32) *protocol.SessionPacket {
 	rb := protocol.PacketReservedBody{Kv: map[string]string{"result": fmt.Sprintf("%d", result)}}
 	body, _ := json.Marshal(rb)
 	pkt := &protocol.SessionPacket{
@@ -42,7 +41,7 @@ func sendClientVerReply(sessionID uint64, result int32) {
 			Body:      string(body[:]),
 		},
 	}
-	connSend(pkt)
+	return pkt
 }
 
 func setSessionVerCheck(sessionID uint64) {

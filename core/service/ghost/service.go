@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol"
+	"github.com/xcsean/ApplicationEngine/core/service/ghost/asset"
 	"github.com/xcsean/ApplicationEngine/core/shared/dbg"
 	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
@@ -112,6 +113,12 @@ func (s *myService) LockUserAsset(ctx context.Context, req *protocol.LockUserass
 	defer dbg.Stacktrace()
 
 	rsp := &protocol.LockUserassetRsp{Result: errno.OK}
+	userasset, newbee, expiredTime, result := asset.LockAssetBySession(req.Sessionid, req.LockDuration, req.Userasset)
+	rsp.Result = result
+	rsp.ExpiredTime = expiredTime
+	rsp.Newbee = newbee
+	rsp.Userasset = userasset
+
 	return rsp, nil
 }
 
@@ -119,6 +126,9 @@ func (s *myService) UnlockUserAsset(ctx context.Context, req *protocol.UnlockUse
 	defer dbg.Stacktrace()
 
 	rsp := &protocol.UnlockUserassetRsp{Result: errno.OK}
+	result := asset.UnlockAssetBySession(req.Sessionid, req.Userasset)
+
+	rsp.Result = result
 	return rsp, nil
 }
 

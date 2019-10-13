@@ -70,8 +70,8 @@ message lock_userasset_req {
 
 message lock_userasset_rsp {
     int32 result = 1;
-    int64 expired_time = 2;
-    bool newbee = 3;
+    int64 newbee = 2;
+    int64 expired_time = 3;
     ghost_userasset userasset = 4;
 }
 

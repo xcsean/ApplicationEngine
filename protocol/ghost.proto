@@ -6,7 +6,7 @@ import "packet.proto";
 
 message ghost_userasset {
     uint64 uuid = 1;
-    uint64 version = 2;
+    uint64 revision = 2;
     string asset = 3;
 }
 
@@ -64,21 +64,20 @@ message unbind_session_rsp {
 message lock_userasset_req {
     string division = 1;
     uint64 sessionid = 2;
-    uint64 uuid = 3;
-    int64 duration = 4;
-    ghost_userasset userasset = 5;
+    int64 lock_duration = 3;
+    ghost_userasset userasset = 4;
 }
 
 message lock_userasset_rsp {
     int32 result = 1;
-    int64 expired = 2;
-    ghost_userasset userasset = 3;
+    int64 lock_expired = 2;
+    bool newbee = 3;
+    ghost_userasset userasset = 4;
 }
 
 message unlock_userasset_req {
     uint64 sessionid = 1;
-    uint64 uuid = 2;
-    ghost_userasset userasset = 3;
+    ghost_userasset userasset = 2;
 }
 
 message unlock_userasset_rsp {

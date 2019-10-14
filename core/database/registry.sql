@@ -35,9 +35,9 @@ CREATE TABLE `t_server` (
   `server` varchar(32) NOT NULL COMMENT 'for example globby',
   `division` varchar(32) NOT NULL COMMENT 'for example 101',
   `node` varchar(128) NOT NULL COMMENT 'for example 192.168.1.10',
-  `use_agent` int(255) NOT NULL DEFAULT '1' COMMENT 'use monitor or not',
-  `node_status` int(255) NOT NULL DEFAULT '0' COMMENT 'process status, 0 is ready',
-  `service_status` int(255) NOT NULL DEFAULT '0' COMMENT 'service in process status, 0 is ready',
+  `use_agent` int(10) NOT NULL DEFAULT '1' COMMENT 'use monitor or not',
+  `node_status` int(10) NOT NULL DEFAULT '0' COMMENT 'process status, 0 is ready',
+  `service_status` int(10) NOT NULL DEFAULT '0' COMMENT 'service in process status, 0 is ready',
   PRIMARY KEY (`app`,`server`,`division`,`node`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -57,3 +57,5 @@ CREATE TABLE `t_service` (
   `rpc_port` int(10) NOT NULL COMMENT '17002',
   PRIMARY KEY (`app`,`server`,`division`,`node`,`service`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+SET FOREIGN_KEY_CHECKS=1;

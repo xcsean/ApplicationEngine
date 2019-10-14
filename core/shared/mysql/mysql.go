@@ -11,9 +11,9 @@ import (
 
 // DB database wrapper
 type DB struct {
-	pool    *sql.DB
-	queryT  time.Duration
-	execT   time.Duration
+	pool   *sql.DB
+	queryT time.Duration
+	execT  time.Duration
 }
 
 // New new a mysql instance
@@ -32,27 +32,20 @@ func New(username, password, ip, port, database string) (*DB, error) {
 		}
 	}
 
-	return &DB{pool: pool, queryT: 3*time.Second, execT: 3*time.Second}, nil
+	return &DB{pool: pool, queryT: 3 * time.Second, execT: 3 * time.Second}, nil
 }
 
 // SetQueryTimeout set the timeout of query
 func (db *DB) SetQueryTimeout(timeout time.Duration) {
-	db.queryT = timeout*time.Second
+	db.queryT = timeout * time.Second
 }
 
-// Query do a query statement
-func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), db.queryT)
-	defer cancel()
-	return db.pool.QueryContext(ctx, query, args...)
-}
-
-// QueryCB do a query statement with a callback
-func (db *DB) QueryCB(query string, cb func(*sql.Rows) error) error {
+// Query do a query statement with callback
+func (db *DB) Query(stmt string, cb func(*sql.Rows) error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), db.queryT)
 	defer cancel()
 
-	rows, err := db.pool.QueryContext(ctx, query)
+	rows, err := db.pool.QueryContext(ctx, stmt)
 	if err != nil {
 		return err
 	}
@@ -61,9 +54,20 @@ func (db *DB) QueryCB(query string, cb func(*sql.Rows) error) error {
 	return cb(rows)
 }
 
+// SetExecTimeout set the timeout of exec
+func (db *DB) SetExecTimeout(timeout time.Duration) {
+	db.execT = timeout * time.Second
+}
+
 // Exec do a exec statement
-func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (db *DB) Exec(stmt string, cb func(sql.Result) error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), db.execT)
 	defer cancel()
-	return db.pool.ExecContext(ctx, query, args...)
+
+	result, err := db.pool.ExecContext(ctx, stmt)
+	if err != nil {
+		return err
+	}
+
+	return cb(result)
 }

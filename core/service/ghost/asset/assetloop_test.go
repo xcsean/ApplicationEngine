@@ -18,7 +18,7 @@ func TestAsset(t *testing.T) {
 		return
 	}
 
-	StartAssetLoop(pool)
+	StartAssetLoop(1, pool)
 
 	sessionID := uint64(123456)
 	duration := int64(30)

@@ -19,7 +19,7 @@ var (
 	exitC   chan struct{}
 	wg      sync.WaitGroup
 	flag    bool
-	ghostID uint64 = 1
+	ghostID uint64
 )
 
 func init() {
@@ -28,9 +28,10 @@ func init() {
 	exitC = make(chan struct{})
 }
 
-func start(pool *mysql.DB) {
+func start(id uint64, pool *mysql.DB) {
 	if !flag {
 		flag = true
+		ghostID = id
 		dbpool = pool
 		wg.Add(1)
 		go assetLoop()

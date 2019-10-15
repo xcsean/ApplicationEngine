@@ -6,9 +6,11 @@ import (
 	"path"
 	"time"
 
+	"github.com/xcsean/ApplicationEngine/core/service/ghost/asset"
 	"github.com/xcsean/ApplicationEngine/core/shared/etc"
 	"github.com/xcsean/ApplicationEngine/core/shared/id"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
+	"github.com/xcsean/ApplicationEngine/core/shared/mysql"
 )
 
 func start(c *ghostConfig, selfID int64) bool {
@@ -56,6 +58,13 @@ func start(c *ghostConfig, selfID int64) bool {
 	if err != nil {
 		log.Fatal("server select node %s failed: %s", c.Gconnd, err.Error())
 	}
+
+	// init the mysql pool and start asset loop
+	pool, err := mysql.New(c.Mysql.Username, c.Mysql.Password, c.Mysql.IP, c.Mysql.Port, c.Mysql.Database)
+	if err != nil {
+		log.Fatal("server connect mysql failed: %s", err.Error())
+	}
+	asset.StartAssetLoop(selfID, pool)
 
 	// create the channels for communication between gconnd and vm(s)
 	connChannel := make(chan *connCmd, 3000)

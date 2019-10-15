@@ -16,7 +16,7 @@ const (
 )
 
 // StartAssetLoop start the asset loop
-func StartAssetLoop(id uint64, pool *mysql.DB) {
+func StartAssetLoop(id int64, pool *mysql.DB) {
 	start(id, pool)
 }
 

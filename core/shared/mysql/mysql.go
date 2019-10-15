@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	// for need of database/sql
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -37,7 +38,7 @@ func New(username, password, ip, port, database string) (*DB, error) {
 
 // SetQueryTimeout set the timeout of query
 func (db *DB) SetQueryTimeout(timeout time.Duration) {
-	db.queryT = timeout * time.Second
+	db.queryT = timeout
 }
 
 // Query do a query statement with callback
@@ -56,7 +57,7 @@ func (db *DB) Query(stmt string, cb func(*sql.Rows) error) error {
 
 // SetExecTimeout set the timeout of exec
 func (db *DB) SetExecTimeout(timeout time.Duration) {
-	db.execT = timeout * time.Second
+	db.execT = timeout
 }
 
 // Exec do a exec statement

@@ -113,7 +113,7 @@ func (s *myService) LockUserAsset(ctx context.Context, req *protocol.LockUserass
 	defer dbg.Stacktrace()
 
 	rsp := &protocol.LockUserassetRsp{Result: errno.OK}
-	userasset, newbee, expiredTime, result := asset.LockAssetBySession(req.Sessionid, req.LockDuration, req.Userasset)
+	userasset, newbee, expiredTime, result := asset.LockAssetBySession(req.Sessionid, req.LockDuration, req.Userasset, req.IsRenew)
 	rsp.Result = result
 	rsp.ExpiredTime = expiredTime
 	rsp.Newbee = newbee

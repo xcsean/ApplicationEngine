@@ -3,16 +3,10 @@ package asset
 import "github.com/xcsean/ApplicationEngine/core/protocol"
 
 const (
-	assetCmdLock = iota
-	assetCmdUnlock
+	assetCmdSessionLock = iota
+	assetCmdSessionUnlock
 	assetCmdSystemLock
 	assetCmdSystemUnlock
-)
-
-const (
-	ownerTypeFree = iota
-	ownerTypeSystem
-	ownerTypeSession
 )
 
 // Req the asset request

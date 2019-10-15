@@ -45,4 +45,13 @@ const (
 
 	// HOSTVMNOTEXIST means the vm identified by division is not exist in host
 	HOSTVMNOTEXIST = -39
+
+	// HOSTASSETUUIDNOTSET means the uuid hadn't been set
+	HOSTASSETUUIDNOTSET = -51
+
+	// HOSTASSETALREADYLOCKED means the asset had beed locked
+	HOSTASSETALREADYLOCKED = -52
+
+	// HOSTASSETSAVEFAILED means the asset save to db failed
+	HOSTASSETSAVEFAILED = -53
 )

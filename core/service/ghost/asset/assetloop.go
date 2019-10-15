@@ -2,36 +2,24 @@ package asset
 
 import (
 	"sync"
-	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol"
-	"github.com/xcsean/ApplicationEngine/core/shared/errno"
 	"github.com/xcsean/ApplicationEngine/core/shared/log"
 	"github.com/xcsean/ApplicationEngine/core/shared/mysql"
 )
 
-const (
-	modForUUID = 7
-)
-
-type assetOwner struct {
-	ownerType   uint8
-	ownerID     uint64
-	expiredTime int64
-}
-
 type assetData struct {
-	owner assetOwner
 	asset *protocol.GhostUserasset
 }
 
 var (
-	dbpool *mysql.DB
-	assets map[uint64]*assetData
-	reqC   chan *Req
-	exitC  chan struct{}
-	wg     sync.WaitGroup
-	flag   bool
+	dbpool  *mysql.DB
+	assets  map[uint64]*assetData
+	reqC    chan *Req
+	exitC   chan struct{}
+	wg      sync.WaitGroup
+	flag    bool
+	ghostID uint64 = 1
 )
 
 func init() {
@@ -41,9 +29,12 @@ func init() {
 }
 
 func start(pool *mysql.DB) {
-	dbpool = pool
-	wg.Add(1)
-	go assetLoop()
+	if !flag {
+		flag = true
+		dbpool = pool
+		wg.Add(1)
+		go assetLoop()
+	}
 }
 
 func stop() {
@@ -57,18 +48,6 @@ func assetLoop() {
 
 	for {
 		select {
-		case req := <-reqC:
-			if req.Type == assetCmdLock {
-				expiredTime := uint64(time.Now().Unix()) + req.Userdata2 + 30
-				req.RspChannel <- &Rsp{
-					Result:    errno.OK,
-					Userdata1: 1,
-					Userdata2: expiredTime,
-					Userasset: nil,
-				}
-			} else if req.Type == assetCmdUnlock {
-				req.RspChannel <- &Rsp{Result: errno.OK}
-			}
 		case <-exitC:
 			goto exit
 		}

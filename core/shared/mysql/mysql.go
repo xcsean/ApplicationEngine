@@ -72,3 +72,11 @@ func (db *DB) Exec(stmt string, cb func(sql.Result) error) error {
 
 	return cb(result)
 }
+
+// ExecDirect exec directly
+func (db *DB) ExecDirect(query string, args ...interface{}) (sql.Result, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), db.execT)
+	defer cancel()
+
+	return db.pool.ExecContext(ctx, query, args...)
+}

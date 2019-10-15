@@ -11,6 +11,10 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/mysql"
 )
 
+const (
+	systemSessionID = 1
+)
+
 // StartAssetLoop start the asset loop
 func StartAssetLoop(pool *mysql.DB) {
 	start(pool)
@@ -122,7 +126,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 
 // LockAssetBySystem lock the user asset by system
 func LockAssetBySystem(duration int64, uuid uint64) (*protocol.GhostUserasset, int64, int64, int32) {
-	return LockAssetBySession(0, duration, &protocol.GhostUserasset{Uuid: uuid})
+	return LockAssetBySession(systemSessionID, duration, &protocol.GhostUserasset{Uuid: uuid})
 }
 
 // UnlockAssetBySession unlock the user asset by session id
@@ -133,8 +137,8 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 
 	if len(assetReq.Asset) == 0 {
 		// no need to save, just unlock
-		stmt := fmt.Sprintf("UPDATE t_userasset SET lockerid=0, expiredtime=0 WHERE uuid=%d AND ghostid=%d AND revision=%d",
-			assetReq.Uuid, ghostID, assetReq.Revision)
+		stmt := fmt.Sprintf("UPDATE t_userasset SET lockerid=0, expiredtime=0 WHERE uuid=%d AND ghostid=%d AND revision=%d AND lockerid=%d",
+			assetReq.Uuid, ghostID, assetReq.Revision, sessionID)
 		dbpool.Exec(stmt, func(result sql.Result) error {
 			return nil
 		})
@@ -142,8 +146,8 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 	}
 
 	// save and unlock
-	_, err := dbpool.ExecDirect("UPDATE t_userasset SET lockerid=0, expiredtime=0, asset=? WHERE uuid=? AND ghostid=? AND revision=?",
-		[]byte(assetReq.Asset), assetReq.Uuid, ghostID, assetReq.Revision)
+	_, err := dbpool.ExecDirect("UPDATE t_userasset SET lockerid=0, expiredtime=0, asset=? WHERE uuid=? AND ghostid=? AND revision=? AND lockerid=?",
+		[]byte(assetReq.Asset), assetReq.Uuid, ghostID, assetReq.Revision, sessionID)
 	if err != nil {
 		log.Error("save ghost=%d uuid=%d failed: %s", ghostID, assetReq.Uuid, err.Error())
 		return errno.SYSINTERNALERROR
@@ -154,5 +158,5 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 
 // UnlockAssetBySystem unlock the user asset by system
 func UnlockAssetBySystem(assetReq *protocol.GhostUserasset) int32 {
-	return UnlockAssetBySession(0, assetReq)
+	return UnlockAssetBySession(systemSessionID, assetReq)
 }

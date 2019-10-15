@@ -59,11 +59,11 @@ func assetLoop() {
 		select {
 		case req := <-reqC:
 			if req.Type == assetCmdLock {
-				now := uint64(time.Now().Unix())
+				expiredTime := uint64(time.Now().Unix()) + req.Userdata2 + 30
 				req.RspChannel <- &Rsp{
 					Result:    errno.OK,
 					Userdata1: 1,
-					Userdata2: now + 60,
+					Userdata2: expiredTime,
 					Userasset: nil,
 				}
 			} else if req.Type == assetCmdUnlock {

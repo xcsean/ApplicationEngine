@@ -26,18 +26,37 @@ func StopAssetLoop() {
 }
 
 // LockAssetBySession lock the user asset by session id
-func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.GhostUserasset) (*protocol.GhostUserasset, int64, int64, int32) {
+func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.GhostUserasset, isRenew bool) (*protocol.GhostUserasset, int64, int64, int32) {
 	if assetReq == nil || assetReq.Uuid == 0 {
 		return nil, 0, 0, errno.HOSTASSETUUIDNOTSET
 	}
 
 	now := time.Now().Unix()
 	expiredTime := now + duration
-
 	if len(assetReq.Asset) == 0 {
-		var revision uint64 = 0
+		if isRenew {
+			// just only renew
+			renewOk := false
+			stmt := fmt.Sprintf("UPDATE t_userasset SET expiredtime=%d WHERE uuid=%d AND ghostid=%d AND revision=%d",
+				expiredTime, assetReq.Uuid, ghostID, assetReq.Revision)
+			dbpool.Exec(stmt, func(result sql.Result) error {
+				n, err := result.RowsAffected()
+				if err != nil {
+					return err
+				}
+				if n > 0 {
+					renewOk = true
+				}
+				return nil
+			})
+			if !renewOk {
+				return nil, 0, 0, errno.HOSTASSETLOCKRENEWFAILED
+			}
+			return nil, 0, 0, errno.OK
+		}
 
 		// try to insert
+		var revision uint64 = 0
 		insertOk := false
 		stmt := fmt.Sprintf("INSERT INTO t_userasset (ghostid, uuid, revision, lockerid, expiredtime) VALUES (%d, %d, %d, %d, %d)", ghostID, assetReq.Uuid, revision, sessionID, expiredTime)
 		dbpool.Exec(stmt, func(result sql.Result) error {
@@ -126,7 +145,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 
 // LockAssetBySystem lock the user asset by system
 func LockAssetBySystem(duration int64, uuid uint64) (*protocol.GhostUserasset, int64, int64, int32) {
-	return LockAssetBySession(systemSessionID, duration, &protocol.GhostUserasset{Uuid: uuid})
+	return LockAssetBySession(systemSessionID, duration, &protocol.GhostUserasset{Uuid: uuid}, false)
 }
 
 // UnlockAssetBySession unlock the user asset by session id

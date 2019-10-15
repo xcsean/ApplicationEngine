@@ -31,7 +31,7 @@ func TestAsset(t *testing.T) {
 		Uuid:  uuid,
 		Asset: "",
 	}
-	asset2, newbee, expiredTime, result := LockAssetBySession(sessionID, duration, asset)
+	asset2, newbee, expiredTime, result := LockAssetBySession(sessionID, duration, asset, false)
 	if result != errno.OK {
 		t.Errorf("lock result=%d", result)
 		return
@@ -40,13 +40,13 @@ func TestAsset(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	// test save
+	// test save & lock
 	asset3 := &protocol.GhostUserasset{
 		Uuid:     uuid,
 		Revision: asset2.Revision,
 		Asset:    "abc",
 	}
-	_, _, _, result = LockAssetBySession(sessionID, duration, asset3)
+	_, _, _, result = LockAssetBySession(sessionID, duration, asset3, false)
 	if result != errno.OK {
 		t.Errorf("save result=%d", result)
 		return
@@ -55,15 +55,15 @@ func TestAsset(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	// test load
-	asset4, _, _, result := LockAssetBySession(sessionID, duration, asset)
+	// test renew
+	asset.Revision = asset2.Revision
+	asset4, _, _, result := LockAssetBySession(sessionID, duration, asset, true)
 	if result != errno.OK {
 		t.Errorf("load result=%d", result)
 		return
 	}
-	t.Logf("load result=%d asset=%v", result, asset4)
+	t.Logf("renew result=%d asset=%v", result, asset4)
 
-	asset.Revision = asset4.Revision
 	result = UnlockAssetBySession(sessionID, asset)
 	if result != errno.OK {
 		t.Errorf("unlock result=%d", result)

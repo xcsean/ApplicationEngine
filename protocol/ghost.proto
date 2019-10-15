@@ -66,6 +66,7 @@ message lock_userasset_req {
     uint64 sessionid = 2;
     int64 lock_duration = 3;
     ghost_userasset userasset = 4;
+    bool is_renew = 5;
 }
 
 message lock_userasset_rsp {

@@ -54,4 +54,7 @@ const (
 
 	// HOSTASSETSAVEFAILED means the asset save to db failed
 	HOSTASSETSAVEFAILED = -53
+
+	// HOSTASSETLOCKRENEWFAILED means the lock renew failed
+	HOSTASSETLOCKRENEWFAILED = -54
 )

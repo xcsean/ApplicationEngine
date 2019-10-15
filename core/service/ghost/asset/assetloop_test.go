@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,14 +12,16 @@ import (
 )
 
 func TestAsset(t *testing.T) {
+	selfID := int64(2)
+
 	log.SetupMainLogger("./", "asset.log", "debug")
-	pool, err := mysql.New("root", "123456", "192.168.95.182", "3306", "app_ghost_1")
+	pool, err := mysql.New("root", "123456", "127.0.0.1", "3306", fmt.Sprintf("app_ghost_%d", selfID))
 	if err != nil {
 		t.Errorf("mysql init failed: %s", err.Error())
 		return
 	}
 
-	StartAssetLoop(1, pool)
+	StartAssetLoop(selfID, pool)
 
 	sessionID := uint64(123456)
 	duration := int64(30)

@@ -11,10 +11,6 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/mysql"
 )
 
-const (
-	systemSessionID = 1
-)
-
 // StartAssetLoop start the asset loop
 func StartAssetLoop(id int64, pool *mysql.DB) {
 	start(id, pool)
@@ -52,6 +48,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 			if !renewOk {
 				return nil, 0, 0, errno.HOSTASSETLOCKRENEWFAILED
 			}
+			log.Debug("ghostid=%d uuid=%d renew ok, expiredtime=%d", ghostID, assetReq.Uuid, expiredTime)
 			return nil, 0, 0, errno.OK
 		}
 
@@ -76,6 +73,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 				Revision: revision,
 				Asset:    "",
 			}
+			log.Debug("ghostid=%d uuid=%d insert ok", ghostID, assetReq.Uuid)
 			return assetRsp, newbee, expiredTime, errno.OK
 		}
 
@@ -113,7 +111,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 			return nil, 0, 0, errno.SYSINTERNALERROR
 		}
 
-		log.Debug("ghostid=%d uuid=%d revision=%d asset=%v", ghostID, assetReq.Uuid, revision, data)
+		log.Debug("ghostid=%d uuid=%d lock revision=%d assetLen=%d", ghostID, assetReq.Uuid, revision, len(data))
 		assetRsp := &protocol.GhostUserasset{
 			Uuid:     assetReq.Uuid,
 			Revision: revision,
@@ -140,12 +138,8 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 		// save failed
 		return nil, 0, 0, errno.HOSTASSETSAVEFAILED
 	}
+	log.Debug("ghostid=%d uuid=%d revision=%d save assetLen=%d expiredtime=%d", ghostID, assetReq.Uuid, assetReq.Revision, len(assetReq.Asset), expiredTime)
 	return nil, int64(0), int64(expiredTime), errno.OK
-}
-
-// LockAssetBySystem lock the user asset by system
-func LockAssetBySystem(duration int64, uuid uint64) (*protocol.GhostUserasset, int64, int64, int32) {
-	return LockAssetBySession(systemSessionID, duration, &protocol.GhostUserasset{Uuid: uuid}, false)
 }
 
 // UnlockAssetBySession unlock the user asset by session id
@@ -161,6 +155,7 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 		dbpool.Exec(stmt, func(result sql.Result) error {
 			return nil
 		})
+		log.Debug("ghostid=%d uuid=%d unlock revision=%d without save", ghostID, assetReq.Uuid, assetReq.Revision)
 		return errno.OK
 	}
 
@@ -172,10 +167,6 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 		return errno.SYSINTERNALERROR
 	}
 
+	log.Debug("ghostid=%d uuid=%d unlock revision=%d with save assetLen=%d", ghostID, assetReq.Uuid, assetReq.Revision, len(assetReq.Asset))
 	return errno.OK
-}
-
-// UnlockAssetBySystem unlock the user asset by system
-func UnlockAssetBySystem(assetReq *protocol.GhostUserasset) int32 {
-	return UnlockAssetBySession(systemSessionID, assetReq)
 }

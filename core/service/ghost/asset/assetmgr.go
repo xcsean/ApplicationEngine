@@ -52,7 +52,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 			return nil, 0, 0, errno.OK
 		}
 
-		// try to insert
+		// not renew, try to insert
 		var revision uint64 = 0
 		insertOk := false
 		stmt := fmt.Sprintf("INSERT INTO t_userasset (ghostid, uuid, revision, lockerid, expiredtime) VALUES (%d, %d, %d, %d, %d)", ghostID, assetReq.Uuid, revision, sessionID, expiredTime)
@@ -73,7 +73,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 				Revision: revision,
 				Asset:    "",
 			}
-			log.Debug("ghostid=%d uuid=%d insert ok", ghostID, assetReq.Uuid)
+			log.Debug("ghostid=%d uuid=%d insert ok, lockerid=%d revision=%d expiredtime=%d", ghostID, assetReq.Uuid, sessionID, revision, expiredTime)
 			return assetRsp, newbee, expiredTime, errno.OK
 		}
 
@@ -96,6 +96,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 		if !lockOk {
 			return nil, 0, 0, errno.HOSTASSETALREADYLOCKED
 		}
+		log.Debug("ghostid=%d uuid=%d lock ok, lockerid=%d expiredtime=%d", ghostID, assetReq.Uuid, sessionID, expiredTime)
 
 		// try to load
 		var data []byte
@@ -111,7 +112,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 			return nil, 0, 0, errno.SYSINTERNALERROR
 		}
 
-		log.Debug("ghostid=%d uuid=%d lock revision=%d assetLen=%d", ghostID, assetReq.Uuid, revision, len(data))
+		log.Debug("ghostid=%d uuid=%d load ok, revision=%d assetLen=%d", ghostID, assetReq.Uuid, revision, len(data))
 		assetRsp := &protocol.GhostUserasset{
 			Uuid:     assetReq.Uuid,
 			Revision: revision,

@@ -137,8 +137,9 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 
 	if n <= 0 {
 		// save failed
-		return nil, 0, 0, errno.HOSTASSETSAVEFAILED
+		return nil, 0, 0, errno.HOSTASSETLOCKLOST
 	}
+
 	log.Debug("ghostid=%d uuid=%d revision=%d save assetLen=%d expiredtime=%d", ghostID, assetReq.Uuid, assetReq.Revision, len(assetReq.Asset), expiredTime)
 	return nil, int64(0), int64(expiredTime), errno.OK
 }

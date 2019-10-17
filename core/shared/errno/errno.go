@@ -52,8 +52,8 @@ const (
 	// HOSTASSETALREADYLOCKED means the asset had beed locked
 	HOSTASSETALREADYLOCKED = -52
 
-	// HOSTASSETSAVEFAILED means the asset save to db failed
-	HOSTASSETSAVEFAILED = -53
+	// HOSTASSETLOCKLOST means the asset save to db failed by lock lost
+	HOSTASSETLOCKLOST = -53
 
 	// HOSTASSETLOCKRENEWFAILED means the lock renew failed
 	HOSTASSETLOCKRENEWFAILED = -54

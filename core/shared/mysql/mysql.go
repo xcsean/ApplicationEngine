@@ -27,6 +27,7 @@ func New(username, password, ip, port, database string) (*DB, error) {
 
 	pool.SetMaxOpenConns(10)
 	pool.SetMaxIdleConns(5)
+	pool.SetConnMaxLifetime(10 * time.Minute)
 	for i := 0; i < 5; i++ {
 		if err = pool.Ping(); err != nil {
 			return nil, fmt.Errorf("pool.Ping(%d) failed: %s", i, err.Error())

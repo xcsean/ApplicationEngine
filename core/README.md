@@ -2,7 +2,7 @@
 
 ## Directory
 
-* 'database' contain registry & globby sql scripts
+* 'database' contain registry & ghost sql scripts
 * 'protocol' contain services protocol go files
 * 'sample' contain some samples such as host/vm/client
 * 'service' contain services source, such as getcd/gconnd/ghost

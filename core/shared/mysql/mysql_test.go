@@ -7,13 +7,13 @@ import (
 )
 
 func TestQuery(t *testing.T) {
-	pool, err := New("root", "123456", "192.168.95.182", "3306", "app_ghost_1")
+	pool, err := New("root", "123456", "127.0.0.1", "3306", "app_ghost_2")
 	if err != nil {
 		t.Errorf("mysql init failed: %s", err.Error())
 		return
 	}
 
-	stmt := fmt.Sprintf("SELECT ghostid, uuid, revision, asset FROM t_userasset WHERE ghostid=%d AND uuid=%d", 1, 10001)
+	stmt := fmt.Sprintf("SELECT ghostid, uuid, revision, asset FROM t_userasset WHERE ghostid=%d AND uuid=%d", 2, 10001)
 	err = pool.Query(stmt, func(rows *sql.Rows) error {
 		for rows.Next() {
 			var ghostID uint32 = 0

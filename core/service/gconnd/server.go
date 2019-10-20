@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/xcsean/ApplicationEngine/core/protocol"
@@ -80,7 +81,7 @@ func start(c *gconndConfig, id int64) {
 	// create the channels for communication between server and client
 	srvChannel := make(chan *innerCmd, c.SrvQueueSize)
 	cliChannel := make(chan *innerCmd, c.CliQueueSize)
-	rpcChannel := make(chan *innerCmd, c.SrvQueueSize)
+	rpcChannel := make(chan *reqRPC, c.SrvQueueSize)
 
 	// create the maps for server and client connections
 	srvMst = ""
@@ -187,7 +188,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
 					cliConn.Close()
 				} else {
-					go handleClientConn(cliConn, sessionID, srvMst, cliChannel)
+					go recvCliLoop(cliConn, sessionID, srvMst, cliChannel)
 				}
 			}
 		}
@@ -255,7 +256,7 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 		srvMap[srvAddr] = srvConn
 		log.Debug("server map size=%d", len(srvMap))
 
-		go handleServerConn(srvConn, srvChannel)
+		go recvSrvLoop(srvConn, srvChannel)
 	case innerCmdServerLeave:
 		_, srvAddr, _, err := c.getNotifyCmd()
 		log.Debug("server leave: remote=%s", srvAddr)
@@ -320,17 +321,48 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 	return exit
 }
 
-func dispatchRPCCmd(c *innerCmd, _ chan<- *innerCmd) bool {
+func dispatchRPCCmd(c *reqRPC, _ chan<- *reqRPC) bool {
 	defer dbg.Stacktrace()
 
 	exit := false
-	cmdID := c.getCmdID()
-	switch cmdID {
+	switch c.Type {
+	case innerCmdRPCAllocSessionID:
+		n, _ := strconv.ParseInt(c.StrParam, 10, 64)
+		if n <= 0 {
+			n = 1
+		}
+		if n > 20 {
+			n = 20
+		}
+		var ids []uint64
+		for i := int64(0); i < n; i++ {
+			sessionID := conn.MakeSessionID(uint16(selfID), seedID)
+			seedID++
+			ids = append(ids, sessionID)
+		}
+		s := ""
+		l := len(ids)
+		for i := 0; i < l; i++ {
+			if i == 0 {
+				s += fmt.Sprintf("%d", ids[i])
+			} else {
+				s += fmt.Sprintf(",%d", ids[i])
+			}
+		}
+		c.Rsp <- &rspRPC{Result: errno.OK, StrParam: s}
+	case innerCmdRPCIsSessionAlive:
+		sessionID, _ := strconv.ParseUint(c.StrParam, 10, 64)
+		_, ok := cliMap[sessionID]
+		if ok {
+			c.Rsp <- &rspRPC{Result: errno.OK, StrParam: "1"}
+		} else {
+			c.Rsp <- &rspRPC{Result: errno.OK, StrParam: "0"}
+		}
 	}
 	return exit
 }
 
-func dispatchProfiler(cliChannel, srvChannel, rpcChannel chan<- *innerCmd) {
+func dispatchProfiler(cliChannel, srvChannel chan<- *innerCmd, rpcChannel chan<- *reqRPC) {
 	defer dbg.Stacktrace()
 
 	log.Debug("cliChannel cmd queue size=%d", len(cliChannel))

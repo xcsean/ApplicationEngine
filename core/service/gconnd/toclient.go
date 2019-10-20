@@ -10,7 +10,7 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
-func handleClientConn(cliConn net.Conn, sessionID uint64, srvMst string, cliChannel chan<- *innerCmd) {
+func recvCliLoop(cliConn net.Conn, sessionID uint64, srvMst string, cliChannel chan<- *innerCmd) {
 	defer dbg.Stacktrace()
 	defer cliConn.Close()
 

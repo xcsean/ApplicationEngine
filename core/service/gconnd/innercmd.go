@@ -21,6 +21,10 @@ const (
 	innerCmdServerKickAll      = 108
 	innerCmdServerSetRoute     = 109
 	innerCmdServerBroadcastAll = 110
+
+	innerCmdRPCRegisterMaster = 201
+	innerCmdRPCAllocSessionID = 202
+	innerCmdRPCIsSessionAlive = 203
 )
 
 type innerCmd struct {
@@ -79,4 +83,16 @@ func newNotifyCmd(cmdID uint8, c net.Conn, str string, n uint64, err error) *inn
 		n:     n,
 		err:   err,
 	}
+}
+
+// RPC req & rsp
+type reqRPC struct {
+	Type     uint8
+	StrParam string
+	Rsp      chan *rspRPC
+}
+
+type rspRPC struct {
+	Result   int32
+	StrParam string
 }

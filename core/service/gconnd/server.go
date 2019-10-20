@@ -80,7 +80,7 @@ func start(c *gconndConfig, id int64) {
 	// create the channels for communication between server and client
 	srvChannel := make(chan *innerCmd, c.SrvQueueSize)
 	cliChannel := make(chan *innerCmd, c.CliQueueSize)
-	rpcChannel := make(chan *innerCmd, 10)
+	rpcChannel := make(chan *innerCmd, c.SrvQueueSize)
 
 	// create the maps for server and client connections
 	srvMst = ""
@@ -91,13 +91,25 @@ func start(c *gconndConfig, id int64) {
 	//  cli acceptor will use node:service_port in registry
 	//  srv acceptor will use node:admin_port in registry
 	//  rpc acceptor will use node:rpc_port in registry
-	// TODO: rpc change from http to rpc
 	cliAddr := fmt.Sprintf("%s:%d", nodeIP, cliPort)
 	srvAddr := fmt.Sprintf("%s:%d", nodeIP, srvPort)
 	rpcAddr := fmt.Sprintf("%s:%d", nodeIP, rpcPort)
-	go acceptCli(cliAddr, cliChannel)
-	go acceptSrv(srvAddr, srvChannel)
-	go acceptRPC(rpcAddr, rpcChannel)
+	ls, err := net.Listen("tcp", rpcAddr)
+	if err != nil {
+		log.Fatal("RPC service listen faild: %s", err.Error())
+	}
+	ls2, err := net.Listen("tcp", cliAddr)
+	if err != nil {
+		log.Fatal("Cli listen failed: %s", err.Error())
+	}
+	ls3, err := net.Listen("tcp", srvAddr)
+	if err != nil {
+		log.Fatal("Srv listen failed: %s", err.Error())
+	}
+
+	go startRPCLoop(ls, rpcChannel)
+	go startCliLoop(ls2, cliChannel)
+	go startSrvLoop(ls3, srvChannel)
 
 	// start a profiler timer, print the performance information periodically
 	tick := time.NewTicker(time.Duration(c.ProfilerTime) * time.Second)
@@ -314,24 +326,6 @@ func dispatchRPCCmd(c *innerCmd, _ chan<- *innerCmd) bool {
 	exit := false
 	cmdID := c.getCmdID()
 	switch cmdID {
-	case innerCmdAdminListenStart:
-		log.Info("start listen admin ok")
-	case innerCmdAdminListenStop:
-		log.Info("stop listen admin")
-		exit = true
-	case innerCmdAdminKick:
-		sessionID := c.getAdminCmd()
-		log.Debug("admin kick session=%d", sessionID)
-		cs, ok := cliMap[sessionID]
-		if ok {
-			log.Debug("client session=%d kicked by admin", sessionID)
-			cs.cliConn.Close()
-		} else {
-			log.Debug("admin kick session=%d, but not found", sessionID)
-		}
-	case innerCmdAdminKickAll:
-		log.Info("admin kick all")
-		kickAllClients()
 	}
 	return exit
 }

@@ -55,6 +55,5 @@ func assetLoop() {
 	}
 
 exit:
-	// TODO save all assets into database
 	log.Debug("asset loop exit...")
 }

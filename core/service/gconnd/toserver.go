@@ -53,3 +53,26 @@ func handleServerConn(srvConn net.Conn, srvChannel chan<- *innerCmd) {
 	srvChannel <- newNotifyCmd(innerCmdServerLeave, nil, srvAddr, 0, err)
 	log.Debug("server=%s leave", srvAddr)
 }
+
+func startSrvLoop(ls net.Listener, srvChannel chan<- *innerCmd) {
+	defer dbg.Stacktrace()
+	defer ls.Close()
+
+	// notify listen start
+	srvChannel <- newNotifyCmd(innerCmdServerListenStart, nil, "", 0, nil)
+
+	for {
+		c, err := ls.Accept()
+		if err != nil {
+			log.Error("accept server failed: %s", err.Error())
+			continue
+		}
+
+		// notify a new server is incoming
+		srvChannel <- newNotifyCmd(innerCmdServerIncoming, c, "", 0, nil)
+	}
+
+	// notify listen stop
+	srvChannel <- newNotifyCmd(innerCmdServerListenStop, nil, "", 0, nil)
+	log.Info("acceptor for server exit")
+}

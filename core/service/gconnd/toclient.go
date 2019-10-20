@@ -34,3 +34,26 @@ func handleClientConn(cliConn net.Conn, sessionID uint64, srvMst string, cliChan
 	// notify the client leave
 	cliChannel <- newNotifyCmd(innerCmdClientLeave, nil, cliAddr, sessionID, err)
 }
+
+func startCliLoop(ls net.Listener, cliChannel chan<- *innerCmd) {
+	defer dbg.Stacktrace()
+	defer ls.Close()
+
+	// notify listen start
+	cliChannel <- newNotifyCmd(innerCmdClientListenStart, nil, "", 0, nil)
+
+	for {
+		c, err := ls.Accept()
+		if err != nil {
+			log.Error("accept client failed: %s", err.Error())
+			continue
+		}
+
+		// notify a new client is incoming
+		cliChannel <- newNotifyCmd(innerCmdClientIncoming, c, "", 0, nil)
+	}
+
+	// notify listen stop
+	cliChannel <- newNotifyCmd(innerCmdClientListenStop, nil, "", 0, nil)
+	log.Info("acceptor for client exit")
+}

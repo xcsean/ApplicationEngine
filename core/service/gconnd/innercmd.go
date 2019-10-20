@@ -21,21 +21,16 @@ const (
 	innerCmdServerKickAll      = 108
 	innerCmdServerSetRoute     = 109
 	innerCmdServerBroadcastAll = 110
-
-	innerCmdAdminListenStart = 201
-	innerCmdAdminListenStop  = 202
-	innerCmdAdminKick        = 203
-	innerCmdAdminKickAll     = 204
 )
 
 type innerCmd struct {
-	cmdID  uint8
-	c      net.Conn
-	n      uint64
-	err    error
-	str    string
-	hdr    []byte
-	body   []byte
+	cmdID uint8
+	c     net.Conn
+	n     uint64
+	err   error
+	str   string
+	hdr   []byte
+	body  []byte
 }
 
 func (ic *innerCmd) getCmdID() uint8 {
@@ -50,7 +45,7 @@ func (ic *innerCmd) getClientCmd() (uint64, []byte, []byte) {
 	return ic.n, ic.hdr, ic.body
 }
 
-func (ic *innerCmd) getAdminCmd() (uint64) {
+func (ic *innerCmd) getAdminCmd() uint64 {
 	return ic.n
 }
 
@@ -61,34 +56,27 @@ func (ic *innerCmd) getNotifyCmd() (net.Conn, string, uint64, error) {
 func newServerCmd(cmdID uint8, c net.Conn, hdr, body []byte) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		c: c,
-		hdr: hdr,
-		body: body,
+		c:     c,
+		hdr:   hdr,
+		body:  body,
 	}
 }
 
 func newClientCmd(cmdID uint8, sessionID uint64, hdr, body []byte) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		n: sessionID,
-		hdr: hdr,
-		body: body,
-	}
-}
-
-func newAdminCmd(cmdID uint8, sessionID uint64) *innerCmd {
-	return &innerCmd{
-		cmdID: cmdID,
-		n: sessionID,
+		n:     sessionID,
+		hdr:   hdr,
+		body:  body,
 	}
 }
 
 func newNotifyCmd(cmdID uint8, c net.Conn, str string, n uint64, err error) *innerCmd {
 	return &innerCmd{
 		cmdID: cmdID,
-		c: c,
-		str: str,
-		n: n,
-		err: err,
+		c:     c,
+		str:   str,
+		n:     n,
+		err:   err,
 	}
 }

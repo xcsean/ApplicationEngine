@@ -3,6 +3,7 @@ package protocol;
 import "packet.proto";
 
 // master
+
 message register_master_req {
     string division = 1;
 }
@@ -13,6 +14,16 @@ message register_master_rsp {
 }
 
 // session
+
+message session_alloc_req {
+    int32 count = 1;
+}
+
+message session_alloc_rsp {
+    int32 result = 1;
+    repeated uint64 session_ids = 2;
+}
+
 message session_alive_req {
     uint64 session_id = 1;
 }
@@ -24,6 +35,7 @@ message session_alive_rsp {
 
 service GconndService {
     rpc RegisterMaster(register_master_req) returns(register_master_rsp) {}
+    rpc AllocSessionID(session_alloc_req) returns(session_alloc_rsp) {}
     rpc IsSessionAlive(session_alive_req) returns(session_alive_rsp) {}
 }
 

@@ -21,11 +21,11 @@ go get -u github.com/xcsean/ApplicationEngine
 
 ## Dependencies Installation
 
-* Zerolog
+* Log
 ```sh
 go get -u github.com/rs/zerolog/log
 ```
-* Radix
+* Redis
 ```sh
 go get -u github.com/mediocregopher/radix
 ```
@@ -39,16 +39,20 @@ cd $GOPATH/bin
 wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-linux-x86_64.zip -O protoc.zip
 mkdir -p protoc && unzip protoc.zip -d protoc && cp protoc/bin/protoc . && rm -rf protoc && rm -f protoc.zip
 ```
-* gRPC
+* RPC
 ```sh
 go get -u google.golang.org/grpc
 cd $GOPATH/src/
 go install google.golang.org/grpc
 go install github.com/golang/protobuf/protoc-gen-go
 ```
-* JWT
+* Token
 ```sh
 go get -u github.com/dgrijalva/jwt-go
+```
+* Timer
+```sh
+go get -u github.com/RussellLuo/timingwheel
 ```
 * Cross-Compile
 ```sh

@@ -34,7 +34,7 @@ func handleSrvPkt(srvConn net.Conn, srvChannel chan<- *innerCmd, hdr, body []byt
 	}
 }
 
-func recvSrvLoop(srvConn net.Conn, srvChannel chan<- *innerCmd) {
+func srvRecvLoop(srvConn net.Conn, srvChannel chan<- *innerCmd) {
 	defer dbg.Stacktrace()
 	defer srvConn.Close()
 

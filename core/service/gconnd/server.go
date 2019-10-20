@@ -188,7 +188,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
 					cliConn.Close()
 				} else {
-					go recvCliLoop(cliConn, sessionID, srvMst, cliChannel)
+					go cliRecvLoop(cliConn, sessionID, srvMst, cliChannel)
 				}
 			}
 		}
@@ -256,7 +256,7 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 		srvMap[srvAddr] = srvConn
 		log.Debug("server map size=%d", len(srvMap))
 
-		go recvSrvLoop(srvConn, srvChannel)
+		go srvRecvLoop(srvConn, srvChannel)
 	case innerCmdServerLeave:
 		_, srvAddr, _, err := c.getNotifyCmd()
 		log.Debug("server leave: remote=%s", srvAddr)

@@ -14,7 +14,7 @@ func TestQuery(t *testing.T) {
 	}
 
 	stmt := fmt.Sprintf("SELECT ghostid, uuid, revision, asset FROM t_userasset WHERE ghostid=%d AND uuid=%d", 2, 10001)
-	err = pool.Query(stmt, func(rows *sql.Rows) error {
+	err = pool.QueryCB(stmt, func(rows *sql.Rows) error {
 		for rows.Next() {
 			var ghostID uint32 = 0
 			var uuid uint64 = 0

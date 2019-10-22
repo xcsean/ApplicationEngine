@@ -42,8 +42,8 @@ func (db *DB) SetQueryTimeout(timeout time.Duration) {
 	db.queryT = timeout
 }
 
-// Query do a query statement with callback
-func (db *DB) Query(stmt string, cb func(*sql.Rows) error) error {
+// QueryCB do a query statement with callback
+func (db *DB) QueryCB(stmt string, cb func(*sql.Rows) error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), db.queryT)
 	defer cancel()
 
@@ -61,8 +61,8 @@ func (db *DB) SetExecTimeout(timeout time.Duration) {
 	db.execT = timeout
 }
 
-// Exec do a exec statement
-func (db *DB) Exec(stmt string, cb func(sql.Result) error) error {
+// ExecCB do a exec statement
+func (db *DB) ExecCB(stmt string, cb func(sql.Result) error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), db.execT)
 	defer cancel()
 
@@ -74,8 +74,8 @@ func (db *DB) Exec(stmt string, cb func(sql.Result) error) error {
 	return cb(result)
 }
 
-// ExecDirect exec directly
-func (db *DB) ExecDirect(query string, args ...interface{}) (sql.Result, error) {
+// Exec exec directly
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), db.execT)
 	defer cancel()
 

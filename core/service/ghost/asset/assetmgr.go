@@ -35,7 +35,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 			renewOk := false
 			stmt := fmt.Sprintf("UPDATE t_userasset SET expiredtime=%d WHERE uuid=%d AND ghostid=%d AND revision=%d",
 				expiredTime, assetReq.Uuid, ghostID, assetReq.Revision)
-			dbpool.Exec(stmt, func(result sql.Result) error {
+			dbpool.ExecCB(stmt, func(result sql.Result) error {
 				n, err := result.RowsAffected()
 				if err != nil {
 					return err
@@ -56,7 +56,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 		var revision uint64 = 0
 		insertOk := false
 		stmt := fmt.Sprintf("INSERT INTO t_userasset (ghostid, uuid, revision, lockerid, expiredtime) VALUES (%d, %d, %d, %d, %d)", ghostID, assetReq.Uuid, revision, sessionID, expiredTime)
-		dbpool.Exec(stmt, func(result sql.Result) error {
+		dbpool.ExecCB(stmt, func(result sql.Result) error {
 			n, err := result.RowsAffected()
 			if err != nil {
 				return err
@@ -101,7 +101,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 		// try to load
 		var data []byte
 		stmt = fmt.Sprintf("SELECT revision, asset FROM t_userasset WHERE uuid=%d AND ghostid=%d", assetReq.Uuid, ghostID)
-		err := dbpool.Query(stmt, func(rows *sql.Rows) error {
+		err := dbpool.QueryCB(stmt, func(rows *sql.Rows) error {
 			for rows.Next() {
 				return rows.Scan(&revision, &data)
 			}
@@ -122,7 +122,7 @@ func LockAssetBySession(sessionID uint64, duration int64, assetReq *protocol.Gho
 	}
 
 	// try to save with lock
-	result, err := dbpool.ExecDirect("UPDATE t_userasset SET expiredtime=?, asset=? WHERE uuid=? AND ghostid=? AND revision=?",
+	result, err := dbpool.Exec("UPDATE t_userasset SET expiredtime=?, asset=? WHERE uuid=? AND ghostid=? AND revision=?",
 		expiredTime, []byte(assetReq.Asset), assetReq.Uuid, ghostID, assetReq.Revision)
 	if err != nil {
 		log.Error("save ghost=%d uuid=%d failed: %s", ghostID, assetReq.Uuid, err.Error())
@@ -154,7 +154,7 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 		// no need to save, just unlock
 		stmt := fmt.Sprintf("UPDATE t_userasset SET lockerid=0, expiredtime=0 WHERE uuid=%d AND ghostid=%d AND revision=%d AND lockerid=%d",
 			assetReq.Uuid, ghostID, assetReq.Revision, sessionID)
-		dbpool.Exec(stmt, func(result sql.Result) error {
+		dbpool.ExecCB(stmt, func(result sql.Result) error {
 			return nil
 		})
 		log.Debug("ghostid=%d uuid=%d unlock revision=%d without save", ghostID, assetReq.Uuid, assetReq.Revision)
@@ -162,7 +162,7 @@ func UnlockAssetBySession(sessionID uint64, assetReq *protocol.GhostUserasset) i
 	}
 
 	// save and unlock
-	_, err := dbpool.ExecDirect("UPDATE t_userasset SET lockerid=0, expiredtime=0, asset=? WHERE uuid=? AND ghostid=? AND revision=? AND lockerid=?",
+	_, err := dbpool.Exec("UPDATE t_userasset SET lockerid=0, expiredtime=0, asset=? WHERE uuid=? AND ghostid=? AND revision=? AND lockerid=?",
 		[]byte(assetReq.Asset), assetReq.Uuid, ghostID, assetReq.Revision, sessionID)
 	if err != nil {
 		log.Error("save ghost=%d uuid=%d failed: %s", ghostID, assetReq.Uuid, err.Error())

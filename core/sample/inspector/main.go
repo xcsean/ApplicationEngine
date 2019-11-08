@@ -10,7 +10,7 @@ import (
 )
 
 func printHelp() {
-	fmt.Println("inspector inspector.xml")
+	fmt.Println("inspector inspector.xml [test]")
 }
 
 var (
@@ -34,13 +34,24 @@ func main() {
 	// init the directory
 	os.MkdirAll(config.getDir(), os.ModePerm)
 
+	// check whether it's in test mode or not
+	if len(os.Args) == 3 && os.Args[2] == "test" {
+		cont, err := getContent()
+		if err == nil {
+			fmt.Println(matchContent(cont))
+		} else {
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
 	// init the startup content
 	cont, err := getContent()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	cont = pickContent(cont)
+	cont = matchContent(cont)
 	saveContent(cont, true)
 
 	// loop for inspect the target
@@ -50,7 +61,7 @@ func main() {
 		case <-tick.C:
 			cont, err = getContent()
 			if err == nil {
-				cont = pickContent(cont)
+				cont = matchContent(cont)
 				saveContent(cont, false)
 			}
 		}
@@ -72,27 +83,21 @@ func getContent() (string, error) {
 	return string(cont[:]), nil
 }
 
-func pickContent(cont string) string {
-	cont2 := ""
-	arr1 := strings.Split(cont, config.getPrefix())
-	if len(arr1) == 1 {
-		cont2 = arr1[0]
-	} else if len(arr1) == 0 {
-		cont2 = cont
-	} else {
-		cont2 = arr1[1]
+func matchContent(cont string) string {
+	content := ""
+	keywords := config.getKeywords()
+	ss := strings.Split(cont, "\n\n")
+	for i := 0; i < len(ss); i++ {
+		s := ss[i]
+		for j := 0; j < len(keywords); j++ {
+			keyword := keywords[j]
+			if strings.Contains(s, keyword) {
+				content += s
+				content += "\n\n"
+			}
+		}
 	}
-
-	arr2 := strings.Split(cont2, config.getPostfix())
-	if len(arr2) == 1 {
-		return arr2[0]
-	}
-
-	if len(arr2) == 0 {
-		return cont2
-	}
-
-	return arr2[0]
+	return content
 }
 
 func saveContent(cont string, startup bool) error {

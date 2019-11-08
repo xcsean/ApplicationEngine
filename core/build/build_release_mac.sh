@@ -9,3 +9,4 @@ export GOOS=linux
 export GOARCH=amd64
 
 go build ../service/getcd
+go build ../sample/inspector

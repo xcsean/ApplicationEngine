@@ -7,11 +7,10 @@ import (
 )
 
 type inspectorConfig struct {
-	Cmd      string `xml:"cmd"`
-	Prefix   string `xml:"prefix"`
-	Postfix  string `xml:"postfix"`
-	Interval int32  `xml:"interval"`
-	Dir      string `xml:"dir"`
+	Cmd      string   `xml:"cmd"`
+	Keywords []string `xml:"keyword"`
+	Interval int32    `xml:"interval"`
+	Dir      string   `xml:"dir"`
 }
 
 var config *inspectorConfig
@@ -35,12 +34,8 @@ func (cfg *inspectorConfig) getCmd() string {
 	return cfg.Cmd
 }
 
-func (cfg *inspectorConfig) getPrefix() string {
-	return cfg.Prefix
-}
-
-func (cfg *inspectorConfig) getPostfix() string {
-	return cfg.Postfix
+func (cfg *inspectorConfig) getKeywords() []string {
+	return cfg.Keywords
 }
 
 func (cfg *inspectorConfig) getInterval() int32 {

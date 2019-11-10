@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+    <cmd>http://192.168.95.160:17901/debug/pprof/goroutine?debug=1</cmd>
+    <keyword>main.main</keyword>
+    <interval>10</interval>
+    <dir>./stack</dir>
+
+</config>

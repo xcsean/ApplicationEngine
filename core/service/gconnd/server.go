@@ -17,18 +17,41 @@ import (
 	"github.com/xcsean/ApplicationEngine/core/shared/packet"
 )
 
-type srvSession net.Conn
+type srvSession struct {
+	Conn net.Conn
+}
+
+func (ss *srvSession) Write(b []byte) (int, error) {
+	ss.Conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
+	n, err := ss.Conn.Write(b)
+	ss.Conn.SetWriteDeadline(time.Time{})
+	return n, err
+}
 
 type cliSession struct {
-	cliConn   net.Conn
+	Conn      net.Conn
 	forwardTo string
+}
+
+func (cs *cliSession) Write(b []byte) (int, error) {
+	cs.Conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
+	n, err := cs.Conn.Write(b)
+	cs.Conn.SetWriteDeadline(time.Time{})
+	if err != nil {
+		if nerr, ok := err.(net.Error); !ok || !nerr.Timeout() {
+			log.Error("client Session write timeout error=%v", err)
+		} else {
+			log.Error("client Session write error=%v", err)
+		}
+	}
+	return n, err
 }
 
 var (
 	selfID int64
 	seedID uint16
 	srvMst string
-	srvMap map[string]srvSession
+	srvMap map[string]*srvSession
 	cliMap map[uint64]*cliSession
 )
 
@@ -85,7 +108,7 @@ func start(c *gconndConfig, id int64) {
 
 	// create the maps for server and client connections
 	srvMst = ""
-	srvMap = make(map[string]srvSession)
+	srvMap = make(map[string]*srvSession)
 	cliMap = make(map[uint64]*cliSession)
 
 	// start the acceptors for server/client/rpc by using channels
@@ -95,7 +118,7 @@ func start(c *gconndConfig, id int64) {
 	cliAddr := fmt.Sprintf("%s:%d", nodeIP, cliPort)
 	srvAddr := fmt.Sprintf("%s:%d", nodeIP, srvPort)
 	rpcAddr := fmt.Sprintf("%s:%d", nodeIP, rpcPort)
-	ls, err := net.Listen("tcp", rpcAddr)
+	ls1, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
 		log.Fatal("RPC service listen faild: %s", err.Error())
 	}
@@ -108,7 +131,7 @@ func start(c *gconndConfig, id int64) {
 		log.Fatal("Srv listen failed: %s", err.Error())
 	}
 
-	go startRPCLoop(ls, rpcChannel)
+	go startRPCLoop(ls1, rpcChannel)
 	go startCliLoop(ls2, cliChannel)
 	go startSrvLoop(ls3, srvChannel)
 
@@ -177,7 +200,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				seedID++
 
 				// the forwardTo field set to master by default
-				cs := &cliSession{cliConn: cliConn, forwardTo: srvMst}
+				cs := &cliSession{Conn: cliConn, forwardTo: srvMst}
 				cliMap[sessionID] = cs
 				log.Debug("client map size=%d", count+1)
 
@@ -253,7 +276,7 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 		srvAddr := srvConn.RemoteAddr().String()
 		log.Debug("server incoming: conn=%v, remote=%s", srvConn, srvAddr)
 
-		srvMap[srvAddr] = srvConn
+		srvMap[srvAddr] = &srvSession{Conn: srvConn}
 		log.Debug("server map size=%d", len(srvMap))
 
 		go srvRecvLoop(srvConn, srvChannel)
@@ -395,7 +418,7 @@ func broadcastToClients(hdr, body []byte) {
 		sessionID := sessionIDs[i]
 		cs, ok := cliMap[sessionID]
 		if ok {
-			n, err := cs.cliConn.Write(pkt)
+			n, err := cs.Write(pkt)
 			if config.isTrafficEnabled() {
 				log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, cmdID, len(hdr), len(innerBody))
 				if err != nil {
@@ -415,7 +438,7 @@ func broadcastAll(pkt []byte) {
 
 	for sessionID, cs := range cliMap {
 		log.Debug("broadcast all, session=%d, pkt=%d", sessionID, len(pkt))
-		n, err := cs.cliConn.Write(pkt)
+		n, err := cs.Write(pkt)
 		if config.isTrafficEnabled() {
 			hdr := conn.ParseHeader(pkt)
 			log.Info("DN|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, hdr.CmdID, conn.LengthOfHeader, len(pkt)-conn.LengthOfHeader)
@@ -439,7 +462,7 @@ func kickClients(hdr, body []byte) {
 			cs, ok := cliMap[sessionID]
 			if ok {
 				log.Debug("client kicked, session=%d", sessionID)
-				cs.cliConn.Close()
+				cs.Conn.Close()
 			} else {
 				log.Debug("client kick failed, session=%d not found", sessionID)
 			}
@@ -450,7 +473,7 @@ func kickClients(hdr, body []byte) {
 func kickAllClients() {
 	for sessionID, cs := range cliMap {
 		log.Debug("client kicked, session=%d", sessionID)
-		cs.cliConn.Close()
+		cs.Conn.Close()
 	}
 }
 

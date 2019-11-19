@@ -26,12 +26,14 @@ func MakeSessionPkt(sessionIDs []uint64, cmdID uint16, userData, timestamp uint3
 	bufU16 := make([]byte, 2)
 	bufU32 := make([]byte, 4)
 	bufU64 := make([]byte, 8)
-	var buffer bytes.Buffer
 	sessionNum := uint16(len(sessionIDs))
 	sessionBodyLen := len(body) + 2 + 8*int(sessionNum)
 	if sessionBodyLen > LengthOfMaxBody {
 		return nil, fmt.Errorf("session body length=%d above max body=%d", sessionBodyLen, LengthOfMaxBody)
 	}
+
+	var buffer bytes.Buffer
+	buffer.Grow(LengthOfHeader + int(sessionBodyLen))
 
 	// fill the header
 	binary.BigEndian.PutUint16(bufU16, uint16(sessionBodyLen))
@@ -94,11 +96,12 @@ func ParseSessionPkt(pkt []byte) ([]byte, uint16, []uint64, []byte) {
 
 // MakeCommonPkt make a new common packet (no session) by some data & body
 func MakeCommonPkt(cmdID uint16, userData, timestamp uint32, body []byte) []byte {
-	var buffer bytes.Buffer
-
 	bufU16 := make([]byte, 2)
 	bufU32 := make([]byte, 4)
 	bodyLen := uint16(len(body))
+
+	var buffer bytes.Buffer
+	buffer.Grow(LengthOfHeader + int(bodyLen))
 
 	// fill the header
 	binary.BigEndian.PutUint16(bufU16, bodyLen)

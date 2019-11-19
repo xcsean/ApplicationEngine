@@ -10,6 +10,10 @@ core/build/vmcli.xml
 core/build/start_vmcli.sh
 core/build/app.ghost.*
 core/build/inspector
+core/build/gconnd.exe
+core/build/getcd.exe
+core/build/ghost.exe
+core/build/vmcli.exe
 core/sample/vmcli/vmcli.exe
 core/service/getcd/getcd.exe
 core/service/gconnd/gconnd.exe

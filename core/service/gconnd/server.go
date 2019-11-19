@@ -18,25 +18,25 @@ import (
 )
 
 type srvSession struct {
-	Conn net.Conn
+	conn net.Conn
 }
 
 func (ss *srvSession) Write(b []byte) (int, error) {
-	ss.Conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
-	n, err := ss.Conn.Write(b)
-	ss.Conn.SetWriteDeadline(time.Time{})
+	ss.conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
+	n, err := ss.conn.Write(b)
+	ss.conn.SetWriteDeadline(time.Time{})
 	return n, err
 }
 
 type cliSession struct {
-	Conn      net.Conn
+	conn      net.Conn
 	forwardTo string
 }
 
 func (cs *cliSession) Write(b []byte) (int, error) {
-	cs.Conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
-	n, err := cs.Conn.Write(b)
-	cs.Conn.SetWriteDeadline(time.Time{})
+	cs.conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
+	n, err := cs.conn.Write(b)
+	cs.conn.SetWriteDeadline(time.Time{})
 	if err != nil {
 		if nerr, ok := err.(net.Error); !ok || !nerr.Timeout() {
 			log.Error("client Session write timeout error=%v", err)
@@ -45,6 +45,10 @@ func (cs *cliSession) Write(b []byte) (int, error) {
 		}
 	}
 	return n, err
+}
+
+func (cs *cliSession) Close() error {
+	return cs.conn.Close()
 }
 
 var (
@@ -200,7 +204,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 				seedID++
 
 				// the forwardTo field set to master by default
-				cs := &cliSession{Conn: cliConn, forwardTo: srvMst}
+				cs := &cliSession{conn: cliConn, forwardTo: srvMst}
 				cliMap[sessionID] = cs
 				log.Debug("client map size=%d", count+1)
 
@@ -276,7 +280,7 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 		srvAddr := srvConn.RemoteAddr().String()
 		log.Debug("server incoming: conn=%v, remote=%s", srvConn, srvAddr)
 
-		srvMap[srvAddr] = &srvSession{Conn: srvConn}
+		srvMap[srvAddr] = &srvSession{conn: srvConn}
 		log.Debug("server map size=%d", len(srvMap))
 
 		go srvRecvLoop(srvConn, srvChannel)
@@ -462,7 +466,7 @@ func kickClients(hdr, body []byte) {
 			cs, ok := cliMap[sessionID]
 			if ok {
 				log.Debug("client kicked, session=%d", sessionID)
-				cs.Conn.Close()
+				cs.Close()
 			} else {
 				log.Debug("client kick failed, session=%d not found", sessionID)
 			}
@@ -473,7 +477,7 @@ func kickClients(hdr, body []byte) {
 func kickAllClients() {
 	for sessionID, cs := range cliMap {
 		log.Debug("client kicked, session=%d", sessionID)
-		cs.Conn.Close()
+		cs.Close()
 	}
 }
 

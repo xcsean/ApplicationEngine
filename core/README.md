@@ -41,9 +41,10 @@ mkdir -p protoc && unzip protoc.zip -d protoc && cp protoc/bin/protoc . && rm -r
 ```
 * RPC
 ```sh
-go get -u google.golang.org/grpc
 cd $GOPATH/src/
+go get -u google.golang.org/grpc
 go install google.golang.org/grpc
+go get -u github.com/golang/protobuf
 go install github.com/golang/protobuf/protoc-gen-go
 ```
 * Token

@@ -395,9 +395,20 @@ func dispatchRPCCmd(c *reqRPC, _ chan<- *reqRPC) bool {
 func dispatchProfiler(cliChannel, srvChannel chan<- *innerCmd, rpcChannel chan<- *reqRPC) {
 	defer dbg.Stacktrace()
 
-	log.Debug("cliChannel cmd queue size=%d", len(cliChannel))
-	log.Debug("srvChannel cmd queue size=%d", len(srvChannel))
-	log.Debug("rpcChannel cmd queue size=%d", len(rpcChannel))
+	cliLen := len(cliChannel)
+	if cliLen > 0 {
+		log.Debug("cliChannel cmd queue size=%d", len(cliChannel))
+	}
+
+	srvLen := len(srvChannel)
+	if srvLen > 0 {
+		log.Debug("srvChannel cmd queue size=%d", len(srvChannel))
+	}
+
+	rpcLen := len(rpcChannel)
+	if rpcLen > 0 {
+		log.Debug("rpcChannel cmd queue size=%d", len(rpcChannel))
+	}
 }
 
 func forwardToServer(ss io.Writer, sessionID uint64, hdr, body []byte) {

@@ -52,8 +52,4 @@ func startCliLoop(ls net.Listener, cliChannel chan<- *innerCmd) {
 		// notify a new client is incoming
 		cliChannel <- newNotifyCmd(innerCmdClientIncoming, c, "", 0, nil)
 	}
-
-	// notify listen stop
-	cliChannel <- newNotifyCmd(innerCmdClientListenStop, nil, "", 0, nil)
-	log.Info("acceptor for client exit")
 }

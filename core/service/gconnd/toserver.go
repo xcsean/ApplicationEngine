@@ -71,8 +71,4 @@ func startSrvLoop(ls net.Listener, srvChannel chan<- *innerCmd) {
 		// notify a new server is incoming
 		srvChannel <- newNotifyCmd(innerCmdServerIncoming, c, "", 0, nil)
 	}
-
-	// notify listen stop
-	srvChannel <- newNotifyCmd(innerCmdServerListenStop, nil, "", 0, nil)
-	log.Info("acceptor for server exit")
 }

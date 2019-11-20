@@ -184,21 +184,23 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		cliConn, _, _, _ := c.getNotifyCmd()
 		cliAddr := cliConn.RemoteAddr().String()
 		log.Debug("client incoming: conn=%v, remote=%s, master=%s", cliConn, cliAddr, srvMst)
-		srvConn, ok := srvMap[srvMst]
+		ss, ok := srvMap[srvMst]
 		if !ok {
 			// master isn't ready, so kick the client
 			log.Debug("master is nil, so close the connection from client=%s", cliAddr)
 			pkt := packet.MakeNotifyClient(map[string]string{"result": fmt.Sprintf("%d", errno.CONNMASTEROFFLINE)})
-			cliConn.Write(pkt)
-			cliConn.Close()
+			cs := &cliSession{conn: cliConn}
+			cs.Write(pkt)
+			cs.Close()
 		} else {
 			count := len(cliMap)
 			funGE := func(a, b int64) bool { return a >= b }
 			if etc.CompareInt64WithConfig("global", "maxClientConnections", int64(count), int64(config.CliMaxConns), funGE) {
 				log.Debug("client connections full, client num=%d", count)
 				pkt := packet.MakeNotifyClient(map[string]string{"result": fmt.Sprintf("%d", errno.CONNMAXCONNECTIONS)})
-				cliConn.Write(pkt)
-				cliConn.Close()
+				cs := &cliSession{conn: cliConn}
+				cs.Write(pkt)
+				cs.Close()
 			} else {
 				sessionID := conn.MakeSessionID(uint16(selfID), seedID)
 				seedID++
@@ -210,7 +212,7 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 
 				// send a session enter to master, with "client address" in body
 				pkt, _ := packet.MakeSessionEnter([]uint64{sessionID}, cliAddr)
-				_, err := srvConn.Write(pkt)
+				_, err := ss.Write(pkt)
 				if err != nil {
 					log.Error("send session=%d enter failed: %s", sessionID, err.Error())
 					cliConn.Close()
@@ -227,10 +229,10 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		}
 
 		// send a session leave to master, with "client address" in body
-		srvConn, ok := srvMap[srvMst]
+		ss, ok := srvMap[srvMst]
 		if ok {
 			pkt, _ := packet.MakeSessionLeave([]uint64{sessionID})
-			_, err := srvConn.Write(pkt)
+			_, err := ss.Write(pkt)
 			if err != nil {
 				log.Error("send session=%d leave failed: %s", sessionID, err.Error())
 			}
@@ -244,10 +246,10 @@ func dispatchCliCmd(c *innerCmd, cliChannel chan<- *innerCmd) bool {
 		cs, ok := cliMap[sessionID]
 		if ok {
 			log.Debug("client up: server=%s", cs.forwardTo)
-			srvConn, ok := srvMap[cs.forwardTo]
+			ss, ok := srvMap[cs.forwardTo]
 			if ok {
-				log.Debug("server=%s found, conn=%v", cs.forwardTo, srvConn)
-				forwardToServer(srvConn, sessionID, hdr, body)
+				log.Debug("server=%s found, conn=%v", cs.forwardTo, ss)
+				forwardToServer(ss, sessionID, hdr, body)
 			} else {
 				log.Debug("server=%s not found, discard client up", cs.forwardTo)
 			}
@@ -307,6 +309,7 @@ func dispatchSrvCmd(c *innerCmd, srvChannel chan<- *innerCmd) bool {
 			kickAllClients()
 		}
 	case innerCmdServerMasterSet:
+		// TODO replace this with RPC call
 		srvConn, _, _ := c.getServerCmd()
 		srvAddr := srvConn.RemoteAddr().String()
 		log.Debug("server=%s want to be master", srvAddr)
@@ -397,12 +400,12 @@ func dispatchProfiler(cliChannel, srvChannel chan<- *innerCmd, rpcChannel chan<-
 	log.Debug("rpcChannel cmd queue size=%d", len(rpcChannel))
 }
 
-func forwardToServer(srvConn io.Writer, sessionID uint64, hdr, body []byte) {
+func forwardToServer(ss io.Writer, sessionID uint64, hdr, body []byte) {
 	sessionIDs := make([]uint64, 1)
 	sessionIDs[0] = sessionID
 	pkt, cmdID := conn.CopySessionPkt(sessionIDs, hdr, body)
 	if pkt != nil {
-		n, err := srvConn.Write(pkt)
+		n, err := ss.Write(pkt)
 		if config.isTrafficEnabled() {
 			log.Info("UP|session=%d|cmd=%d|hdr=%d|body=%d", sessionID, cmdID, len(hdr), len(body))
 			if err != nil {
